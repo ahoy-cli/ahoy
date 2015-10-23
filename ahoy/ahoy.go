@@ -17,12 +17,13 @@ func getComposeDir() (string, error) {
     log.Fatal(err)
   }
   for dir != "/" && err == nil {
-    dir = path.Dir(dir)
     ymlpath := filepath.Join(dir, ".ahoy.yml")
     fmt.Println(ymlpath)
     if _, err := os.Stat(ymlpath); err == nil {
       fmt.Printf("found: %s", ymlpath )
       return dir, err
+    // Chop off the last part of the path.
+    dir = path.Dir(dir)
     }
   }
   return "", err
