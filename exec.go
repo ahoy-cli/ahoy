@@ -14,6 +14,7 @@ func main() {
   app.Action = func(c *cli.Context) {
     cmd := exec.Command(os.Args[1], os.Args[2:]...)
     cmd.Stdout = os.Stdout
+    cmd.Stdin = os.Stdin
     cmd.Stderr = os.Stderr
     if err := cmd.Run(); err != nil {
       fmt.Fprintln(os.Stderr, err)
