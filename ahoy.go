@@ -7,25 +7,25 @@ import (
   "os/exec"
   "log"
   "path"
+  "path/filepath"
 )
 
-func getComposeDir() string {
+func getComposeDir() (string, error) {
+  var err error
   dir, err := os.Getwd()
   if err != nil {
     log.Fatal(err)
   }
-  for dir != "" && err == nil {
-    dir, file := path.Split(dir)
-    cut_off_last_char_len := len(dir) - 1
-    dir = dir[:cut_off_last_char_len]
-    fmt.Println(dir)
-    _ = file
+  for dir != "/" && err == nil {
+    dir = path.Dir(dir)
+    ymlpath := filepath.Join(dir, ".ahoy.yml")
+    fmt.Println(ymlpath)
+    if _, err := os.Stat(ymlpath); err == nil {
+      fmt.Printf("found: %s", ymlpath )
+      return dir, err
+    }
   }
-  // Go complains with an error if you don't use a variable.
-  if err != nil {
-    log.Fatal(err)
-  }
-  return dir
+  return "", err
 }
 
 func main() {
@@ -34,13 +34,15 @@ func main() {
   app.Usage = "Send commands to docker-compose services"
   app.Action = func(c *cli.Context) {
 
-    fmt.Println(getComposeDir())
+    if ymlpath, err := getComposeDir(); err == nil {
+      fmt.Println(ymlpath)
+    }
     cmd := exec.Command(os.Args[1], os.Args[2:]...)
     cmd.Stdout = os.Stdout
     cmd.Stdin = os.Stdin
     cmd.Stderr = os.Stderr
     if err := cmd.Run(); err != nil {
-      fmt.Fprintln(os.Stderr, err)
+      fmt.Fprintln(os.Stderr)
       os.Exit(1)
     }
   }
