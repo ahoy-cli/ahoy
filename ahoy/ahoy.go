@@ -44,6 +44,18 @@ func getConfig(sourcefile string) (*simpleyaml.Yaml, error) {
   return yaml, err
 }
 
+func runCommand(args []string, dir string) {
+  cmd := exec.Command(os.Args[1], os.Args[2:]...)
+  cmd.Dir = dir
+  cmd.Stdout = os.Stdout
+  cmd.Stdin = os.Stdin
+  cmd.Stderr = os.Stderr
+  if err := cmd.Run(); err != nil {
+    fmt.Fprintln(os.Stderr)
+    os.Exit(1)
+  }
+}
+
 func main() {
   app := cli.NewApp()
   app.Name = "ahoy"
@@ -54,15 +66,7 @@ func main() {
       yml, _ := getConfig(sourcefile)
       version, _ := yml.Get("version").String()
       log.Println("version: ", version)
-      cmd := exec.Command(os.Args[1], os.Args[2:]...)
-      cmd.Dir = sourcedir
-      cmd.Stdout = os.Stdout
-      cmd.Stdin = os.Stdin
-      cmd.Stderr = os.Stderr
-      if err := cmd.Run(); err != nil {
-        fmt.Fprintln(os.Stderr)
-        os.Exit(1)
-      }
+      runCommand(os.Args, sourcedir)
     }
   }
 
