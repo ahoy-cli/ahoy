@@ -82,8 +82,7 @@ func runCommand(c string) {
   //fmt.Printf("%+v\n", exportCmd)
   dir := sourcedir
   args := strings.Split(c, " ")
-  //cmd := exec.Command(os.Args[1], os.Args[2:]...)
-  log.Println("run command: ", args[0] )
+  log.Println("run command: ", strings.Join(args, " ") )
   cmd := exec.Command(args[0], args[1:]...)
   cmd.Dir = dir
   cmd.Stdout = os.Stdout
