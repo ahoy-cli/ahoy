@@ -12,6 +12,8 @@ import (
   "io/ioutil"
 )
 
+var sourcedir string
+
 func getConfigPath() (string, error) {
   var err error
   dir, err := os.Getwd()
@@ -44,8 +46,27 @@ func getConfig(sourcefile string) (*simpleyaml.Yaml, error) {
   return yaml, err
 }
 
-func runCommand(args []string, dir string) {
-  cmd := exec.Command(os.Args[1], os.Args[2:]...)
+func getCommands(y *simpleyaml.Yaml) []cli.Command {
+  yamlCmds := y.Get("commands")
+  exportCmds := []cli.Command{}
+  m, _ := yamlCmds.Map()
+  for key, value := range m {
+    new := cli.Command
+    new.Name = key
+    new.Action = func(c *cli.Context) {
+      runCommand(c);
+    }
+    log.Println("found command: ", key, " > ", value )
+    exportCmds = append(exportCmds, new)
+  }
+
+  return exportCmds
+}
+
+func runCommand(exportCmd *cli.Context) {
+  fmt.Printf("%+v\n", exportCmd)
+  dir := sourcedir
+  cmd := exec.Command(os.Airgs[1], os.Args[2:]...)
   cmd.Dir = dir
   cmd.Stdout = os.Stdout
   cmd.Stdin = os.Stdin
@@ -60,14 +81,13 @@ func main() {
   app := cli.NewApp()
   app.Name = "ahoy"
   app.Usage = "Send commands to docker-compose services"
-  app.Action = func(c *cli.Context) {
-    if sourcefile, err := getConfigPath(); err == nil {
-      sourcedir := filepath.Dir(sourcefile)
-      yml, _ := getConfig(sourcefile)
-      version, _ := yml.Get("version").String()
-      log.Println("version: ", version)
-      runCommand(os.Args, sourcedir)
-    }
+  app.EnableBashCompletion = true
+  if sourcefile, err := getConfigPath(); err == nil {
+    sourcedir = filepath.Dir(sourcefile)
+    yml, _ := getConfig(sourcefile)
+    app.Commands = getCommands(yml)
+    version, _ := yml.Get("version").String()
+    log.Println("version: ", version)
   }
 
   app.Run(os.Args)
