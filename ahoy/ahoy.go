@@ -10,6 +10,7 @@ import (
   "path/filepath"
   "github.com/smallfish/simpleyaml"
   "io/ioutil"
+  "strings"
 )
 
 var sourcedir string
@@ -51,22 +52,26 @@ func getCommands(y *simpleyaml.Yaml) []cli.Command {
   exportCmds := []cli.Command{}
   m, _ := yamlCmds.Map()
   for key, value := range m {
-    new := cli.Command
-    new.Name = key
-    new.Action = func(c *cli.Context) {
-      runCommand(c);
+    newCmd := cli.Command{
+      Name: key.(string),
+      Action: func(c *cli.Context) {
+       runCommand(value.(string));
+      },
     }
     log.Println("found command: ", key, " > ", value )
-    exportCmds = append(exportCmds, new)
+    exportCmds = append(exportCmds, newCmd)
   }
 
   return exportCmds
 }
 
-func runCommand(exportCmd *cli.Context) {
-  fmt.Printf("%+v\n", exportCmd)
+func runCommand(c string) {
+  //fmt.Printf("%+v\n", exportCmd)
   dir := sourcedir
-  cmd := exec.Command(os.Airgs[1], os.Args[2:]...)
+  args := strings.Split(c, " ")
+  //cmd := exec.Command(os.Args[1], os.Args[2:]...)
+  log.Println("run command: ", args[0] )
+  cmd := exec.Command(args[0], args[1:]...)
   cmd.Dir = dir
   cmd.Stdout = os.Stdout
   cmd.Stdin = os.Stdin
