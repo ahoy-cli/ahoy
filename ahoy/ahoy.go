@@ -8,9 +8,11 @@ import (
   "log"
   "path"
   "path/filepath"
+  "github.com/smallfish/simpleyaml"
+  "io/ioutil"
 )
 
-func getComposeDir() (string, error) {
+func getConfigPath() (string, error) {
   var err error
   dir, err := os.Getwd()
   if err != nil {
@@ -18,15 +20,28 @@ func getComposeDir() (string, error) {
   }
   for dir != "/" && err == nil {
     ymlpath := filepath.Join(dir, ".ahoy.yml")
-    fmt.Println(ymlpath)
+    log.Println(ymlpath)
     if _, err := os.Stat(ymlpath); err == nil {
-      fmt.Printf("found: %s", ymlpath )
-      return dir, err
+      log.Println("found: ", ymlpath )
+      return ymlpath, err
+    }
     // Chop off the last part of the path.
     dir = path.Dir(dir)
-    }
   }
   return "", err
+}
+
+func getConfig(sourcefile string) (*simpleyaml.Yaml, error) {
+
+  source, err := ioutil.ReadFile(sourcefile)
+  if err != nil {
+    panic(err)
+  }
+  yaml, err := simpleyaml.NewYaml(source)
+  if err != nil {
+    panic(err)
+  }
+  return yaml, err
 }
 
 func main() {
@@ -34,17 +49,20 @@ func main() {
   app.Name = "ahoy"
   app.Usage = "Send commands to docker-compose services"
   app.Action = func(c *cli.Context) {
-
-    if ymlpath, err := getComposeDir(); err == nil {
-      fmt.Println(ymlpath)
-    }
-    cmd := exec.Command(os.Args[1], os.Args[2:]...)
-    cmd.Stdout = os.Stdout
-    cmd.Stdin = os.Stdin
-    cmd.Stderr = os.Stderr
-    if err := cmd.Run(); err != nil {
-      fmt.Fprintln(os.Stderr)
-      os.Exit(1)
+    if sourcefile, err := getConfigPath(); err == nil {
+      sourcedir := filepath.Dir(sourcefile)
+      yml, _ := getConfig(sourcefile)
+      version, _ := yml.Get("version").String()
+      log.Println("version: ", version)
+      cmd := exec.Command(os.Args[1], os.Args[2:]...)
+      cmd.Dir = sourcedir
+      cmd.Stdout = os.Stdout
+      cmd.Stdin = os.Stdin
+      cmd.Stderr = os.Stderr
+      if err := cmd.Run(); err != nil {
+        fmt.Fprintln(os.Stderr)
+        os.Exit(1)
+      }
     }
   }
 
