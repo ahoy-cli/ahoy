@@ -8,10 +8,21 @@ import (
   "log"
   "path"
   "path/filepath"
-  "github.com/smallfish/simpleyaml"
+  "gopkg.in/yaml.v2"
   "io/ioutil"
   "strings"
 )
+
+type Config struct {
+  Version string
+  Commands map[string]Command
+}
+
+type Command struct {
+  Description string
+  Usage string
+  Cmd string
+}
 
 var sourcedir string
 
@@ -34,31 +45,33 @@ func getConfigPath() (string, error) {
   return "", err
 }
 
-func getConfig(sourcefile string) (*simpleyaml.Yaml, error) {
+func getConfig(sourcefile string) (Config, error) {
 
-  source, err := ioutil.ReadFile(sourcefile)
+  yamlFile, err := ioutil.ReadFile(sourcefile)
   if err != nil {
     panic(err)
   }
-  yaml, err := simpleyaml.NewYaml(source)
+
+  var config Config
+
+  err = yaml.Unmarshal(yamlFile, &config)
   if err != nil {
     panic(err)
   }
-  return yaml, err
+  return config, err
 }
 
-func getCommands(y *simpleyaml.Yaml) []cli.Command {
-  yamlCmds := y.Get("commands")
+func getCommands(config Config) []cli.Command {
   exportCmds := []cli.Command{}
-  m, _ := yamlCmds.Map()
-  for key, value := range m {
+  for name, cmd := range config.Commands {
     newCmd := cli.Command{
-      Name: key.(string),
+      Name: name,
+      Usage: cmd.Usage,
       Action: func(c *cli.Context) {
-       runCommand(value.(string));
+       runCommand(cmd.Cmd);
       },
     }
-    log.Println("found command: ", key, " > ", value )
+    log.Println("found command: ", name, " > ", cmd.Cmd )
     exportCmds = append(exportCmds, newCmd)
   }
 
@@ -83,16 +96,16 @@ func runCommand(c string) {
 }
 
 func main() {
+  // cli stuff
   app := cli.NewApp()
   app.Name = "ahoy"
   app.Usage = "Send commands to docker-compose services"
   app.EnableBashCompletion = true
   if sourcefile, err := getConfigPath(); err == nil {
     sourcedir = filepath.Dir(sourcefile)
-    yml, _ := getConfig(sourcefile)
-    app.Commands = getCommands(yml)
-    version, _ := yml.Get("version").String()
-    log.Println("version: ", version)
+    config, _ := getConfig(sourcefile)
+    app.Commands = getCommands(config)
+    log.Println("version: ", config.Version)
   }
 
   app.Run(os.Args)
