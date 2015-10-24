@@ -10,6 +10,27 @@ ahoy makes is easy to create aliases for commands that are useful, but ones you'
 - Commands and help declared in .ahoy.yml show up as ahoy command help
 - ahoy can be run in any subfolder where the yaml file exists
 
+## INSTALLATION
+
+### OSX
+Using Homebrew:
+```
+brew tap devinci-code/tap
+brew install ahoy
+```
+
+### Linux
+Download and unzip the latest release and move the appropriate binary for your plaform into someplace in your $PATH and rename it `ahoy`
+
+Example:
+```
+wget https://github.com/devinci-code/ahoy/releases/download/1.0.0/ahoy-release-1-0-0.tar.gz
+tar xzvf ahoy-release-1-0-0.tar.gz
+cp ahoy-release-1-0-0/ahoy-linux-amd64 /usr/local/bin/ahoy
+chown +x /usr/local/bin/ahoy
+```
+
+
 ## TODOS
 
 - Disable logging unless verbose mode is set.
@@ -19,3 +40,4 @@ ahoy makes is easy to create aliases for commands that are useful, but ones you'
 - Add ability to specify the .ahoy.yml file you want to use, using a flag.
 - Support a .ahoy.yml file in your home directory for general use aliases.
 - Support multiple line commands (already supported with && but this might be a nice and cleaner option)
+- Upload individual binaries instead of a tar ball of each one. (4.6M each, vs 2M for the tarball)
