@@ -29,7 +29,40 @@ tar xzvf ahoy-release-1-0-0.tar.gz
 cp ahoy-release-1-0-0/ahoy-linux-amd64 /usr/local/bin/ahoy
 chown +x /usr/local/bin/ahoy
 ```
+## USAGE
+Almost all the commands are actually specified in a .ahoy.yml file placed in your working tree somewhere. Commands that are added there show up as options in ahoy. Here is what it looks like when using the [example.ahoy.yml file](https://github.com/devinci-code/ahoy/blob/master/examples/examples.ahoy.yml). To start with this file locally you can run `ahoy init`.
 
+```
+$ ahoy
+NAME:
+   ahoy - Send commands to docker-compose services
+
+USAGE:
+   ahoy [global options] command [command options] [arguments...]
+
+VERSION:
+   0.0.0
+
+COMMANDS:
+   vdown	Stop the vagrant box if one exists.
+   vup		Start the vagrant box if one exists.
+   start	Start the docker compose-containers.
+   stop		Stop the docker-compose containers.
+   restart	Restart the docker-compose containers.
+   drush	Run drush commands in the cli service container.
+   bash		Start a shell in the container (like ssh without actual ssh).
+   sqlc		Connect to the default mysql database. Supports piping of data into the command.
+   behat	Run the behat tests within the container.
+   ps		List the running docker-compose containers.
+   behat-init	Use composer to install behat dependencies.
+   init		Initialize a new .ahoy.yml config file in the current directory.
+   help, h	Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+   --help, -h			show help
+   --generate-bash-completion
+   --version, -v		print the version
+```
 
 ## TODOS
 
