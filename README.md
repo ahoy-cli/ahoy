@@ -1,5 +1,5 @@
 # AHOY!
-ahoy makes is easy to create aliases for commands that are useful, but ones you'd rather not type them repeatedly. It was specifically created to help with running interactive commands within docker containers, but you can also use it for local commands, commands over ssh, etc.
+ahoy makes is easy to create aliases and templates for commands that are useful. It was specifically created to help with running interactive commands within docker containers, but you can also use it for local commands, commands over ssh, etc.
 
 ## FEATURES
 - Easily create shortcuts in a yml file that run relative to the .ahoy.yml file.
