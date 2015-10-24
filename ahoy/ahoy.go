@@ -65,12 +65,13 @@ func getConfig(sourcefile string) (Config, error) {
 func getCommands(config Config) []cli.Command {
   exportCmds := []cli.Command{}
   for name, cmd := range config.Commands {
+    cmdCopy := cmd.Cmd
     newCmd := cli.Command{
       Name: name,
       Usage: cmd.Usage,
       Action: func(c *cli.Context) {
        args = c.Args()
-       runCommand(cmd.Cmd);
+       runCommand(cmdCopy);
       },
     }
     log.Println("found command: ", name, " > ", cmd.Cmd )
