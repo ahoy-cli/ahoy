@@ -10,6 +10,7 @@ import (
   "path/filepath"
   "gopkg.in/yaml.v2"
   "io/ioutil"
+  "strings"
 )
 
 type Config struct {
@@ -24,6 +25,7 @@ type Command struct {
 }
 
 var sourcedir string
+var args []string
 
 func getConfigPath() (string, error) {
   var err error
@@ -67,6 +69,7 @@ func getCommands(config Config) []cli.Command {
       Name: name,
       Usage: cmd.Usage,
       Action: func(c *cli.Context) {
+       args = c.Args()
        runCommand(cmd.Cmd);
       },
     }
@@ -79,9 +82,13 @@ func getCommands(config Config) []cli.Command {
 
 func runCommand(c string) {
   //fmt.Printf("%+v\n", exportCmd)
+
+  cReplace := strings.Replace(c, "{{args}}", strings.Join(args, " "), 1)
+
   dir := sourcedir
-  log.Println("run command: ", c)
-  cmd := exec.Command("bash", "-c", c)
+  log.Println("args: ", args)
+  log.Println("run command: ", cReplace)
+  cmd := exec.Command("bash", "-c", cReplace)
   cmd.Dir = dir
   cmd.Stdout = os.Stdout
   cmd.Stdin = os.Stdin
