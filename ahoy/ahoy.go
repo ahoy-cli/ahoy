@@ -35,9 +35,9 @@ func getConfigPath() (string, error) {
   }
   for dir != "/" && err == nil {
     ymlpath := filepath.Join(dir, ".ahoy.yml")
-    log.Println(ymlpath)
+    //log.Println(ymlpath)
     if _, err := os.Stat(ymlpath); err == nil {
-      log.Println("found: ", ymlpath )
+      //log.Println("found: ", ymlpath )
       return ymlpath, err
     }
     // Chop off the last part of the path.
@@ -74,7 +74,7 @@ func getCommands(config Config) []cli.Command {
        runCommand(cmdCopy);
       },
     }
-    log.Println("found command: ", name, " > ", cmd.Cmd )
+    //log.Println("found command: ", name, " > ", cmd.Cmd )
     exportCmds = append(exportCmds, newCmd)
   }
 
@@ -87,8 +87,8 @@ func runCommand(c string) {
   cReplace := strings.Replace(c, "{{args}}", strings.Join(args, " "), 1)
 
   dir := sourcedir
-  log.Println("args: ", args)
-  log.Println("run command: ", cReplace)
+  //log.Println("args: ", args)
+  //log.Println("run command: ", cReplace)
   cmd := exec.Command("bash", "-c", cReplace)
   cmd.Dir = dir
   cmd.Stdout = os.Stdout
@@ -110,7 +110,7 @@ func main() {
     sourcedir = filepath.Dir(sourcefile)
     config, _ := getConfig(sourcefile)
     app.Commands = getCommands(config)
-    log.Println("version: ", config.Version)
+    //log.Println("version: ", config.Version)
   }
 
   app.Run(os.Args)
