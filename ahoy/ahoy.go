@@ -50,8 +50,8 @@ func getConfig(sourcefile string) (Config, error) {
 
   yamlFile, err := ioutil.ReadFile(sourcefile)
   if err != nil {
-    fmt.Println("Error: An ahoy config file couldn't be found in your path.")
-    os.Exit(1)
+    fmt.Println("\n ==> Error: An ahoy config file couldn't be found in your path. You can create an example one by using 'ahoy init'\n")
+    //os.Exit(1)
   }
 
   var config Config
