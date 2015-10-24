@@ -41,3 +41,4 @@ chown +x /usr/local/bin/ahoy
 - Support a .ahoy.yml file in your home directory for general use aliases.
 - Support multiple line commands (already supported with && but this might be a nice and cleaner option)
 - Upload individual binaries instead of a tar ball of each one. (4.6M each, vs 2M for the tarball)
+- Support alternate init files (take a url parameter) which give a way to deploy the config files.
