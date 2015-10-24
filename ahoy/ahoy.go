@@ -50,7 +50,8 @@ func getConfig(sourcefile string) (Config, error) {
 
   yamlFile, err := ioutil.ReadFile(sourcefile)
   if err != nil {
-    panic(err)
+    fmt.Println("Error: An ahoy config file couldn't be found in your path.")
+    os.Exit(1)
   }
 
   var config Config
@@ -100,6 +101,30 @@ func runCommand(c string) {
   }
 }
 
+func addDefaultCommands(commands []cli.Command) []cli.Command {
+  newCmd := cli.Command{
+    Name: "init",
+    Usage: "Initialize a new .ahoy.yml config file in the current directory.",
+    Action: func(c *cli.Context) {
+      //log.Println(exec.LookPath(os.Args[0]))
+      grabYaml := "wget https://raw.githubusercontent.com/devinci-code/ahoy/master/examples/examples.ahoy.yml -O .ahoy.yml"
+      cmd := exec.Command("bash", "-c", grabYaml)
+      //cmd.Dir = dir
+      //cmd.Stdout = os.Stdout
+      cmd.Stdin = os.Stdin
+      cmd.Stderr = os.Stderr
+      if err := cmd.Run(); err != nil {
+        fmt.Fprintln(os.Stderr)
+        os.Exit(1)
+      } else {
+        fmt.Println("example.ahoy.yml downloaded to the current directory. You can customize it to suit your needs!" )
+      }
+    },
+  }
+  commands = append(commands, newCmd)
+  return commands
+}
+
 func main() {
   // cli stuff
   app := cli.NewApp()
@@ -110,6 +135,7 @@ func main() {
     sourcedir = filepath.Dir(sourcefile)
     config, _ := getConfig(sourcefile)
     app.Commands = getCommands(config)
+    app.Commands = addDefaultCommands(app.Commands)
     //log.Println("version: ", config.Version)
   }
 
