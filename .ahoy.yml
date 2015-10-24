@@ -1,0 +1,9 @@
+version: 0.0.0
+commands:
+  i:
+    cmd: "go install ahoy/ahoy.go"
+    usage: Build ahoy using go install.
+
+  test:
+    cmd: "go test ahoy/ahoy.go"
+    usage: Test out ahoy using go.
