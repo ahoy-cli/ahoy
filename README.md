@@ -4,8 +4,11 @@ ahoy makes is easy to create aliases and templates for commands that are useful.
 ## Examples
 
 Say you want to import a sql database running in docker-compose using another container called cli. The command could look like this:
+
 `docker exec -i $(docker-compose ps -q cli) bash -c 'mysql -u$DB_ENV_MYSQL_USER -p$DB_ENV_MYSQL_PASSWORD -h$DB_PORT_3306_TCP_ADDR $DB_ENV_MYSQL_DATABASE' < some-database.sql`
+
 With ahoy, you can turn this into
+
 `ahoy mysql-import < some-database.sql`
 
 ## FEATURES
