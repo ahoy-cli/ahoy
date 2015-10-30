@@ -42,7 +42,7 @@ chown +x /usr/local/bin/ahoy
 ```
 
 ### Bash / Zsh Completion
-For Zsh, Just add this to your ~/.bashrc or ~/.zshrc, and your completions will be relative to the directory you're in.
+For Zsh, Just add this to your ~/.zshrc, and your completions will be relative to the directory you're in.
 
 `complete -F "ahoy --generate-bash-completion" ahoy`
 
@@ -50,7 +50,7 @@ For Bash, you'll need to make sure you have bash-completion installed and setup.
 
 `brew install bash bash-completion`
 
-Now make sure you follow the installation instructions in the "Caveats" section that homebrew returns. And make sure completiong is working for git for instance (you may need to restart your shell)
+Now make sure you follow the couple installation instructions in the "Caveats" section that homebrew returns. And make sure completion is working for git for instance before you continue (you may need to restart your shell)
 
 Then, (for homebrew) you'll want to create a file at `/usr/local/etc/bash_completion.d/ahoy` with the following:
 
