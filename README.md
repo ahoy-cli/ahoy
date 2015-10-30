@@ -41,11 +41,29 @@ cp ahoy-release-1-0-0/ahoy-linux-amd64 /usr/local/bin/ahoy
 chown +x /usr/local/bin/ahoy
 ```
 
-### Bash Completion
-Add this to your ~/.bashrc or ~/.zshrc, and your completions will be relative to the directory you're in.
+### Bash / Zsh Completion
+For Zsh, Just add this to your ~/.bashrc or ~/.zshrc, and your completions will be relative to the directory you're in.
 
 `complete -F "ahoy --generate-bash-completion" ahoy`
 
+For Bash, you'll need to make sure you have bash-completion installed and setup. On OSX with homebrew it looks like this:
+
+`brew install bash bash-completion`
+
+Now make sure you follow the installation instructions in the "Caveats" section that homebrew returns. And make sure completiong is working for git for instance (you may need to restart your shell)
+
+Then, (for homebrew) you'll want to create a file at `/usr/local/etc/bash_completion.d/ahoy` with the following:
+
+```Bash
+_ahoy()
+{
+    local cur=${COMP_WORDS[COMP_CWORD]}
+    COMPREPLY=( $(compgen -W "`ahoy --generate-bash-completion`" -- $cur) )
+}
+complete -F _ahoy ahoy
+```
+
+restart your shell, and you should see ahoy autocomplete when typing `ahoy [TAB]`
 
 ## USAGE
 Almost all the commands are actually specified in a .ahoy.yml file placed in your working tree somewhere. Commands that are added there show up as options in ahoy. Here is what it looks like when using the [example.ahoy.yml file](https://github.com/devinci-code/ahoy/blob/master/examples/examples.ahoy.yml). To start with this file locally you can run `ahoy init`.
