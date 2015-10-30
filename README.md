@@ -19,6 +19,7 @@ With ahoy, you can turn this into
 - Fully interactive shells
 - Commands and help declared in .ahoy.yml show up as ahoy command help
 - ahoy can be run in any subfolder where the yaml file exists
+- bash completion of commands (see below)
 
 ## INSTALLATION
 
@@ -88,7 +89,5 @@ GLOBAL OPTIONS:
 - Do specific arg replacement like {{arg1}}
 - Add ability to use subcommands (would help clean up a longer list of commands)
 - Add ability to specify the .ahoy.yml file you want to use, using a flag.
-- Support a .ahoy.yml file in your home directory for general use aliases.
 - Support multiple line commands (already supported with && but this might be a nice and cleaner option)
-- Upload individual binaries instead of a tar ball of each one. (4.6M each, vs 2M for the tarball)
 - Support alternate init files (take a url parameter) which give a way to deploy the config files.
