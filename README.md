@@ -34,6 +34,7 @@ Download and unzip the latest release and move the appropriate binary for your p
 
 ### Bash Completion
 Add this to your ~/.bashrc or ~/.zshrc, and your completions will be relative to the directory you're in.
+
 `complete -F "ahoy --generate-bash-completion" ahoy`
 
 Example:
