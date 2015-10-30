@@ -32,11 +32,6 @@ brew install ahoy
 ### Linux
 Download and unzip the latest release and move the appropriate binary for your plaform into someplace in your $PATH and rename it `ahoy`
 
-### Bash Completion
-Add this to your ~/.bashrc or ~/.zshrc, and your completions will be relative to the directory you're in.
-
-`complete -F "ahoy --generate-bash-completion" ahoy`
-
 Example:
 ```
 wget https://github.com/devinci-code/ahoy/releases/download/1.0.0/ahoy-release-1-0-0.tar.gz
@@ -44,6 +39,13 @@ tar xzvf ahoy-release-1-0-0.tar.gz
 cp ahoy-release-1-0-0/ahoy-linux-amd64 /usr/local/bin/ahoy
 chown +x /usr/local/bin/ahoy
 ```
+
+### Bash Completion
+Add this to your ~/.bashrc or ~/.zshrc, and your completions will be relative to the directory you're in.
+
+`complete -F "ahoy --generate-bash-completion" ahoy`
+
+
 ## USAGE
 Almost all the commands are actually specified in a .ahoy.yml file placed in your working tree somewhere. Commands that are added there show up as options in ahoy. Here is what it looks like when using the [example.ahoy.yml file](https://github.com/devinci-code/ahoy/blob/master/examples/examples.ahoy.yml). To start with this file locally you can run `ahoy init`.
 
