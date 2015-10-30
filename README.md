@@ -12,15 +12,13 @@ With ahoy, you can turn this into
 `ahoy mysql-import < some-database.sql`
 
 ## FEATURES
-- Non-invasive, straight forward to understand, and can wrap commands and scripts you are already using.
-- Easily create shortcuts in a yml file that run relative to the .ahoy.yml file.
-- Visualize a list of all of your alias commands in one place, along with helpful descriptions.
-- Aliases are specific to a single folder tree, so each repo/workspace can have its own commands
-- Arg replacement in commands using {{args}}
-- Fully interactive shells
-- Commands and help declared in .ahoy.yml show up as ahoy command help
-- ahoy can be run in any subfolder where the yaml file exists
-- bash completion of commands (see below)
+- Non-invasive - Use your existing workflow! It can wrap commands and scripts you are already using.
+- Consitent - Commands always run relative to the .ahoy.yml file, but can be called from any subfolder.
+- Visual - See a list of all of your commands in one place, along with helpful descriptions.
+- Flexible - Commands are specific to a single folder tree, so each repo/workspace can have its own commands
+- Command Templates - Args can be dropped into your commands using `{{args}}`
+- Fully interactive  - your shells (like mysql) and prompts still work.
+- Self-Documenting - Commands and help declared in .ahoy.yml show up as ahoy command help and bash completion of commands (see below)
 
 ## INSTALLATION
 
