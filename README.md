@@ -32,6 +32,10 @@ brew install ahoy
 ### Linux
 Download and unzip the latest release and move the appropriate binary for your plaform into someplace in your $PATH and rename it `ahoy`
 
+### Bash Completion
+Add this to your ~/.bashrc or ~/.zshrc, and your completions will be relative to the directory you're in.
+`complete -F "ahoy --generate-bash-completion" ahoy`
+
 Example:
 ```
 wget https://github.com/devinci-code/ahoy/releases/download/1.0.0/ahoy-release-1-0-0.tar.gz
