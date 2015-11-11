@@ -34,10 +34,7 @@ Download and unzip the latest release and move the appropriate binary for your p
 
 Example:
 ```
-wget https://github.com/devinci-code/ahoy/releases/download/1.0.0/ahoy-release-1-0-0.tar.gz
-tar xzvf ahoy-release-1-0-0.tar.gz
-cp ahoy-release-1-0-0/ahoy-linux-amd64 /usr/local/bin/ahoy
-chown +x /usr/local/bin/ahoy
+sudo wget -q https://github.com/devinci-code/ahoy/releases/download/1.0.0/ahoy-`uname -s`-amd64 -O /usr/local/bin/ahoy && chown $USER /usr/local/bin/ahoy && chmod +x /usr/local/bin/ahoy
 ```
 
 ### Bash / Zsh Completion
