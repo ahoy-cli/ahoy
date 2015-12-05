@@ -8,7 +8,7 @@ Simply write your commands in a yaml file and ahoy gives you lots of features li
 * command tab completion
 * run commands from any subdirectory
 
-Essentially, ahoy makes is easy to create aliases and templates for commands that are useful. It was specifically created to help with running interactive commands within docker containers, but you can also use it for local commands, commands over ssh, or really anything that could be run from the command line.
+Essentially, ahoy makes is easy to create aliases and templates for commands that are useful. It was specifically created to help with running interactive commands within docker containers, but it's just as useful for local commands, commands over ssh, or really anything that could be run from the command line in a single clean interface.
 
 ## Examples
 
