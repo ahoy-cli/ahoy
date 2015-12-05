@@ -1,6 +1,14 @@
 # AHOY! - Automate and organize your workflows, no matter what technology you use.
 
-Ahoy is command line tool that gives each of your projects their own CLI app with with zero code and dependencies. Simply write your commands in a yaml file and ahoy gives you lots of features like a command listing, help text, tab completion and can be run from any subdirectory. Essentially, ahoy makes is easy to create aliases and templates for commands that are useful. It was specifically created to help with running interactive commands within docker containers, but you can also use it for local commands, commands over ssh, or really anything that could be run from the command line.
+Ahoy is command line tool that gives each of your projects their own CLI app with with zero code and dependencies. 
+
+Simply write your commands in a yaml file and ahoy gives you lots of features like:
+* a command listing
+* per-command help text
+* command tab completion
+* run commands from any subdirectory
+
+Essentially, ahoy makes is easy to create aliases and templates for commands that are useful. It was specifically created to help with running interactive commands within docker containers, but you can also use it for local commands, commands over ssh, or really anything that could be run from the command line.
 
 ## Examples
 
