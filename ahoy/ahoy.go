@@ -25,6 +25,7 @@ type Command struct {
   Usage string
   Cmd string
   HideHelp bool
+  SkipFlagParsing bool
 }
 
 var sourcedir string
@@ -94,6 +95,7 @@ func getCommands(config Config) []cli.Command {
     newCmd := cli.Command{
       Name: name,
       Usage: cmd.Usage,
+      SkipFlagParsing: cmd.SkipFlagParsing,
       HideHelp: cmd.HideHelp,
       Action: func(c *cli.Context) {
        args = c.Args()
