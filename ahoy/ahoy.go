@@ -10,6 +10,7 @@ import (
   "path/filepath"
   "gopkg.in/yaml.v2"
   "io/ioutil"
+  "sort"
   "strings"
 )
 
@@ -65,14 +66,21 @@ func getConfig(sourcefile string) (Config, error) {
 
 func getCommands(config Config) []cli.Command {
   exportCmds := []cli.Command{}
-  for name, cmd := range config.Commands {
-    cmdCopy := cmd.Cmd
+
+  var keys []string
+  for k := range config.Commands {
+      keys = append(keys, k)
+  }
+  sort.Strings(keys)
+
+  for _ , name := range keys {
+    cmd := config.Commands[name]
     newCmd := cli.Command{
       Name: name,
       Usage: cmd.Usage,
       Action: func(c *cli.Context) {
        args = c.Args()
-       runCommand(cmdCopy);
+       runCommand(cmd.Cmd);
       },
     }
     //log.Println("found command: ", name, " > ", cmd.Cmd )
