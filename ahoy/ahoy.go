@@ -3,6 +3,7 @@ package main
 import (
   "os"
   "github.com/codegangsta/cli"
+  "flag"
   "fmt"
   "os/exec"
   "log"
@@ -26,11 +27,23 @@ type Command struct {
 }
 
 var sourcedir string
+var sourcefile string
 var args []string
 var verbose bool
 
-func getConfigPath() (string, error) {
+func getConfigPath(sourcefile string) (string, error) {
   var err error
+
+  // If a specific source file was set, then try to load it directly.
+  if sourcefile != "" {
+    if  _, err := os.Stat(sourcefile); err == nil {
+      return sourcefile, err
+    } else {
+      fmt.Println("\n ==> Error: An ahoy config file was specified to be at", sourcefile, "but couldn't be found. Check your path.\n")
+      os.Exit(1)
+    }
+  }
+
   dir, err := os.Getwd()
   if err != nil {
     log.Fatal(err)
@@ -139,9 +152,14 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 }
 
 
+func init() {
+  flag.StringVar(&sourcefile, "f", "", "specify the sourcefile")
+}
 
 func main() {
-
+  // Grab the sourcefile flag first.
+  flag.Parse()
+  log.Println(sourcefile)
   // cli stuff
   app := cli.NewApp()
   app.Name = "ahoy"
@@ -154,8 +172,13 @@ func main() {
       EnvVar: "AHOY_VERBOSE",
       Destination: &verbose,
     },
+    cli.StringFlag{
+      Name: "f",
+      Usage: "Use a specific ahoy file.",
+      Destination: &sourcefile,
+    },
   }
-  if sourcefile, err := getConfigPath(); err == nil {
+  if sourcefile, err := getConfigPath(sourcefile); err == nil {
     sourcedir = filepath.Dir(sourcefile)
     config, _ := getConfig(sourcefile)
     app.Commands = getCommands(config)
