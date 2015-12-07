@@ -27,6 +27,7 @@ type Command struct {
 
 var sourcedir string
 var args []string
+var verbose bool
 
 func getConfigPath() (string, error) {
   var err error
@@ -75,12 +76,13 @@ func getCommands(config Config) []cli.Command {
 
   for _ , name := range keys {
     cmd := config.Commands[name]
+    cmdName := name
     newCmd := cli.Command{
       Name: name,
       Usage: cmd.Usage,
       Action: func(c *cli.Context) {
        args = c.Args()
-       runCommand(cmd.Cmd);
+       runCommand(cmdName, cmd.Cmd);
       },
     }
     //log.Println("found command: ", name, " > ", cmd.Cmd )
@@ -90,14 +92,15 @@ func getCommands(config Config) []cli.Command {
   return exportCmds
 }
 
-func runCommand(c string) {
-  //fmt.Printf("%+v\n", exportCmd)
+func runCommand(name string, c string) {
 
   cReplace := strings.Replace(c, "{{args}}", strings.Join(args, " "), 1)
 
   dir := sourcedir
-  //log.Println("args: ", args)
-  //log.Println("run command: ", cReplace)
+
+  if verbose {
+    log.Println("===> AHOY", name, "from", sourcedir, ":", cReplace)
+  }
   cmd := exec.Command("bash", "-c", cReplace)
   cmd.Dir = dir
   cmd.Stdout = os.Stdout
@@ -129,16 +132,29 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
       }
     },
   }
+
+  // TODO: Check if a command has already been set. Don't add defaults if it has.
   commands = append(commands, newCmd)
   return commands
 }
 
+
+
 func main() {
+
   // cli stuff
   app := cli.NewApp()
   app.Name = "ahoy"
   app.Usage = "Send commands to docker-compose services"
   app.EnableBashCompletion = true
+  app.Flags = []cli.Flag {
+    cli.BoolFlag{
+      Name: "verbose",
+      Usage: "Output extra details like the commands to be run.",
+      EnvVar: "AHOY_VERBOSE",
+      Destination: &verbose,
+    },
+  }
   if sourcefile, err := getConfigPath(); err == nil {
     sourcedir = filepath.Dir(sourcefile)
     config, _ := getConfig(sourcefile)
