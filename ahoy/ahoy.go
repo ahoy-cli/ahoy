@@ -32,6 +32,7 @@ var sourcedir string
 var sourcefile string
 var args []string
 var verbose bool
+var bashCompletion bool
 
 func getConfigPath(sourcefile string) (string, error) {
   var err error
@@ -158,17 +159,34 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 
 func init() {
   flag.StringVar(&sourcefile, "f", "", "specify the sourcefile")
+  flag.BoolVar(&bashCompletion, "generate-bash-completion", false, "")
 }
+
+// Prints the list of subcommands as the default app completion method
+func BashComplete(c *cli.Context) {
+
+  if sourcefile != "" {
+    log.Println(sourcefile)
+    os.Exit(0);
+  }
+  for _, command := range c.App.Commands {
+    for _, name := range command.Names() {
+      fmt.Fprintln(c.App.Writer, name)
+    }
+  }
+}
+
 
 func main() {
   // Grab the sourcefile flag first.
   flag.Parse()
-  log.Println(sourcefile)
+  //log.Println(sourcefile)
   // cli stuff
   app := cli.NewApp()
   app.Name = "ahoy"
   app.Usage = "Send commands to docker-compose services"
   app.EnableBashCompletion = true
+  app.BashComplete = BashComplete
   app.Flags = []cli.Flag {
     cli.BoolFlag{
       Name: "verbose",
