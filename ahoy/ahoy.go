@@ -24,6 +24,7 @@ type Command struct {
   Description string
   Usage string
   Cmd string
+  HideHelp bool
 }
 
 var sourcedir string
@@ -93,6 +94,7 @@ func getCommands(config Config) []cli.Command {
     newCmd := cli.Command{
       Name: name,
       Usage: cmd.Usage,
+      HideHelp: cmd.HideHelp,
       Action: func(c *cli.Context) {
        args = c.Args()
        runCommand(cmdName, cmd.Cmd);
