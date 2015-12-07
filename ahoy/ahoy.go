@@ -163,5 +163,26 @@ func main() {
     //log.Println("version: ", config.Version)
   }
 
+  cli.AppHelpTemplate = `NAME:
+   {{.Name}} - {{.Usage}}
+USAGE:
+   {{.HelpName}} {{if .Flags}}[global options]{{end}}{{if .Commands}} command [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}
+   {{if len .Authors}}
+AUTHOR(S):
+   {{range .Authors}}{{ . }}{{end}}
+   {{end}}{{if .Commands}}
+COMMANDS:
+{{range .Commands}}{{if not .HideHelp}}   {{join .Names ", "}}{{ "\t" }}{{.Usage}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .Flags}}
+GLOBAL OPTIONS:
+   {{range .Flags}}{{.}}
+   {{end}}{{end}}{{if .Copyright }}
+COPYRIGHT:
+   {{.Copyright}}
+   {{end}}{{if .Version}}
+VERSION:
+   {{.Version}}
+   {{end}}
+`
+
   app.Run(os.Args)
 }
