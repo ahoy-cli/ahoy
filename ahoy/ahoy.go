@@ -117,7 +117,7 @@ func runCommand(name string, c string) {
   dir := sourcedir
 
   if verbose {
-    log.Println("===> AHOY", name, "from", sourcedir, ":", cReplace)
+    log.Println("===> AHOY", name, "from", sourcefile, ":", cReplace)
   }
   cmd := exec.Command("bash", "-c", cReplace)
   cmd.Dir = dir
@@ -160,6 +160,7 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 func init() {
   flag.StringVar(&sourcefile, "f", "", "specify the sourcefile")
   flag.BoolVar(&bashCompletion, "generate-bash-completion", false, "")
+  flag.BoolVar(&verbose, "verbose", false, "")
 }
 
 // Prints the list of subcommands as the default app completion method
