@@ -107,12 +107,7 @@ GLOBAL OPTIONS:
 
 ## TODOS
 
-- Disable logging unless verbose mode is set.
 - Provide "drivers" for bash, docker-compose, kubernetes (these systems still work now, this would just make it easier)
 - Do specific arg replacement like {{arg1}}
-- Add ability to use subcommands (would help clean up a longer list of commands)
-- Add ability to specify the .ahoy.yml file you want to use, using a flag.
-- Support multiple line commands (already supported with && but this might be a nice and cleaner option)
 - Support alternate init files (take a url parameter) which give a way to deploy the config files.
-- Add a verbose flag that would actually output the command before it's run.
 - Support a "verify" yaml option that would create a yes / no prompt for potentially destructive commands. (Are you sure you want to delete all your containers?)
