@@ -3,7 +3,14 @@ commands:
   i:
     cmd: "go install ahoy/ahoy.go"
     usage: Build ahoy using go install.
-
   test:
     cmd: "go test ahoy/ahoy.go"
     usage: Test out ahoy using go.
+  docker:
+    #cmd: "ahoy help home"
+    usage: Example docker commands from examples/docker.ahoy.yml
+    import: examples/docker.ahoy.yml
+  confirm:
+    cmd: "ahoy -f examples/confirmation.ahoy.yml confirm {{args}}"
+    usage: Example of importing a single docker command from examples/confirmation.ahoy.yml
+    hidehelp: true
