@@ -26,6 +26,7 @@ type Command struct {
   Cmd string
   HideHelp bool
   SkipFlagParsing bool
+  Import string
 }
 
 var sourcedir string
@@ -33,6 +34,15 @@ var sourcefile string
 var args []string
 var verbose bool
 var bashCompletion bool
+
+func logger(errType string, text string) {
+  if (errType == "error") || (errType == "fatal") || (verbose == true) {
+    log.Print("AHOY! [", errType, "] ==>", text, "\n")
+  }
+  if errType == "fatal" {
+    os.Exit(1)
+  }
+}
 
 func getConfigPath(sourcefile string) (string, error) {
   var err error
@@ -42,8 +52,7 @@ func getConfigPath(sourcefile string) (string, error) {
     if  _, err := os.Stat(sourcefile); err == nil {
       return sourcefile, err
     } else {
-      fmt.Println("\n ==> Error: An ahoy config file was specified to be at", sourcefile, "but couldn't be found. Check your path.\n")
-      os.Exit(1)
+      logger("fatal", "An ahoy config file was specified using -f to be at " + sourcefile + " but couldn't be found. Check your path.")
     }
   }
 
@@ -68,8 +77,7 @@ func getConfig(sourcefile string) (Config, error) {
 
   yamlFile, err := ioutil.ReadFile(sourcefile)
   if err != nil {
-    fmt.Println("\n ==> Error: An ahoy config file couldn't be found in your path. You can create an example one by using 'ahoy init'\n")
-    //os.Exit(1)
+    logger("fatal", "An ahoy config file couldn't be found in your path. You can create an example one by using 'ahoy init'.")
   }
 
   var config Config
@@ -93,16 +101,41 @@ func getCommands(config Config) []cli.Command {
   for _ , name := range keys {
     cmd := config.Commands[name]
     cmdName := name
+    subCommands := []cli.Command{}
+
+    // Handle the import of subcommands.
+    if cmd.Import != "" {
+      // If the first character isn't "/" or "~" we assume a relative path.
+      subSource := cmd.Import
+      if cmd.Import[0] != "/"[0] || cmd.Import[0] != "~"[0] {
+        subSource = filepath.Join(sourcedir, cmd.Import)
+      }
+      logger("info", "Importing commands into '" + name + "' command from " + subSource)
+      subConfig, _ := getConfig(subSource)
+      subCommands = getCommands(subConfig)
+    }
+
     newCmd := cli.Command{
       Name: name,
-      Usage: cmd.Usage,
       SkipFlagParsing: cmd.SkipFlagParsing,
       HideHelp: cmd.HideHelp,
-      Action: func(c *cli.Context) {
+    }
+
+    if cmd.Usage != "" {
+      newCmd.Usage = cmd.Usage
+    }
+
+    if cmd.Cmd != "" {
+      newCmd.Action = func(c *cli.Context) {
        args = c.Args()
        runCommand(cmdName, cmd.Cmd);
-      },
+      }
     }
+
+    if subCommands != nil {
+      newCmd.Subcommands = subCommands
+    }
+
     //log.Println("found command: ", name, " > ", cmd.Cmd )
     exportCmds = append(exportCmds, newCmd)
   }
