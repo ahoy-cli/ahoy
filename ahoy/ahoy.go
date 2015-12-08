@@ -29,6 +29,7 @@ type Command struct {
 	Import          string
 }
 
+var app *cli.App
 var sourcedir string
 var sourcefile string
 var args []string
@@ -189,6 +190,7 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 	return commands
 }
 
+//TODO Move these to flag.go?
 func init() {
 	flag.StringVar(&sourcefile, "f", "", "specify the sourcefile")
 	flag.BoolVar(&bashCompletion, "generate-bash-completion", false, "")
@@ -210,28 +212,15 @@ func BashComplete(c *cli.Context) {
 }
 
 func main() {
-	// Grab the sourcefile flag first.
-	flag.Parse()
+	initFlags()
 	//log.Println(sourcefile)
 	// cli stuff
-	app := cli.NewApp()
+	app = cli.NewApp()
 	app.Name = "ahoy"
 	app.Usage = "Send commands to docker-compose services"
 	app.EnableBashCompletion = true
 	app.BashComplete = BashComplete
-	app.Flags = []cli.Flag{
-		cli.BoolFlag{
-			Name:        "verbose",
-			Usage:       "Output extra details like the commands to be run.",
-			EnvVar:      "AHOY_VERBOSE",
-			Destination: &verbose,
-		},
-		cli.StringFlag{
-			Name:        "f",
-			Usage:       "Use a specific ahoy file.",
-			Destination: &sourcefile,
-		},
-	}
+	overrideFlags(app)
 	if sourcefile, err := getConfigPath(sourcefile); err == nil {
 		sourcedir = filepath.Dir(sourcefile)
 		config, _ := getConfig(sourcefile)
