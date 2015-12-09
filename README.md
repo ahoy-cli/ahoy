@@ -1,3 +1,5 @@
+![AHOY logo](http://i65.tinypic.com/vqrwgl.png)
+
 # AHOY! - Automate and organize your workflows, no matter what technology you use.
 
 Ahoy is command line tool that gives each of your projects their own CLI app with with zero code and dependencies. 
