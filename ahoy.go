@@ -173,7 +173,8 @@ func runCommand(name string, c string) {
 }
 
 func addDefaultCommands(commands []cli.Command) []cli.Command {
-	newCmd := cli.Command{
+
+	defaultInitCmd := cli.Command{
 		Name:  "init",
 		Usage: "Initialize a new .ahoy.yml config file in the current directory.",
 		Action: func(c *cli.Context) {
@@ -196,8 +197,10 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 		},
 	}
 
-	// TODO: Check if a command has already been set. Don't add defaults if it has.
-	commands = append(commands, newCmd)
+	// Don't add default commands if they've already been set.
+	if c := app.Command(defaultInitCmd.Name); c == nil {
+		commands = append(commands, defaultInitCmd)
+	}
 	return commands
 }
 

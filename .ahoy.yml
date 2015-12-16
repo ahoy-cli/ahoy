@@ -1,11 +1,11 @@
 ahoyapi: v1
 version: 0.0.0
 commands:
-  i:
-    cmd: "go install ahoy/ahoy.go"
+  install:
+    cmd: "go install"
     usage: Build ahoy using go install.
   test:
-    cmd: "go test ahoy/ahoy.go"
+    cmd: "go test"
     usage: Test out ahoy using go.
   docker:
     #cmd: "ahoy help home"
@@ -14,4 +14,7 @@ commands:
   confirm:
     cmd: "ahoy -f examples/confirmation.ahoy.yml confirm {{args}}"
     usage: Example of importing a single docker command from examples/confirmation.ahoy.yml
-    hidehelp: true
+    hide: true
+  init:
+    cmd: echo ".ahoy.yml file already exists."
+    hide: true
