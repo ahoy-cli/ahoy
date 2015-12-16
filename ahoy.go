@@ -16,17 +16,18 @@ import (
 )
 
 type Config struct {
+	Usage    string
+	AhoyAPI  string
 	Version  string
 	Commands map[string]Command
 }
 
 type Command struct {
-	Description     string
-	Usage           string
-	Cmd             string
-	HideHelp        bool
-	SkipFlagParsing bool
-	Import          string
+	Description string
+	Usage       string
+	Cmd         string
+	Hide        bool
+	Import      string
 }
 
 var app *cli.App
@@ -118,8 +119,8 @@ func getCommands(config Config) []cli.Command {
 
 		newCmd := cli.Command{
 			Name:            name,
-			SkipFlagParsing: cmd.SkipFlagParsing,
-			HideHelp:        cmd.HideHelp,
+			SkipFlagParsing: true,
+			HideHelp:        cmd.Hide,
 		}
 
 		if cmd.Usage != "" {
@@ -217,7 +218,7 @@ func main() {
 	// cli stuff
 	app = cli.NewApp()
 	app.Name = "ahoy"
-	app.Usage = "Send commands to docker-compose services"
+	app.Usage = "Creates a configurable cli app for running commands."
 	app.EnableBashCompletion = true
 	app.BashComplete = BashComplete
 	overrideFlags(app)
@@ -226,7 +227,9 @@ func main() {
 		config, _ := getConfig(sourcefile)
 		app.Commands = getCommands(config)
 		app.Commands = addDefaultCommands(app.Commands)
-		//log.Println("version: ", config.Version)
+		if config.Usage != "" {
+			app.Usage = config.Usage
+		}
 	}
 
 	cli.AppHelpTemplate = `NAME:
