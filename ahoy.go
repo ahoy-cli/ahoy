@@ -147,7 +147,7 @@ func getCommands(config Config) []cli.Command {
 
 func runCommand(name string, c string) {
 
-	cReplace := strings.Replace(c, "{{args}}", strings.Join(args, " "), 1)
+	cReplace := strings.Replace(c, "{{args}}", strings.Join(args, " "), -1)
 
 	dir := sourcedir
 
