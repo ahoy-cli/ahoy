@@ -170,11 +170,14 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 		Name:  "init",
 		Usage: "Initialize a new .ahoy.yml config file in the current directory.",
 		Action: func(c *cli.Context) {
-			//log.Println(exec.LookPath(os.Args[0]))
-			grabYaml := "wget https://raw.githubusercontent.com/devinci-code/ahoy/master/examples/examples.ahoy.yml -O .ahoy.yml"
+			// Grab the URL or use a default for the initial ahoy file.
+			// Allows users to define their own files to call to init.
+			var wgetUrl = "https://raw.githubusercontent.com/devinci-code/ahoy/master/examples/examples.ahoy.yml"
+			if len(c.Args()) > 0 {
+				wgetUrl = c.Args()[0]
+			}
+			grabYaml := "wget " + wgetUrl + " -O .ahoy.yml"
 			cmd := exec.Command("bash", "-c", grabYaml)
-			//cmd.Dir = dir
-			//cmd.Stdout = os.Stdout
 			cmd.Stdin = os.Stdin
 			cmd.Stderr = os.Stderr
 			if err := cmd.Run(); err != nil {
