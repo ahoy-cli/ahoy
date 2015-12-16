@@ -83,11 +83,18 @@ func getConfig(sourcefile string) (Config, error) {
 	}
 
 	var config Config
-
+	// Extract the yaml file into the config varaible.
 	err = yaml.Unmarshal(yamlFile, &config)
 	if err != nil {
 		panic(err)
 	}
+
+	// All ahoy files (and imports) must specify the ahoy version.
+	// This is so we can support backwards compatability in the future.
+	if config.AhoyAPI != "v1" {
+		logger("fatal", "Ahoy only supports API version 'v1', but '"+config.AhoyAPI+"' given in "+sourcefile)
+	}
+
 	return config, err
 }
 
