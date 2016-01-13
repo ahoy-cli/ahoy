@@ -240,6 +240,12 @@ func main() {
 		if config.Usage != "" {
 			app.Usage = config.Usage
 		}
+		if config.Version != "" {
+			app.Version = config.Version
+		}
+		if config.Copyright != "" {
+			app.Copyright = config.Copyright
+		}
 	}
 
 	cli.AppHelpTemplate = `NAME:
