@@ -1,4 +1,5 @@
 version: 0.0.0
+ahoyapi: v1
 commands:
   vup:
     cmd: "vagrant up"
