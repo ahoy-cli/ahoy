@@ -62,12 +62,20 @@ Now make sure you follow the couple installation instructions in the "Caveats" s
 Then, (for homebrew) you'll want to create a file at `/usr/local/etc/bash_completion.d/ahoy` with the following:
 
 ```Bash
-_ahoy()
-{
-    local cur=${COMP_WORDS[COMP_CWORD]}
-    COMPREPLY=( $(compgen -W "`ahoy --generate-bash-completion`" -- $cur) )
-}
-complete -F _ahoy ahoy
+#! /bin/bash
+
+: ${PROG:=$(basename ${BASH_SOURCE})}
+
+_cli_bash_autocomplete() {
+     local cur opts base
+     COMPREPLY=()
+     cur="${COMP_WORDS[COMP_CWORD]}"
+     opts=$( ${COMP_WORDS[@]:0:$COMP_CWORD} --generate-bash-completion )
+     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+     return 0
+ }
+
+ complete -F _cli_bash_autocomplete $PROG
 ```
 
 restart your shell, and you should see ahoy autocomplete when typing `ahoy [TAB]`
