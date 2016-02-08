@@ -19,6 +19,7 @@ type Config struct {
 	Usage    string
 	AhoyAPI  string
 	Version  string
+	Include  string
 	Commands map[string]Command
 }
 
@@ -201,6 +202,26 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 	return commands
 }
 
+func addIncludeCommands(commands []cli.Command, config Config) []cli.Command {
+	includes := strings.Split(config.Include, "\n")
+	for _, include := range includes {
+		if len(include) == 0 {
+			continue
+		}
+		includeSource := include
+		if include[0] != "/"[0] || include[0] != "~"[0] {
+			includeSource = filepath.Join(sourcedir, include)
+		}
+		config, _ := getConfig(includeSource)
+		includeCommands := getCommands(config)
+		for _, command := range includeCommands {
+			// TODO: Allow override of previously set command.
+			commands = append(commands, command)
+		}
+	}
+	return commands
+}
+
 //TODO Move these to flag.go?
 func init() {
 	flag.StringVar(&sourcefile, "f", "", "specify the sourcefile")
@@ -237,6 +258,7 @@ func main() {
 		config, _ := getConfig(sourcefile)
 		app.Commands = getCommands(config)
 		app.Commands = addDefaultCommands(app.Commands)
+		app.Commands = addIncludeCommands(app.Commands, config)
 		if config.Usage != "" {
 			app.Usage = config.Usage
 		}
