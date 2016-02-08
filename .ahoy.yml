@@ -10,7 +10,11 @@ commands:
   docker:
     #cmd: "ahoy help home"
     usage: Example docker commands from examples/docker.ahoy.yml
-    import: examples/docker.ahoy.yml
+    import: |
+      examples/docker.ahoy.yml
+      examples/docker2.ahoy.yml
+      examples/private-docker3.ahoy.yml
+
   confirm:
     cmd: "ahoy -f examples/confirmation.ahoy.yml confirm {{args}}"
     usage: Example of importing a single docker command from examples/confirmation.ahoy.yml

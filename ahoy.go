@@ -98,6 +98,43 @@ func getConfig(sourcefile string) (Config, error) {
 	return config, err
 }
 
+func getSubCommands(path string) []cli.Command {
+	subCommands := []cli.Command{}
+	if path != "" {
+		includes := strings.Split(path, "\n")
+		commands := map[string]cli.Command{}
+		for _, include := range includes {
+			if len(include) == 0 {
+				continue
+			}
+			includeSource := include
+			if include[0] != "/"[0] || include[0] != "~"[0] {
+				includeSource = filepath.Join(sourcedir, include)
+			}
+			if _, err := os.Stat(includeSource); err != nil {
+				//Skipping files that cannot be loaded allows us to separate
+				//subcommands into public and private.
+				continue
+			}
+			config, _ := getConfig(includeSource)
+			includeCommands := getCommands(config)
+			for _, command := range includeCommands {
+				commands[command.Name] = command
+			}
+		}
+
+		var names []string
+		for k := range commands {
+			names = append(names, k)
+		}
+		sort.Strings(names)
+		for _, name := range names {
+			subCommands = append(subCommands, commands[name])
+		}
+	}
+	return subCommands
+}
+
 func getCommands(config Config) []cli.Command {
 	exportCmds := []cli.Command{}
 
@@ -110,19 +147,6 @@ func getCommands(config Config) []cli.Command {
 	for _, name := range keys {
 		cmd := config.Commands[name]
 		cmdName := name
-		subCommands := []cli.Command{}
-
-		// Handle the import of subcommands.
-		if cmd.Import != "" {
-			// If the first character isn't "/" or "~" we assume a relative path.
-			subSource := cmd.Import
-			if cmd.Import[0] != "/"[0] || cmd.Import[0] != "~"[0] {
-				subSource = filepath.Join(sourcedir, cmd.Import)
-			}
-			logger("info", "Importing commands into '"+name+"' command from "+subSource)
-			subConfig, _ := getConfig(subSource)
-			subCommands = getCommands(subConfig)
-		}
 
 		newCmd := cli.Command{
 			Name:            name,
@@ -141,6 +165,7 @@ func getCommands(config Config) []cli.Command {
 			}
 		}
 
+		subCommands := getSubCommands(cmd.Import)
 		if subCommands != nil {
 			newCmd.Subcommands = subCommands
 		}
