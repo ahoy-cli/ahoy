@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/devinci-code/ahoy/flag"
-	"github.com/devinci-code/ahoy/logger"
-	"github.com/devinci-code/ahoy/config"
 	"fmt"
 	"github.com/codegangsta/cli"
+	"github.com/devinci-code/ahoy/config"
+	"github.com/devinci-code/ahoy/flag"
+	"github.com/devinci-code/ahoy/logger"
 	"log"
 	"os"
 	"os/exec"
@@ -16,7 +16,6 @@ import (
 
 var app *cli.App
 var args []string
-
 
 func getCommands(config config.Config) []cli.Command {
 	exportCmds := []cli.Command{}
@@ -120,7 +119,6 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 	commands = append(commands, newCmd)
 	return commands
 }
-
 
 // Prints the list of subcommands as the default app completion method
 func BashComplete(c *cli.Context) {
