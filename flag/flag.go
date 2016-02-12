@@ -1,4 +1,4 @@
-package main
+package flag
 
 import (
 	"flag"
@@ -6,17 +6,21 @@ import (
 	"os"
 )
 
-var globalFlags = []cli.Flag{
+var Verbose bool
+var SourceFile string
+var BashCompletion bool
+
+var GlobalFlags = []cli.Flag{
 	cli.BoolFlag{
 		Name:        "verbose, v",
 		Usage:       "Output extra details like the commands to be run.",
 		EnvVar:      "AHOY_VERBOSE",
-		Destination: &verbose,
+		Destination: &Verbose,
 	},
 	cli.StringFlag{
 		Name:        "file, f",
 		Usage:       "Use a specific ahoy file.",
-		Destination: &sourcefile,
+		Destination: &SourceFile,
 	},
 	cli.BoolFlag{
 		Name:  "help, h",
@@ -31,7 +35,7 @@ var globalFlags = []cli.Flag{
 	},
 }
 
-func flagSet(name string, flags []cli.Flag) *flag.FlagSet {
+func FlagSet(name string, flags []cli.Flag) *flag.FlagSet {
 	set := flag.NewFlagSet(name, flag.ContinueOnError)
 
 	for _, f := range flags {
@@ -40,14 +44,20 @@ func flagSet(name string, flags []cli.Flag) *flag.FlagSet {
 	return set
 }
 
-func initFlags() {
+func InitFlags() {
 	// Grab the global flags first ourselves so we can customize the yaml file loaded.
-	tempFlags := flagSet("tempFlags", globalFlags)
+	tempFlags := FlagSet("tempFlags", GlobalFlags)
 	tempFlags.Parse(os.Args[1:])
 }
 
-func overrideFlags(app *cli.App) {
-	app.Flags = globalFlags
+func OverrideFlags(app *cli.App) {
+	app.Flags = GlobalFlags
 	app.HideVersion = true
 	app.HideHelp = true
+}
+
+func init() {
+	flag.StringVar(&SourceFile, "f", "", "specify the sourcefile")
+	flag.BoolVar(&BashCompletion, "generate-bash-completion", false, "")
+	flag.BoolVar(&Verbose, "verbose", false, "")
 }

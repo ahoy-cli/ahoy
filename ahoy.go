@@ -1,7 +1,7 @@
 package main
 
 import (
-	"flag"
+	"github.com/devinci-code/ahoy/flag"
 	"fmt"
 	"github.com/codegangsta/cli"
 	"gopkg.in/yaml.v2"
@@ -201,12 +201,6 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 	return commands
 }
 
-//TODO Move these to flag.go?
-func init() {
-	flag.StringVar(&sourcefile, "f", "", "specify the sourcefile")
-	flag.BoolVar(&bashCompletion, "generate-bash-completion", false, "")
-	flag.BoolVar(&verbose, "verbose", false, "")
-}
 
 // Prints the list of subcommands as the default app completion method
 func BashComplete(c *cli.Context) {
@@ -223,7 +217,7 @@ func BashComplete(c *cli.Context) {
 }
 
 func main() {
-	initFlags()
+	flag.InitFlags()
 	//log.Println(sourcefile)
 	// cli stuff
 	app = cli.NewApp()
@@ -231,7 +225,7 @@ func main() {
 	app.Usage = "Creates a configurable cli app for running commands."
 	app.EnableBashCompletion = true
 	app.BashComplete = BashComplete
-	overrideFlags(app)
+	flag.OverrideFlags(app)
 	if sourcefile, err := getConfigPath(sourcefile); err == nil {
 		sourcedir = filepath.Dir(sourcefile)
 		config, _ := getConfig(sourcefile)
