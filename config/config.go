@@ -2,12 +2,10 @@ package config
 
 import (
 	"errors"
-	"fmt"
 	"github.com/devinci-code/ahoy/logger"
 	"github.com/imdario/mergo"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -36,7 +34,6 @@ func init() {
 // If sourcefile is set, it checks directly that the file exists.
 // Else it searches up from the working directory until it finds it or reaches the root and throws an error.
 func GetConfigPath(sourcefile string) (string, error) {
-	var err error
 
 	// If a specific source file was set, then try to load it directly.
 	if sourcefile != "" {
@@ -81,8 +78,8 @@ func FindPath(dir string, filename string) (string, error) {
 func ParseConfig(sourcefile string) (Config, error) {
 
 	yamlFile, err := ioutil.ReadFile(sourcefile)
-	if err != nil {
-		logger.Log("fatal", "An ahoy config file couldn't be found in your path. You can create an example one by using 'ahoy init'.")
+	if err == nil {
+		return Config{}, err
 	}
 
 	var config Config
@@ -97,19 +94,29 @@ func ParseConfig(sourcefile string) (Config, error) {
 
 func MergeConfig(config Config, baseDir string) (Config, error) {
 	// Handle imports.
+	var importConfig Config
+	var err error
 	if config.Import != "" {
 		filename := config.Import
 		//logger.Log("info", "Importing commands into '"+name+"' command from "+subSource)
-		filename, _ = GetConfigPath(filename)
-		importConfig := ParseConfig(filename)
-
+		if filename, err = GetConfigPath(filename); err == nil {
+			return config, err
+		}
+		if importConfig, err = ParseConfig(filename); err == nil {
+			return config, err
+		}
+		mergo.Merge(&config, importConfig)
 	}
+	return config, nil
 }
 
-func CheckVersion(config Config) (bool, error) {
+// Checks that version matches reqVersion and outputs an error if it does.
+func checkVersion(version string, reqVersion string) error {
 	// All ahoy files (and imports) must specify the ahoy version.
 	// This is so we can support backwards compatability in the future.
-	if config.AhoyAPI != RequiredAPIVersion {
-		logger.Log("fatal", "Ahoy only supports API version "+fmt.Sprintf("%f", RequiredAPIVersion)+", but '"+config.AhoyAPI+"' given in "+sourcefile)
+	// TODO: Make this handle ranges of versions
+	if version != reqVersion {
+		return errors.New("Version is " + version + ", but only version " + reqVersion + " is supported")
 	}
+	return nil
 }
