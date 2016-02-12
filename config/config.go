@@ -2,7 +2,6 @@ package config
 
 import (
 	"errors"
-	"github.com/devinci-code/ahoy/logger"
 	"github.com/imdario/mergo"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -30,10 +29,11 @@ func init() {
 	Cwd, _ = os.Getwd()
 }
 
-// GetConfigPath returns a valid config path if it exists.
+// GetFile returns a valid config path if it exists.
 // If sourcefile is set, it checks directly that the file exists.
 // Else it searches up from the working directory until it finds it or reaches the root and throws an error.
-func GetConfigPath(sourcefile string) (string, error) {
+
+func FilePath(sourcefile string) (string, error) {
 
 	// If a specific source file was set, then try to load it directly.
 	if sourcefile != "" {
@@ -45,17 +45,26 @@ func GetConfigPath(sourcefile string) (string, error) {
 		if _, err := os.Stat(sourcefile); err == nil {
 			return sourcefile, err
 		} else {
-			logger.Log("fatal", "An ahoy config file was specified using -f or 'import' to be at '"+sourcefile+"' but couldn't be found. Check your path.")
+			return sourcefile, err
+			//logger.Log("fatal", "An ahoy config file was specified using -f or 'import' to be at '"+sourcefile+"' but couldn't be found. Check your path.")
 		}
 	}
 
 	// Otherwise, start in the current directory that ahoy was called from and work
 	// our way up the tree until we either find a .ahoy.yml file or we reach the root.
-	return FindPath(Cwd, DefaultFilename)
+	return FindFile(Cwd, DefaultFilename)
+}
+
+func LoadFile(filename string) ([]byte, error) {
+	file, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	return file, err
 }
 
 // FindPath will search for 'filename' starting in 'dir' until it either finds it or reaches the root '/'.
-func FindPath(dir string, filename string) (string, error) {
+func FindFile(dir string, filename string) (string, error) {
 	var err error
 
 	for dir != "/" && err == nil {
@@ -75,18 +84,13 @@ func FindPath(dir string, filename string) (string, error) {
 
 // Parse a config file and return a simple Config Item.
 // Imports are not processed yet.
-func ParseConfig(sourcefile string) (Config, error) {
-
-	yamlFile, err := ioutil.ReadFile(sourcefile)
-	if err == nil {
-		return Config{}, err
-	}
+func ParseConfig(yamlFile []byte) (Config, error) {
 
 	var config Config
 	// Extract the yaml file into the config varaible.
-	err = yaml.Unmarshal(yamlFile, &config)
+	err := yaml.Unmarshal(yamlFile, &config)
 	if err != nil {
-		panic(err)
+		return Config{}, err
 	}
 
 	return config, err
@@ -94,16 +98,18 @@ func ParseConfig(sourcefile string) (Config, error) {
 
 func MergeConfig(config Config, baseDir string) (Config, error) {
 	// Handle imports.
-	var importConfig Config
-	var err error
 	if config.Import != "" {
-		filename := config.Import
-		//logger.Log("info", "Importing commands into '"+name+"' command from "+subSource)
-		if filename, err = GetConfigPath(filename); err == nil {
-			return config, err
+		filename, err := FilePath(config.Import)
+		if err != nil {
+			return Config{}, err
 		}
-		if importConfig, err = ParseConfig(filename); err == nil {
-			return config, err
+		yamlFile, err := LoadFile(filename)
+		if err != nil {
+			return Config{}, err
+		}
+		importConfig, err := ParseConfig(yamlFile)
+		if err != nil {
+			return Config{}, err
 		}
 		mergo.Merge(&config, importConfig)
 	}
