@@ -99,10 +99,11 @@ func ParseConfig(yamlFile []byte) (Config, error) {
 func MergeConfig(config Config, baseDir string) (Config, error) {
 	// Handle imports.
 	if config.Import != "" {
-		filename, err := FilePath(config.Import)
-		if err != nil {
-			return Config{}, err
-		}
+		filename := path.Join(baseDir, config.Import)
+		// filename, err := FilePath(filename)
+		//if err != nil {
+		//return Config{}, err
+		//}
 		yamlFile, err := LoadFile(filename)
 		if err != nil {
 			return Config{}, err

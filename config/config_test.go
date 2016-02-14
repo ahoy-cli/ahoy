@@ -2,12 +2,15 @@ package config
 
 import (
 	"github.com/stretchr/testify/assert"
+	"path"
 	"testing"
 )
 
 var (
-	SimpleF  = "../testdata/simple.yml"
-	NoExistF = "../testdata/noexist.yml"
+	SimpleF    = "../testdata/simple.yml"
+	SubConfigF = "../testdata/subconfig.yml"
+	MergeF     = "../testdata/merge.yml"
+	NoExistF   = "../testdata/noexist.yml"
 )
 
 func TestFilePath(t *testing.T) {
@@ -19,6 +22,11 @@ func TestFilePath(t *testing.T) {
 		//assert.Equal(t, NoExistF, filename)
 	}
 
+	// Non-existing files should give an error
+	filename, err = FilePath(MergeF)
+	if assert.Nil(t, err) {
+		assert.Equal(t, NoExistF, filename)
+	}
 	// Existing relative files should not give an error
 	filename, err = FilePath(SimpleF)
 	if assert.Nil(t, err) {
@@ -75,4 +83,112 @@ func TestParseSimpleConfig(t *testing.T) {
 	}
 	assert.Equal(t, expectConfig, config, "they should be equal")
 
+}
+
+func TestSubConfig(t *testing.T) {
+
+	expectConfig := Config{
+		AhoyAPI: "1.0",
+		Usage:   "Example Usage",
+		Cmd:     "",
+		Hide:    false,
+		Import:  "",
+		Commands: map[string]Config{
+			"test": Config{
+				AhoyAPI: "",
+				Usage:   "",
+				Cmd:     "",
+				Hide:    false,
+				Import:  "",
+				Commands: map[string]Config{
+					"subtest": Config{
+						AhoyAPI:  "",
+						Usage:    "Create subcommand",
+						Cmd:      `echo "Create subcommand"`,
+						Hide:     false,
+						Import:   "",
+						Commands: nil,
+					},
+				},
+			},
+		},
+	}
+
+	filename, err := FilePath(SubConfigF)
+	if !assert.Nil(t, err) {
+		return
+	}
+
+	yamlFile, err := LoadFile(filename)
+	if !assert.Nil(t, err) {
+		return
+	}
+
+	config, err := ParseConfig(yamlFile)
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, expectConfig, config, "they should be equal")
+
+}
+
+func TestMergeConfig(t *testing.T) {
+
+	expectConfig := Config{
+		AhoyAPI: "1.0",
+		Usage:   "This is an imported set of commands",
+		Cmd:     "",
+		Hide:    false,
+		Import:  "subconfig.yml",
+		Commands: map[string]Config{
+			"test": Config{
+				AhoyAPI: "",
+				Usage:   "override an import",
+				Cmd:     "",
+				Hide:    false,
+				Import:  "",
+				Commands: map[string]Config{
+					"subtest": Config{
+						AhoyAPI:  "",
+						Usage:    "Create subcommand",
+						Cmd:      `echo "Create subcommand"`,
+						Hide:     false,
+						Import:   "",
+						Commands: nil,
+					},
+				},
+			},
+			"override": Config{
+				AhoyAPI:  "",
+				Usage:    "Override subcommand",
+				Cmd:      `echo "Override subcommand"`,
+				Hide:     false,
+				Import:   "",
+				Commands: nil,
+			},
+		},
+	}
+
+	filename, err := FilePath(MergeF)
+	if !assert.Nil(t, err) {
+		return
+	}
+
+	yamlFile, err := LoadFile(filename)
+	if !assert.Nil(t, err) {
+		return
+	}
+
+	config, err := ParseConfig(yamlFile)
+	if err != nil {
+		t.Error(err)
+	}
+
+	baseDir := path.Dir(filename)
+	config, err = MergeConfig(config, baseDir)
+	if err != nil {
+		t.Error(err)
+	}
+	assert.Equal(t, expectConfig, config, "they should be equal")
+	//_ = expectConfig
 }

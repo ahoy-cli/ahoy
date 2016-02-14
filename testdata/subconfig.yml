@@ -1,0 +1,8 @@
+ahoyapi: 1.0
+usage: Example Usage
+commands:
+  test:
+    commands:
+      subtest:
+        usage:  Create subcommand
+        cmd: echo "Create subcommand"
