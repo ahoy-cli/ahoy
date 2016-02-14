@@ -22,11 +22,6 @@ func TestFilePath(t *testing.T) {
 		//assert.Equal(t, NoExistF, filename)
 	}
 
-	// Non-existing files should give an error
-	filename, err = FilePath(MergeF)
-	if assert.Nil(t, err) {
-		assert.Equal(t, NoExistF, filename)
-	}
 	// Existing relative files should not give an error
 	filename, err = FilePath(SimpleF)
 	if assert.Nil(t, err) {
@@ -93,14 +88,14 @@ func TestSubConfig(t *testing.T) {
 		Cmd:     "",
 		Hide:    false,
 		Import:  "",
-		Commands: map[string]Config{
+		Commands: map[interface{}]Config{
 			"test": Config{
 				AhoyAPI: "",
 				Usage:   "",
 				Cmd:     "",
 				Hide:    false,
 				Import:  "",
-				Commands: map[string]Config{
+				Commands: map[interface{}]Config{
 					"subtest": Config{
 						AhoyAPI:  "",
 						Usage:    "Create subcommand",
@@ -140,14 +135,14 @@ func TestMergeConfig(t *testing.T) {
 		Cmd:     "",
 		Hide:    false,
 		Import:  "subconfig.yml",
-		Commands: map[string]Config{
+		Commands: map[interface{}]Config{
 			"test": Config{
 				AhoyAPI: "",
-				Usage:   "override an import",
+				Usage:   "",
 				Cmd:     "",
 				Hide:    false,
 				Import:  "",
-				Commands: map[string]Config{
+				Commands: map[interface{}]Config{
 					"subtest": Config{
 						AhoyAPI:  "",
 						Usage:    "Create subcommand",
