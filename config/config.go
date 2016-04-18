@@ -12,7 +12,7 @@ import (
 
 type Config struct {
 	AhoyAPI     string
-	Commands    map[interface{}]Config
+	Commands    map[string]Config
 	Description string
 	Usage       string
 	Cmd         string
@@ -98,7 +98,6 @@ func ParseConfig(yamlFile []byte) (Config, error) {
 
 func MergeConfig(config Config, baseDir string) (Config, error) {
 	// Handle imports.
-	var importConfig Config
 	if config.Import != "" {
 		filename := path.Join(baseDir, config.Import)
 		// filename, err := FilePath(filename)
@@ -113,9 +112,9 @@ func MergeConfig(config Config, baseDir string) (Config, error) {
 		if err != nil {
 			return Config{}, err
 		}
-		mergo.Merge(config, importConfig)
+		mergo.Merge(&config, importConfig)
 	}
-	return importConfig, nil
+	return config, nil
 }
 
 // Checks that version matches reqVersion and outputs an error if it does.
