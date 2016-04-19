@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/imdario/mergo"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -32,7 +33,6 @@ func init() {
 // GetFile returns a valid config path if it exists.
 // If sourcefile is set, it checks directly that the file exists.
 // Else it searches up from the working directory until it finds it or reaches the root and throws an error.
-
 func FilePath(sourcefile string) (string, error) {
 
 	// If a specific source file was set, then try to load it directly.
@@ -112,6 +112,8 @@ func MergeConfig(config Config, baseDir string) (Config, error) {
 		if err != nil {
 			return Config{}, err
 		}
+		spew.Dump(config)
+		spew.Dump(importConfig)
 		mergo.Merge(&config, importConfig)
 	}
 	return config, nil
