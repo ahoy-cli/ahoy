@@ -100,37 +100,38 @@ func getConfig(sourcefile string) (Config, error) {
 
 func getSubCommands(path string) []cli.Command {
 	subCommands := []cli.Command{}
-	if path != "" {
-		includes := strings.Split(path, "\n")
-		commands := map[string]cli.Command{}
-		for _, include := range includes {
-			if len(include) == 0 {
-				continue
-			}
-			includeSource := include
-			if include[0] != "/"[0] || include[0] != "~"[0] {
-				includeSource = filepath.Join(sourcedir, include)
-			}
-			if _, err := os.Stat(includeSource); err != nil {
-				//Skipping files that cannot be loaded allows us to separate
-				//subcommands into public and private.
-				continue
-			}
-			config, _ := getConfig(includeSource)
-			includeCommands := getCommands(config)
-			for _, command := range includeCommands {
-				commands[command.Name] = command
-			}
+	if path == "" {
+		return subCommands
+	}
+	includes := strings.Split(path, "\n")
+	commands := map[string]cli.Command{}
+	for _, include := range includes {
+		if len(include) == 0 {
+			continue
 		}
+		includeSource := include
+		if include[0] != "/"[0] || include[0] != "~"[0] {
+			includeSource = filepath.Join(sourcedir, include)
+		}
+		if _, err := os.Stat(includeSource); err != nil {
+			//Skipping files that cannot be loaded allows us to separate
+			//subcommands into public and private.
+			continue
+		}
+		config, _ := getConfig(includeSource)
+		includeCommands := getCommands(config)
+		for _, command := range includeCommands {
+			commands[command.Name] = command
+		}
+	}
 
-		var names []string
-		for k := range commands {
-			names = append(names, k)
-		}
-		sort.Strings(names)
-		for _, name := range names {
-			subCommands = append(subCommands, commands[name])
-		}
+	var names []string
+	for k := range commands {
+		names = append(names, k)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		subCommands = append(subCommands, commands[name])
 	}
 	return subCommands
 }
