@@ -1,4 +1,4 @@
-ahoyapi: v1
+ahoyapi: v2
 version: 0.0.0
 commands:
   i:
@@ -10,10 +10,10 @@ commands:
   docker:
     #cmd: "ahoy help home"
     usage: Example docker commands from examples/docker.ahoy.yml
-    import: |
-      examples/docker.ahoy.yml
-      examples/docker2.ahoy.yml
-      examples/private-docker3.ahoy.yml
+    imports:
+      - examples/docker.ahoy.yml
+      - examples/docker-overrides.ahoy.yml
+      - examples/private-docker3.ahoy.yml
 
   confirm:
     cmd: "ahoy -f examples/confirmation.ahoy.yml confirm {{args}}"

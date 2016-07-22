@@ -27,7 +27,7 @@ type Command struct {
 	Usage       string
 	Cmd         string
 	Hide        bool
-	Import      string
+	Imports     []string
 }
 
 var app *cli.App
@@ -91,34 +91,32 @@ func getConfig(sourcefile string) (Config, error) {
 
 	// All ahoy files (and imports) must specify the ahoy version.
 	// This is so we can support backwards compatability in the future.
-	if config.AhoyAPI != "v1" {
-		logger("fatal", "Ahoy only supports API version 'v1', but '"+config.AhoyAPI+"' given in "+sourcefile)
+	if config.AhoyAPI != "v2" {
+		logger("fatal", "Ahoy only supports API version 'v2', but '"+config.AhoyAPI+"' given in "+sourcefile)
 	}
 
 	return config, err
 }
 
-func getSubCommands(path string) []cli.Command {
+func getSubCommands(includes []string) []cli.Command {
 	subCommands := []cli.Command{}
-	if path == "" {
+	if 0 == len(includes) {
 		return subCommands
 	}
-	includes := strings.Split(path, "\n")
 	commands := map[string]cli.Command{}
 	for _, include := range includes {
 		if len(include) == 0 {
 			continue
 		}
-		includeSource := include
 		if include[0] != "/"[0] || include[0] != "~"[0] {
-			includeSource = filepath.Join(sourcedir, include)
+			include = filepath.Join(sourcedir, include)
 		}
-		if _, err := os.Stat(includeSource); err != nil {
+		if _, err := os.Stat(include); err != nil {
 			//Skipping files that cannot be loaded allows us to separate
 			//subcommands into public and private.
 			continue
 		}
-		config, _ := getConfig(includeSource)
+		config, _ := getConfig(include)
 		includeCommands := getCommands(config)
 		for _, command := range includeCommands {
 			commands[command.Name] = command
@@ -166,7 +164,7 @@ func getCommands(config Config) []cli.Command {
 			}
 		}
 
-		subCommands := getSubCommands(cmd.Import)
+		subCommands := getSubCommands(cmd.Imports)
 		if subCommands != nil {
 			newCmd.Subcommands = subCommands
 		}
