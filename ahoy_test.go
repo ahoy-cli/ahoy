@@ -9,6 +9,16 @@ import (
 )
 
 func TestOverrideExample(t *testing.T) {
+
+	expected := "Overrode you.\n"
+	actual, _ := appRun([]string{"ahoy", "docker", "override-example"})
+
+	if expected != actual {
+		t.Errorf("ahoy docker override-example: expected - %s; actual - %s", string(expected), string(actual))
+	}
+}
+
+func appRun(args []string) (string, error) {
 	std_out := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
@@ -22,16 +32,10 @@ func TestOverrideExample(t *testing.T) {
 		app.Commands = getCommands(config)
 	}
 
-	app.Run([]string{"ahoy", "docker", "override-example"})
+	app.Run(args)
 
 	w.Close()
 	out, _ := ioutil.ReadAll(r)
 	os.Stdout = std_out
-
-	expected := "Overrode you.\n"
-	actual := string(out)
-
-	if expected != actual {
-		t.Errorf("ahoy docker override-example: expected - %s; actual - %s", string(expected), string(actual))
-	}
+	return string(out), nil
 }
