@@ -5,7 +5,7 @@ commands:
     cmd: "go install ahoy/ahoy.go"
     usage: Build ahoy using go install.
   test:
-    cmd: "go test ahoy/ahoy.go"
+    cmd: "go test"
     usage: Test out ahoy using go.
   docker:
     #cmd: "ahoy help home"
