@@ -38,11 +38,13 @@ var verbose bool
 var bashCompletion bool
 
 func logger(errType string, text string) {
+	err_text := ""
 	if (errType == "error") || (errType == "fatal") || (verbose == true) {
-		log.Print("AHOY! [", errType, "] ==>", text, "\n")
+		err_text = "AHOY! [" + errType + "] ==> " + text + "\n"
+		log.Print(err_text)
 	}
 	if errType == "fatal" {
-		os.Exit(1)
+		panic(err_text)
 	}
 }
 

@@ -77,13 +77,6 @@ func TestGetConfigPath(t *testing.T) {
 		t.Errorf("ahoy docker override-example: expected - %s; actual - %s", string(expected), string(actual))
 	}
 
-	// TODO: use golang try-catch?
-	// Passing bogus path..
-	//_, err := getConfigPath("~/bogus/path")
-	//if err == nil {
-	//t.Error("getConfigPath fails on bogus path.")
-	//}
-
 	// Passing known path works as expected
 	expected = pwd + "/.ahoy.yml"
 	actual, _ = getConfigPath(expected)
@@ -93,6 +86,16 @@ func TestGetConfigPath(t *testing.T) {
 	}
 
 	// TODO: Passing directory should return default
+}
+
+func TestGetConfigPathPanicOnBogusPath(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("getConfigPath did not fail when passed a bogus path.")
+		}
+	}()
+
+	getConfigPath("~/bogus/path")
 }
 
 func appRun(args []string) (string, error) {
