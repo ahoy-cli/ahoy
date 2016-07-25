@@ -44,3 +44,8 @@ commands:
   behat-init:
     cmd: 'docker-compose run cli bash -c "cd docroot/test && composer install --prefer-source --no-interaction"'
     usage: Use composer to install behat dependencies.
+
+  #This command overrides the up command in the docker.ahoy.yml to test the "last in wins" feature of ahoy
+  up:
+    cmd: "docker-compose up -d"
+    usage: Start the docker-compose containers.
