@@ -18,6 +18,133 @@ func TestOverrideExample(t *testing.T) {
 	}
 }
 
+func TestGetSubCommand(t *testing.T) {
+	// When empty return empty list of commands.
+	actual := getSubCommands([]string{})
+
+	if len(actual) != 0 {
+		t.Error("Expect that getSubCommands([]string) returns []Command{}")
+	}
+
+	// List of bogus or empty strings returns empty list of commands.
+	actual = getSubCommands([]string{
+		"./testing/bogus1.ahoy.yml",
+		"./testing/private.ahoy.yml",
+	})
+
+	if len(actual) != 0 {
+		t.Error("Expect that getSubCommands([]string) returns []Command{}")
+	}
+
+	// Commands with same name are merged, last one wins.
+	err := os.MkdirAll("testing", 0755)
+	if err != nil {
+		t.Error("Something went wrong creating the 'testing' directory")
+	}
+
+	file1, err := os.Create("testing/a.ahoy.yml")
+	if err != nil {
+		t.Error("Something went wrong with the file creation - file1.")
+	}
+
+	file2, err := os.Create("testing/b.ahoy.yml")
+	if err != nil {
+		t.Error("Something went wrong with the file creation - file2.")
+	}
+
+	config := Config{
+		Usage:   "Test getSubCommands Usage.",
+		AhoyAPI: "v2",
+		Version: "0.0.0",
+		Commands: map[string]Command{
+			"test-command": Command{
+				Description: "Testing example Command.",
+				Usage:       "test-command a",
+				Cmd:         "echo a.ahoy.yml",
+				Hide:        false,
+			},
+		},
+	}
+
+	yaml_config, err := yaml.Marshal(config)
+	if err != nil {
+		t.Error("Error marshalling config for file1")
+	}
+
+	_, err = file1.Write([]byte(yaml_config))
+
+	if err != nil {
+		t.Error("Error writing to file1.")
+	}
+
+	command := config.Commands["test-command"]
+	command.Usage = "testing-command b"
+	config.Commands["test-command"] = command
+
+	yaml_config, err = yaml.Marshal(config)
+	if err != nil {
+		t.Error("Error marshalling config for file2")
+	}
+
+	_, err = file2.Write([]byte(yaml_config))
+
+	if err != nil {
+		t.Error("Error writing to file2.")
+	}
+
+	actual = getSubCommands([]string{
+		"./testing/a.ahoy.yml",
+		"./testing/b.ahoy.yml",
+	})
+
+	if len(actual) != 1 {
+		t.Error("Failed: expect that two commands with the same name get merged into one.")
+	}
+
+	if actual[0].Usage != "testing-command b" {
+		t.Error("Failed: expect that when multiple commands are merged, last one wins.")
+	}
+
+	// Test commands with different names do not get merged.
+	file3, err := os.Create("testing/c.ahoy.yml")
+	if err != nil {
+		t.Error("Something went wrong with the file creation - file3.")
+	}
+
+	config.Commands["testing-new-command"] = Command{
+		Description: "Testing new example Command.",
+		Usage:       "test-new-command a",
+		Cmd:         "echo new a.ahoy.yml",
+		Hide:        false,
+	}
+
+	yaml_config, err = yaml.Marshal(config)
+	if err != nil {
+		t.Error("Error marshalling config for file3")
+	}
+
+	_, err = file3.Write([]byte(yaml_config))
+
+	if err != nil {
+		t.Error("Error writing to file3.")
+	}
+
+	actual = getSubCommands([]string{
+		"./testing/a.ahoy.yml",
+		"./testing/b.ahoy.yml",
+		"./testing/c.ahoy.yml",
+	})
+
+	if len(actual) != 2 {
+		t.Error("Failed: expect unique commands to be captured separately.")
+	}
+
+	file1.Close()
+	file2.Close()
+	file3.Close()
+	os.RemoveAll("testing")
+}
+
 func TestGetConfig(t *testing.T) {
 	test_file, err := os.Create("test_getConfig.yml")
 
