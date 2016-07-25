@@ -18,6 +18,29 @@ func TestOverrideExample(t *testing.T) {
 	}
 }
 
+func TestGetCommands(t *testing.T) {
+	// Get Command with no sub Commands.
+	config := Config{
+		Usage:   "Test getSubCommands Usage.",
+		AhoyAPI: "v2",
+		Version: "0.0.0",
+		Commands: map[string]Command{
+			"test-command": Command{
+				Description: "Testing example Command.",
+				Usage:       "test-command a",
+				Cmd:         "echo a.ahoy.yml",
+				Hide:        false,
+			},
+		},
+	}
+
+	commands := getCommands(config)
+
+	if len(commands) != 1 {
+		t.Error("Expect that getCommands can get one command if passed config with one command.")
+	}
+}
+
 func TestGetSubCommand(t *testing.T) {
 	// When empty return empty list of commands.
 	actual := getSubCommands([]string{})
