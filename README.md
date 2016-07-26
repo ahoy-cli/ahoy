@@ -115,6 +115,21 @@ GLOBAL OPTIONS:
    --version, -v		print the version
 ```
 
+## Version 2
+
+- Implements a new feature to import mulitple config files using the "imports" field.
+- Uses the "last in wins" rule to deal with duplicate commands amongst the config files.
+
+```
+commands:
+  list:
+      usage: List the commands from the imported config files.
+      imports:
+        - ./confirmation.ahoy.yml
+        - ./docker.ahoy.yml
+        - ./examples.ahoy.yml
+```
+
 ## TODOS
 
 - Provide "drivers" for bash, docker-compose, kubernetes (these systems still work now, this would just make it easier)
