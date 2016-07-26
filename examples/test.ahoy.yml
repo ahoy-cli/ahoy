@@ -1,0 +1,10 @@
+ahoyapi: v2
+version: 0.0.0
+
+commands:
+  list:
+      usage: List the commands from the imported config files.
+      imports:
+        - ./confirmation.ahoy.yml
+        - ./docker.ahoy.yml
+        - ./examples.ahoy.yml
