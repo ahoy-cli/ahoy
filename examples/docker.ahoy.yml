@@ -1,4 +1,4 @@
-ahoyapi: v1
+ahoyapi: v2
 version: 0.0.0
 commands:
   up:
@@ -31,3 +31,5 @@ commands:
   mysql-dump:
     cmd: "docker exec -it $(docker-compose ps -q cli) bash -c 'mysqldump -u$DB_ENV_MYSQL_USER -p$DB_ENV_MYSQL_PASSWORD -h$DB_PORT_3306_TCP_ADDR $DB_ENV_MYSQL_DATABASE'"
     usage: Dump data out into a file. `ahoy mysql-import > backups/local.sql`
+  override-example:
+    cmd: echo "Override me"

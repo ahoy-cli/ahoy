@@ -27,7 +27,7 @@ type Command struct {
 	Usage       string
 	Cmd         string
 	Hide        bool
-	Import      string
+	Imports     []string
 }
 
 var app *cli.App
@@ -38,11 +38,13 @@ var verbose bool
 var bashCompletion bool
 
 func logger(errType string, text string) {
+	err_text := ""
 	if (errType == "error") || (errType == "fatal") || (verbose == true) {
-		log.Print("AHOY! [", errType, "] ==>", text, "\n")
+		err_text = "AHOY! [" + errType + "] ==> " + text + "\n"
+		log.Print(err_text)
 	}
 	if errType == "fatal" {
-		os.Exit(1)
+		panic(err_text)
 	}
 }
 
@@ -91,11 +93,47 @@ func getConfig(sourcefile string) (Config, error) {
 
 	// All ahoy files (and imports) must specify the ahoy version.
 	// This is so we can support backwards compatability in the future.
-	if config.AhoyAPI != "v1" {
-		logger("fatal", "Ahoy only supports API version 'v1', but '"+config.AhoyAPI+"' given in "+sourcefile)
+	if config.AhoyAPI != "v2" {
+		logger("fatal", "Ahoy only supports API version 'v2', but '"+config.AhoyAPI+"' given in "+sourcefile)
 	}
 
 	return config, err
+}
+
+func getSubCommands(includes []string) []cli.Command {
+	subCommands := []cli.Command{}
+	if 0 == len(includes) {
+		return subCommands
+	}
+	commands := map[string]cli.Command{}
+	for _, include := range includes {
+		if len(include) == 0 {
+			continue
+		}
+		if include[0] != "/"[0] || include[0] != "~"[0] {
+			include = filepath.Join(sourcedir, include)
+		}
+		if _, err := os.Stat(include); err != nil {
+			//Skipping files that cannot be loaded allows us to separate
+			//subcommands into public and private.
+			continue
+		}
+		config, _ := getConfig(include)
+		includeCommands := getCommands(config)
+		for _, command := range includeCommands {
+			commands[command.Name] = command
+		}
+	}
+
+	var names []string
+	for k := range commands {
+		names = append(names, k)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		subCommands = append(subCommands, commands[name])
+	}
+	return subCommands
 }
 
 func getCommands(config Config) []cli.Command {
@@ -110,19 +148,6 @@ func getCommands(config Config) []cli.Command {
 	for _, name := range keys {
 		cmd := config.Commands[name]
 		cmdName := name
-		subCommands := []cli.Command{}
-
-		// Handle the import of subcommands.
-		if cmd.Import != "" {
-			// If the first character isn't "/" or "~" we assume a relative path.
-			subSource := cmd.Import
-			if cmd.Import[0] != "/"[0] || cmd.Import[0] != "~"[0] {
-				subSource = filepath.Join(sourcedir, cmd.Import)
-			}
-			logger("info", "Importing commands into '"+name+"' command from "+subSource)
-			subConfig, _ := getConfig(subSource)
-			subCommands = getCommands(subConfig)
-		}
 
 		newCmd := cli.Command{
 			Name:            name,
@@ -141,6 +166,7 @@ func getCommands(config Config) []cli.Command {
 			}
 		}
 
+		subCommands := getSubCommands(cmd.Imports)
 		if subCommands != nil {
 			newCmd.Subcommands = subCommands
 		}
