@@ -5,20 +5,40 @@ commands:
     cmd: "go install"
     usage: Build ahoy using go install.
   test:
-    cmd: "go test"
-    usage: Test out ahoy using go.
-  docker:
-    #cmd: "ahoy help home"
-    usage: Example docker commands from examples/docker.ahoy.yml
-    imports:
-      - examples/docker.ahoy.yml
-      - examples/docker-overrides.ahoy.yml
-      - examples/private-docker3.ahoy.yml
+    usage: Run automated tests
+    cmd: |
+      FAIL=false
+      TESTS=(
+        'go vet'
+        'go test -v -race '
+        'golint -set_exit_status'
+      )
+      for i in "${TESTS[@]}"; do
+        printf "\n=== TEST: $i ===\n\n"
+        $i
+        if [ $? -ne 0 ]; then
+          FAIL=true
+        fi
+      done
+      printf "\n=== RESULT ===\n\n"
+      # If any tests failed, then fail.
+      if [ $FAIL ]; then
+        echo "Some tests failed."
+        exit 1
+      else
+        echo "All tests passed."
 
-  confirm:
-    cmd: "ahoy -f examples/confirmation.ahoy.yml confirm {{args}}"
-    usage: Example of importing a single docker command from examples/confirmation.ahoy.yml
-    hide: true
-  init:
-    cmd: echo ".ahoy.yml file already exists."
-    hide: true
+      fi
+  godep:
+    cmd: |
+      godep="$(which godep)"
+      if [ ! "$godep" ]; then
+        echo "godep not found, installing it first using:"
+        echo "OSX: brew install godep"
+        echo "other: go get github.com/tools/godep"
+      else
+        godep {{args}}
+      fi
+  gofmt:
+    usage: Clean up go code per code standards.
+    cmd: gofmt -w *.go
