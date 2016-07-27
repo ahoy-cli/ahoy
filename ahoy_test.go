@@ -89,12 +89,12 @@ func TestGetSubCommand(t *testing.T) {
 		},
 	}
 
-	yaml_config, err := yaml.Marshal(config)
+	yamlConfig, err := yaml.Marshal(config)
 	if err != nil {
 		t.Error("Error marshalling config for file1")
 	}
 
-	_, err = file1.Write([]byte(yaml_config))
+	_, err = file1.Write([]byte(yamlConfig))
 
 	if err != nil {
 		t.Error("Error writing to file1.")
@@ -104,12 +104,12 @@ func TestGetSubCommand(t *testing.T) {
 	command.Usage = "testing-command b"
 	config.Commands["test-command"] = command
 
-	yaml_config, err = yaml.Marshal(config)
+	yamlConfig, err = yaml.Marshal(config)
 	if err != nil {
 		t.Error("Error marshalling config for file2")
 	}
 
-	_, err = file2.Write([]byte(yaml_config))
+	_, err = file2.Write([]byte(yamlConfig))
 
 	if err != nil {
 		t.Error("Error writing to file2.")
@@ -141,12 +141,12 @@ func TestGetSubCommand(t *testing.T) {
 		Hide:        false,
 	}
 
-	yaml_config, err = yaml.Marshal(config)
+	yamlConfig, err = yaml.Marshal(config)
 	if err != nil {
 		t.Error("Error marshalling config for file3")
 	}
 
-	_, err = file3.Write([]byte(yaml_config))
+	_, err = file3.Write([]byte(yamlConfig))
 
 	if err != nil {
 		t.Error("Error writing to file3.")
@@ -169,7 +169,7 @@ func TestGetSubCommand(t *testing.T) {
 }
 
 func TestGetConfig(t *testing.T) {
-	test_file, err := os.Create("test_getConfig.yml")
+	testFile, err := os.Create("test_getConfig.yml")
 
 	if err != nil {
 		t.Error("Something went wrong creating the test file.")
@@ -192,13 +192,13 @@ func TestGetConfig(t *testing.T) {
 			},
 		},
 	}
-	test_yaml, err := yaml.Marshal(expected)
+	testYaml, err := yaml.Marshal(expected)
 
 	if err != nil {
 		t.Error("Something went wrong mashelling the test object.")
 	}
 
-	test_file.Write([]byte(test_yaml))
+	testFile.Write([]byte(testYaml))
 
 	config, err := getConfig("test_getConfig.yml")
 
@@ -214,7 +214,7 @@ func TestGetConfig(t *testing.T) {
 		t.Errorf("Expected config.Commands['test-command'].cmd to be %s, but actaul is %s", expected.Commands["test-command"].Cmd, config.Commands["test-command"].Cmd)
 	}
 
-	test_file.Close()
+	testFile.Close()
 	os.Remove("test_getConfig.yml")
 }
 
@@ -249,23 +249,15 @@ func TestGetConfigPathPanicOnBogusPath(t *testing.T) {
 }
 
 func appRun(args []string) (string, error) {
-	std_out := os.Stdout
+	stdout := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 
-	app = cli.NewApp()
-	app.Name = "ahoy"
-
-	if sourcefile, err := getConfigPath(sourcefile); err == nil {
-		sourcedir = filepath.Dir(sourcefile)
-		config, _ := getConfig(sourcefile)
-		app.Commands = getCommands(config)
-	}
-
+	setupApp(args[1:])
 	app.Run(args)
 
 	w.Close()
 	out, _ := ioutil.ReadAll(r)
-	os.Stdout = std_out
+	os.Stdout = stdout
 	return string(out), nil
 }
