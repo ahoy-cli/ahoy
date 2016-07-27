@@ -1,22 +1,21 @@
 package main
 
 import (
-	"github.com/codegangsta/cli"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"testing"
 )
 
+
 func TestOverrideExample(t *testing.T) {
 	expected := "Overrode you.\n"
-	actual, _ := appRun([]string{"ahoy", "docker", "override-example"})
-
+	actual, _ := appRun([]string{"ahoy", "-f", "testdata/override-base.ahoy.yml", "docker", "override-example"})
 	if expected != actual {
 		t.Errorf("ahoy docker override-example: expected - %s; actual - %s", string(expected), string(actual))
 	}
 }
+
 
 func TestGetCommands(t *testing.T) {
 	// Get Command with no sub Commands.
@@ -42,7 +41,12 @@ func TestGetCommands(t *testing.T) {
 }
 
 func TestGetSubCommand(t *testing.T) {
+	// Since we're not running the app directly, sourcedir doesn't get reset, so
+	// we need to reset it ourselves. TODO: Remove these globals somehow.
+	sourcedir = ""
+
 	// When empty return empty list of commands.
+
 	actual := getSubCommands([]string{})
 
 	if len(actual) != 0 {
@@ -121,10 +125,11 @@ func TestGetSubCommand(t *testing.T) {
 	})
 
 	if len(actual) != 1 {
-		t.Error("Failed: expect that two commands with the same name get merged into one.")
+		t.Error("Sourcedir:", sourcedir)
+		t.Error("Failed: expect that two commands with the same name get merged into one.", actual)
 	}
 
-	if actual[0].Usage != "testing-command b" {
+	if len(actual) > 0 && actual[0].Usage != "testing-command b" {
 		t.Error("Failed: expect that when multiple commands are merged, last one wins.")
 	}
 
@@ -248,6 +253,7 @@ func TestGetConfigPathPanicOnBogusPath(t *testing.T) {
 	getConfigPath("~/bogus/path")
 }
 
+
 func appRun(args []string) (string, error) {
 	stdout := os.Stdout
 	r, w, _ := os.Pipe()
@@ -257,6 +263,7 @@ func appRun(args []string) (string, error) {
 	app.Run(args)
 
 	w.Close()
+	//@aashil thinks this reads from the command line
 	out, _ := ioutil.ReadAll(r)
 	os.Stdout = stdout
 	return string(out), nil

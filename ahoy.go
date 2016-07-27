@@ -253,8 +253,8 @@ func BashComplete(c *cli.Context) {
 	}
 }
 
-func main() {
-	initFlags()
+func setupApp(args []string) *cli.App {
+	initFlags(args)
 	//log.Println(sourcefile)
 	// cli stuff
 	app = cli.NewApp()
@@ -263,6 +263,7 @@ func main() {
 	app.EnableBashCompletion = true
 	app.BashComplete = BashComplete
 	overrideFlags(app)
+
 	if sourcefile, err := getConfigPath(sourcefile); err == nil {
 		sourcedir = filepath.Dir(sourcefile)
 		config, _ := getConfig(sourcefile)
@@ -294,5 +295,13 @@ VERSION:
    {{end}}
 `
 
+	return app
+}
+
+
+
+
+func main() {
+        app = setupApp(os.Args[1:])
 	app.Run(os.Args)
 }

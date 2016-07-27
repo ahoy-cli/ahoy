@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"github.com/codegangsta/cli"
-	"os"
 )
 
 var globalFlags = []cli.Flag{
@@ -40,10 +39,16 @@ func flagSet(name string, flags []cli.Flag) *flag.FlagSet {
 	return set
 }
 
-func initFlags() {
+func initFlags(incomingFlags []string) {
+
+	// Reset the sourcedir for when we're testing. Otherwise the global state
+	// is preserved between the tests.
+	sourcedir = ""
+
 	// Grab the global flags first ourselves so we can customize the yaml file loaded.
+	// Flags are only parsed once, so we need to do this before cli has the chance to?
 	tempFlags := flagSet("tempFlags", globalFlags)
-	tempFlags.Parse(os.Args[1:])
+	tempFlags.Parse(incomingFlags)
 }
 
 func overrideFlags(app *cli.App) {
