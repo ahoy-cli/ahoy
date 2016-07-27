@@ -22,7 +22,7 @@ commands:
       done
       printf "\n=== RESULT ===\n\n"
       # If any tests failed, then fail.
-      if [ $FAIL ]; then
+      if [ $FAIL == true ]; then
         echo "Some tests failed."
         exit 1
       else
