@@ -1,0 +1,6 @@
+test:
+  pre:
+    - go get -u github.com/golang/lint/golint
+    - go build -v
+  override:
+    - ./ahoy test

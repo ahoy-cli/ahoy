@@ -15,13 +15,16 @@ import (
 	"strings"
 )
 
+// Config handles the overall configuration in an ahoy.yml file
+// with one Config per file.
 type Config struct {
 	Usage    string
 	AhoyAPI  string
 	Version  string
 	Commands map[string]Command
 }
-
+// Command is an ahoy command detailed in ahoy.yml files. Multiple
+// commands can be defined per ahoy.yml file.
 type Command struct {
 	Description string
 	Usage       string
@@ -38,13 +41,13 @@ var verbose bool
 var bashCompletion bool
 
 func logger(errType string, text string) {
-	err_text := ""
+	errText := ""
 	if (errType == "error") || (errType == "fatal") || (verbose == true) {
-		err_text = "AHOY! [" + errType + "] ==> " + text + "\n"
-		log.Print(err_text)
+		errText = "AHOY! [" + errType + "] ==> " + text + "\n"
+		log.Print(errText)
 	}
 	if errType == "fatal" {
-		panic(err_text)
+		panic(errText)
 	}
 }
 
@@ -55,9 +58,8 @@ func getConfigPath(sourcefile string) (string, error) {
 	if sourcefile != "" {
 		if _, err := os.Stat(sourcefile); err == nil {
 			return sourcefile, err
-		} else {
-			logger("fatal", "An ahoy config file was specified using -f to be at "+sourcefile+" but couldn't be found. Check your path.")
 		}
+		logger("fatal", "An ahoy config file was specified using -f to be at "+sourcefile+" but couldn't be found. Check your path.")
 	}
 
 	dir, err := os.Getwd()
@@ -206,11 +208,11 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 		Action: func(c *cli.Context) {
 			// Grab the URL or use a default for the initial ahoy file.
 			// Allows users to define their own files to call to init.
-			var wgetUrl = "https://raw.githubusercontent.com/devinci-code/ahoy/master/examples/examples.ahoy.yml"
+			var wgetURL = "https://raw.githubusercontent.com/devinci-code/ahoy/master/examples/examples.ahoy.yml"
 			if len(c.Args()) > 0 {
-				wgetUrl = c.Args()[0]
+				wgetURL = c.Args()[0]
 			}
-			grabYaml := "wget " + wgetUrl + " -O .ahoy.yml"
+			grabYaml := "wget " + wgetURL + " -O .ahoy.yml"
 			cmd := exec.Command("bash", "-c", grabYaml)
 			cmd.Stdin = os.Stdin
 			cmd.Stderr = os.Stderr
@@ -237,7 +239,7 @@ func init() {
 	flag.BoolVar(&verbose, "verbose", false, "")
 }
 
-// Prints the list of subcommands as the default app completion method
+// BashComplete prints the list of subcommands as the default app completion method
 func BashComplete(c *cli.Context) {
 
 	if sourcefile != "" {
@@ -251,8 +253,8 @@ func BashComplete(c *cli.Context) {
 	}
 }
 
-func main() {
-	initFlags()
+func setupApp(args []string) *cli.App {
+	initFlags(args)
 	//log.Println(sourcefile)
 	// cli stuff
 	app = cli.NewApp()
@@ -261,6 +263,7 @@ func main() {
 	app.EnableBashCompletion = true
 	app.BashComplete = BashComplete
 	overrideFlags(app)
+
 	if sourcefile, err := getConfigPath(sourcefile); err == nil {
 		sourcedir = filepath.Dir(sourcefile)
 		config, _ := getConfig(sourcefile)
@@ -292,5 +295,13 @@ VERSION:
    {{end}}
 `
 
+	return app
+}
+
+
+
+
+func main() {
+        app = setupApp(os.Args[1:])
 	app.Run(os.Args)
 }

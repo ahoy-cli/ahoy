@@ -1,22 +1,21 @@
 package main
 
 import (
-	"github.com/codegangsta/cli"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"testing"
 )
 
+
 func TestOverrideExample(t *testing.T) {
 	expected := "Overrode you.\n"
-	actual, _ := appRun([]string{"ahoy", "docker", "override-example"})
-
+	actual, _ := appRun([]string{"ahoy", "-f", "testdata/override-base.ahoy.yml", "docker", "override-example"})
 	if expected != actual {
 		t.Errorf("ahoy docker override-example: expected - %s; actual - %s", string(expected), string(actual))
 	}
 }
+
 
 func TestGetCommands(t *testing.T) {
 	// Get Command with no sub Commands.
@@ -42,7 +41,12 @@ func TestGetCommands(t *testing.T) {
 }
 
 func TestGetSubCommand(t *testing.T) {
+	// Since we're not running the app directly, sourcedir doesn't get reset, so
+	// we need to reset it ourselves. TODO: Remove these globals somehow.
+	sourcedir = ""
+
 	// When empty return empty list of commands.
+
 	actual := getSubCommands([]string{})
 
 	if len(actual) != 0 {
@@ -89,12 +93,12 @@ func TestGetSubCommand(t *testing.T) {
 		},
 	}
 
-	yaml_config, err := yaml.Marshal(config)
+	yamlConfig, err := yaml.Marshal(config)
 	if err != nil {
 		t.Error("Error marshalling config for file1")
 	}
 
-	_, err = file1.Write([]byte(yaml_config))
+	_, err = file1.Write([]byte(yamlConfig))
 
 	if err != nil {
 		t.Error("Error writing to file1.")
@@ -104,12 +108,12 @@ func TestGetSubCommand(t *testing.T) {
 	command.Usage = "testing-command b"
 	config.Commands["test-command"] = command
 
-	yaml_config, err = yaml.Marshal(config)
+	yamlConfig, err = yaml.Marshal(config)
 	if err != nil {
 		t.Error("Error marshalling config for file2")
 	}
 
-	_, err = file2.Write([]byte(yaml_config))
+	_, err = file2.Write([]byte(yamlConfig))
 
 	if err != nil {
 		t.Error("Error writing to file2.")
@@ -121,10 +125,11 @@ func TestGetSubCommand(t *testing.T) {
 	})
 
 	if len(actual) != 1 {
-		t.Error("Failed: expect that two commands with the same name get merged into one.")
+		t.Error("Sourcedir:", sourcedir)
+		t.Error("Failed: expect that two commands with the same name get merged into one.", actual)
 	}
 
-	if actual[0].Usage != "testing-command b" {
+	if len(actual) > 0 && actual[0].Usage != "testing-command b" {
 		t.Error("Failed: expect that when multiple commands are merged, last one wins.")
 	}
 
@@ -141,12 +146,12 @@ func TestGetSubCommand(t *testing.T) {
 		Hide:        false,
 	}
 
-	yaml_config, err = yaml.Marshal(config)
+	yamlConfig, err = yaml.Marshal(config)
 	if err != nil {
 		t.Error("Error marshalling config for file3")
 	}
 
-	_, err = file3.Write([]byte(yaml_config))
+	_, err = file3.Write([]byte(yamlConfig))
 
 	if err != nil {
 		t.Error("Error writing to file3.")
@@ -169,7 +174,7 @@ func TestGetSubCommand(t *testing.T) {
 }
 
 func TestGetConfig(t *testing.T) {
-	test_file, err := os.Create("test_getConfig.yml")
+	testFile, err := os.Create("test_getConfig.yml")
 
 	if err != nil {
 		t.Error("Something went wrong creating the test file.")
@@ -192,13 +197,13 @@ func TestGetConfig(t *testing.T) {
 			},
 		},
 	}
-	test_yaml, err := yaml.Marshal(expected)
+	testYaml, err := yaml.Marshal(expected)
 
 	if err != nil {
 		t.Error("Something went wrong mashelling the test object.")
 	}
 
-	test_file.Write([]byte(test_yaml))
+	testFile.Write([]byte(testYaml))
 
 	config, err := getConfig("test_getConfig.yml")
 
@@ -214,7 +219,7 @@ func TestGetConfig(t *testing.T) {
 		t.Errorf("Expected config.Commands['test-command'].cmd to be %s, but actaul is %s", expected.Commands["test-command"].Cmd, config.Commands["test-command"].Cmd)
 	}
 
-	test_file.Close()
+	testFile.Close()
 	os.Remove("test_getConfig.yml")
 }
 
@@ -248,24 +253,18 @@ func TestGetConfigPathPanicOnBogusPath(t *testing.T) {
 	getConfigPath("~/bogus/path")
 }
 
+
 func appRun(args []string) (string, error) {
-	std_out := os.Stdout
+	stdout := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 
-	app = cli.NewApp()
-	app.Name = "ahoy"
-
-	if sourcefile, err := getConfigPath(sourcefile); err == nil {
-		sourcedir = filepath.Dir(sourcefile)
-		config, _ := getConfig(sourcefile)
-		app.Commands = getCommands(config)
-	}
-
+	setupApp(args[1:])
 	app.Run(args)
 
 	w.Close()
+	//@aashil thinks this reads from the command line
 	out, _ := ioutil.ReadAll(r)
-	os.Stdout = std_out
+	os.Stdout = stdout
 	return string(out), nil
 }
