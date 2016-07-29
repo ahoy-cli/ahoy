@@ -41,6 +41,8 @@ var bashCompletion bool
 
 var version string
 
+//The build version can be set using the go linker flag `-ldflags "-X main.version=$VERSION"`
+//Complete command: `go build -ldflags "-X main.version=$VERSION"`
 func logger(errType string, text string) {
 	errText := ""
 	if (errType == "error") || (errType == "fatal") || (verbose == true) {
