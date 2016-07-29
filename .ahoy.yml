@@ -2,12 +2,7 @@ ahoyapi: v2
 commands:
   build:
     usage: Build ahoy with a version automatically set.
-    cmd: |
-      set -e
-      COMMIT=$(git rev-parse --short HEAD)
-      VERSION=$(git describe --tag $COMMIT)
-      go build -ldflags "-X main.version=$VERSION"
-      echo "Built ahoy version $VERSION"
+    cmd: bash build.sh {{args}}
   install:
     cmd: "go install"
     usage: Build ahoy using go install.
