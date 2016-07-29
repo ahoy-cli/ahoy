@@ -38,6 +38,8 @@ Using Homebrew:
 ```
 brew tap devinci-code/tap
 brew install ahoy
+# For v2 which is still alpha (see below)
+brew install ahoy --HEAD
 ```
 
 ### Linux
@@ -115,9 +117,34 @@ GLOBAL OPTIONS:
    --version, -v		print the version
 ```
 
-## TODOS
+## Version 2
 
-- Provide "drivers" for bash, docker-compose, kubernetes (these systems still work now, this would just make it easier)
-- Do specific arg replacement like {{arg1}}
-- Support alternate init files (take a url parameter) which give a way to deploy the config files.
-- Support a "verify" yaml option that would create a yes / no prompt for potentially destructive commands. (Are you sure you want to delete all your containers?)
+All new features are being added to the v2 (master) branch of ahoy which is still in alpha and will have breaking changes with v1 ahoy files, so to use ahoy v2, you'll need to do the following: 
+- Upgrade to the ahoy v2 binary which currently needs to be compiled from source. If you are using homebrew, you can use that to upgrade to v2 using the following:
+```
+  brew uninstall ahoy # Required or you'll get errors 
+  brew upgrade # Updates the tap
+  brew install ahoy --HEAD # Installs ahoy by compiling the latest from the master branch
+  ahoy # You should see full version that you're using.
+```
+- Change your `ahoyapi: v1` lines to `ahoyapi: v2`
+
+### New Features in v2
+- Implements a new feature to import mulitple config files using the "imports" field.
+- Uses the "last in wins" rule to deal with duplicate commands amongst the config files.
+
+```
+commands:
+  list:
+      usage: List the commands from the imported config files.
+      imports:
+        - ./confirmation.ahoy.yml
+        - ./docker.ahoy.yml
+        - ./examples.ahoy.yml
+```
+
+### Planned v2 features
+- Provide "drivers" or "plugins" for bash, docker-compose, kubernetes (these systems still work now, this would just make it easier)
+- Do specific arg replacement like {{arg1}} and enable specifying specific arguments and flags in the ahoy file itself to cut down on parsing arguments in scripts.
+- Support for more built-in commands or a "verify" yaml option that would create a yes / no prompt for potentially destructive commands. (Are you sure you want to delete all your containers?)
+- Pipe tab completion to another command (allows you to get tab completion)
