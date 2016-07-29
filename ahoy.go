@@ -20,7 +20,6 @@ import (
 type Config struct {
 	Usage    string
 	AhoyAPI  string
-	Version  string
 	Commands map[string]Command
 }
 // Command is an ahoy command detailed in ahoy.yml files. Multiple
@@ -39,6 +38,8 @@ var sourcefile string
 var args []string
 var verbose bool
 var bashCompletion bool
+
+var version string
 
 func logger(errType string, text string) {
 	errText := ""
@@ -259,6 +260,7 @@ func setupApp(args []string) *cli.App {
 	// cli stuff
 	app = cli.NewApp()
 	app.Name = "ahoy"
+	app.Version = version
 	app.Usage = "Creates a configurable cli app for running commands."
 	app.EnableBashCompletion = true
 	app.BashComplete = BashComplete
