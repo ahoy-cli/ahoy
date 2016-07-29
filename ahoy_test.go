@@ -22,7 +22,6 @@ func TestGetCommands(t *testing.T) {
 	config := Config{
 		Usage:   "Test getSubCommands Usage.",
 		AhoyAPI: "v2",
-		Version: "0.0.0",
 		Commands: map[string]Command{
 			"test-command": Command{
 				Description: "Testing example Command.",
@@ -82,7 +81,6 @@ func TestGetSubCommand(t *testing.T) {
 	config := Config{
 		Usage:   "Test getSubCommands Usage.",
 		AhoyAPI: "v2",
-		Version: "0.0.0",
 		Commands: map[string]Command{
 			"test-command": Command{
 				Description: "Testing example Command.",
@@ -183,7 +181,6 @@ func TestGetConfig(t *testing.T) {
 	expected := Config{
 		Usage:   "Test example usage.",
 		AhoyAPI: "v2",
-		Version: "0.0.0",
 		Commands: map[string]Command{
 			"test-command": Command{
 				Description: "Testing example Command.",

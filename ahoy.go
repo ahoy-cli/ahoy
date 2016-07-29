@@ -20,7 +20,6 @@ import (
 type Config struct {
 	Usage    string
 	AhoyAPI  string
-	Version  string
 	Commands map[string]Command
 }
 // Command is an ahoy command detailed in ahoy.yml files. Multiple
@@ -40,6 +39,10 @@ var args []string
 var verbose bool
 var bashCompletion bool
 
+var version string
+
+//The build version can be set using the go linker flag `-ldflags "-X main.version=$VERSION"`
+//Complete command: `go build -ldflags "-X main.version=$VERSION"`
 func logger(errType string, text string) {
 	errText := ""
 	if (errType == "error") || (errType == "fatal") || (verbose == true) {
@@ -259,6 +262,7 @@ func setupApp(args []string) *cli.App {
 	// cli stuff
 	app = cli.NewApp()
 	app.Name = "ahoy"
+	app.Version = version
 	app.Usage = "Creates a configurable cli app for running commands."
 	app.EnableBashCompletion = true
 	app.BashComplete = BashComplete
