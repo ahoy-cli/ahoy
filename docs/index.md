@@ -22,6 +22,8 @@ With ahoy, you can turn this into
 
 `ahoy mysql-import < some-database.sql`
 
+[More Examples](Home.html)
+
 ## FEATURES
 - Non-invasive - Use your existing workflow! It can wrap commands and scripts you are already using.
 - Consitent - Commands always run relative to the .ahoy.yml file, but can be called from any subfolder.
