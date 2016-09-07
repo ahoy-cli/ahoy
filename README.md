@@ -148,3 +148,13 @@ commands:
 - Do specific arg replacement like {{arg1}} and enable specifying specific arguments and flags in the ahoy file itself to cut down on parsing arguments in scripts.
 - Support for more built-in commands or a "verify" yaml option that would create a yes / no prompt for potentially destructive commands. (Are you sure you want to delete all your containers?)
 - Pipe tab completion to another command (allows you to get tab completion)
+
+
+## Previewing the Read the Docs documentation locally.
+
+* Change to the `./docs` directory.
+* Run `ahoy deps` to install the python dependencies.
+* Make changes to any of the .md files.
+* Run `ahoy build-docs` (This will convert all the .md files to docs)
+* You should have several html files in docs/_build/html directory of which Home.html and index.html are the parent files.
+* For more information on how to compile the docs from scratch visit: http://read-the-docs.readthedocs.io/en/latest/getting_started.html
