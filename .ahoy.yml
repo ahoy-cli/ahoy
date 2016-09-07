@@ -49,3 +49,6 @@ commands:
   gofmt:
     usage: Clean up go code per code standards.
     cmd: gofmt -w *.go
+  build-docs:
+    usage: Build the docs.
+    cmd: cd docs && make html
