@@ -52,3 +52,6 @@ commands:
   build-docs:
     usage: Build the docs.
     cmd: cd docs && make html
+  deps:
+    usage: Install the dependencies from requirements.txt
+    cmd: cd docs && pip install -r requirements.txt
