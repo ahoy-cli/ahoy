@@ -22,6 +22,7 @@ type Config struct {
 	AhoyAPI  string
 	Commands map[string]Command
 }
+
 // Command is an ahoy command detailed in ahoy.yml files. Multiple
 // commands can be defined per ahoy.yml file.
 type Command struct {
@@ -279,33 +280,30 @@ func setupApp(args []string) *cli.App {
 	}
 
 	cli.AppHelpTemplate = `NAME:
-   {{.Name}} - {{.Usage}}
-USAGE:
-   {{.HelpName}} {{if .Flags}}[global options]{{end}}{{if .Commands}} command [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}
-   {{if len .Authors}}
-AUTHOR(S):
-   {{range .Authors}}{{ . }}{{end}}
-   {{end}}{{if .Commands}}
-COMMANDS:
-{{range .Commands}}{{if not .HideHelp}}   {{join .Names ", "}}{{ "\t" }}{{.Usage}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .Flags}}
-GLOBAL OPTIONS:
-   {{range .Flags}}{{.}}
-   {{end}}{{end}}{{if .Copyright }}
-COPYRIGHT:
-   {{.Copyright}}
-   {{end}}{{if .Version}}
-VERSION:
-   {{.Version}}
-   {{end}}
-`
+	{{.Name}} - {{.Usage}}
+	USAGE:
+	{{.HelpName}} {{if .Flags}}[global options]{{end}}{{if .Commands}} command [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}
+	{{if len .Authors}}
+	AUTHOR(S):
+	{{range .Authors}}{{ . }}{{end}}
+	{{end}}{{if .Commands}}
+	COMMANDS:
+	{{range .Commands}}{{if not .HideHelp}}   {{join .Names ", "}}{{ "\t" }}{{.Usage}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .Flags}}
+	GLOBAL OPTIONS:
+	{{range .Flags}}{{.}}
+	{{end}}{{end}}{{if .Copyright }}
+	COPYRIGHT:
+	{{.Copyright}}
+	{{end}}{{if .Version}}
+	VERSION:
+	{{.Version}}
+	{{end}}
+	`
 
 	return app
 }
 
-
-
-
 func main() {
-        app = setupApp(os.Args[1:])
+	app = setupApp(os.Args)
 	app.Run(os.Args)
 }
