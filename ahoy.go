@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/codegangsta/cli"
@@ -257,11 +258,36 @@ func BashComplete(c *cli.Context) {
 	}
 }
 
-func setupApp(args []string) *cli.App {
-	initFlags(args)
-	//log.Println(sourcefile)
+// This is the application wide default action, for when no arguments are passed.
+func NoArgsAction(c *cli.Context) {
+	if c.Bool("help") {
+		cli.ShowAppHelp(c)
+	}
+}
+
+// This runs before every command so arguments must be passed.
+func BeforeCommand(c *cli.Context) error {
+	args := c.Args()
+	if c.Bool("version") {
+		fmt.Println(version)
+		return errors.New("don't continue with commands")
+	}
+	if c.Bool("help") {
+		if len(args) > 0 {
+			cli.ShowCommandHelp(c, args.First())
+			return errors.New("don't continue with commands")
+		}
+	}
+	//fmt.Printf("%+v\n", args)
+	return nil
+}
+
+func setupApp(localArgs []string) *cli.App {
+	initFlags(localArgs)
 	// cli stuff
 	app = cli.NewApp()
+	app.Action = NoArgsAction
+	app.Before = BeforeCommand
 	app.Name = "ahoy"
 	app.Version = version
 	app.Usage = "Creates a configurable cli app for running commands."

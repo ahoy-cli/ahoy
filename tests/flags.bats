@@ -3,7 +3,7 @@
 @test "get the version of ahoy with --version" {
   run ./ahoy -f testdata/simple.ahoy.yml --version
   [ $status -eq 0 ]
-  [ "$result" == "2.0.0-alpha-23-g0479480" ]
+  [ $(expr "$output" : "[0-9.]\.[0-9.]\.[0-9.]") -ne 0 ]
 }
 
 @test "get help instead of running a command with --help" {
