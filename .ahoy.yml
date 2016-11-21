@@ -8,7 +8,9 @@ commands:
     usage: Build ahoy using go install.
   bats:
     usage: "Run the bats bash testing command."
-    cmd: bats tests
+    cmd: |
+      ahoy build
+      bats tests
   test:
     usage: Run automated tests
     cmd: |

@@ -9,6 +9,6 @@ teardown() {
 }
 
 @test "run ahoy init without a .ahoy.yml file" {
-  result="$(ahoy init)"
+  result="$(./ahoy init)"
   [ "$result" -eq 4 ]
 }
