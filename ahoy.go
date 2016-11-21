@@ -22,6 +22,7 @@ type Config struct {
 	AhoyAPI  string
 	Commands map[string]Command
 }
+
 // Command is an ahoy command detailed in ahoy.yml files. Multiple
 // commands can be defined per ahoy.yml file.
 type Command struct {
@@ -211,7 +212,7 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 		Action: func(c *cli.Context) {
 			// Grab the URL or use a default for the initial ahoy file.
 			// Allows users to define their own files to call to init.
-			var wgetURL = "https://raw.githubusercontent.com/devinci-code/ahoy/master/examples/examples.ahoy.yml"
+			var wgetURL = "https://raw.githubusercontent.com/ahoy-cli/ahoy/master/examples/examples.ahoy.yml"
 			if len(c.Args()) > 0 {
 				wgetURL = c.Args()[0]
 			}
@@ -302,10 +303,7 @@ VERSION:
 	return app
 }
 
-
-
-
 func main() {
-        app = setupApp(os.Args[1:])
+	app = setupApp(os.Args[1:])
 	app.Run(os.Args)
 }

@@ -38,7 +38,7 @@ With ahoy, you can turn this into
 ### OSX
 Using Homebrew:
 ```
-brew tap devinci-code/tap
+brew tap ahoy-cli/tap
 brew install ahoy
 # For v2 which is still alpha (see below)
 brew install ahoy --HEAD
@@ -49,7 +49,7 @@ Download and unzip the latest release and move the appropriate binary for your p
 
 Example:
 ```
-sudo wget -q https://github.com/devinci-code/ahoy/releases/download/1.1.0/ahoy-`uname -s`-amd64 -O /usr/local/bin/ahoy && sudo chown $USER /usr/local/bin/ahoy && chmod +x /usr/local/bin/ahoy
+sudo wget -q https://github.com/ahoy-cli/ahoy/releases/download/1.1.0/ahoy-`uname -s`-amd64 -O /usr/local/bin/ahoy && sudo chown $USER /usr/local/bin/ahoy && chmod +x /usr/local/bin/ahoy
 ```
 
 ### Bash / Zsh Completion
@@ -85,7 +85,7 @@ _cli_bash_autocomplete() {
 restart your shell, and you should see ahoy autocomplete when typing `ahoy [TAB]`
 
 ## USAGE
-Almost all the commands are actually specified in a .ahoy.yml file placed in your working tree somewhere. Commands that are added there show up as options in ahoy. Here is what it looks like when using the [example.ahoy.yml file](https://github.com/devinci-code/ahoy/blob/master/examples/examples.ahoy.yml). To start with this file locally you can run `ahoy init`.
+Almost all the commands are actually specified in a .ahoy.yml file placed in your working tree somewhere. Commands that are added there show up as options in ahoy. Here is what it looks like when using the [example.ahoy.yml file](https://github.com/ahoy-cli/ahoy/blob/master/examples/examples.ahoy.yml). To start with this file locally you can run `ahoy init`.
 
 ```
 $ ahoy
