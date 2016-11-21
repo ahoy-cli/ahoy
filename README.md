@@ -2,6 +2,8 @@
 
 # AHOY! - Automate and organize your workflows, no matter what technology you use.
 
+Test Status: master [![CircleCI](https://circleci.com/gh/ahoy-cli/ahoy/tree/master.svg?style=svg)](https://circleci.com/gh/ahoy-cli/ahoy/tree/master)
+
 Ahoy is command line tool that gives each of your projects their own CLI app with with zero code and dependencies. 
 
 Simply write your commands in a yaml file and ahoy gives you lots of features like:
