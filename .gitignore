@@ -1,2 +1,4 @@
 # Ignore the items build by sphinx for read the docs.
 docs/_build
+# Ignore the ahoy binary when it's built
+ahoy
