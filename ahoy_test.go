@@ -7,7 +7,6 @@ import (
 	"testing"
 )
 
-
 func TestOverrideExample(t *testing.T) {
 	expected := "Overrode you.\n"
 	actual, _ := appRun([]string{"ahoy", "-f", "testdata/override-base.ahoy.yml", "docker", "override-example"})
@@ -15,7 +14,6 @@ func TestOverrideExample(t *testing.T) {
 		t.Errorf("ahoy docker override-example: expected - %s; actual - %s", string(expected), string(actual))
 	}
 }
-
 
 func TestGetCommands(t *testing.T) {
 	// Get Command with no sub Commands.
@@ -249,7 +247,6 @@ func TestGetConfigPathPanicOnBogusPath(t *testing.T) {
 
 	getConfigPath("~/bogus/path")
 }
-
 
 func appRun(args []string) (string, error) {
 	stdout := os.Stdout
