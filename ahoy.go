@@ -51,7 +51,7 @@ func logger(errType string, text string) {
 		log.Print(errText)
 	}
 	if errType == "fatal" {
-		panic(errText)
+		os.Exit(1)
 	}
 }
 
