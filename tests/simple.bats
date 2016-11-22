@@ -3,8 +3,9 @@
 @test "display help text when no arguments are passed." {
   run ./ahoy -f testdata/simple.ahoy.yml
   # Should throw an error.
-  [ "${#lines[@]}" -gt 14 ]
-  [ $status -eq 1 ]
+  [ $status -ne 0 ]
+  echo "$output"
+  [ "${#lines[@]}" -gt 10 ]
 }
 
 @test "run a simple ahoy command: echo" {

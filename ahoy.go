@@ -47,9 +47,12 @@ var version string
 //Complete command: `go build -ldflags "-X main.version=$VERSION"`
 func logger(errType string, text string) {
 	errText := ""
+	// Disable the flags which add date and time for instance.
+	log.SetFlags(0)
+
 	if (errType == "error") || (errType == "fatal") || (verbose == true) {
-		errText = "AHOY! [" + errType + "] ==> " + text + "\n"
-		log.Print(errText)
+		errText = "[" + errType + "] " + text + "\n"
+		log.Println(errText)
 	}
 	if errType == "fatal" {
 		os.Exit(1)
@@ -258,14 +261,31 @@ func BashComplete(c *cli.Context) {
 	}
 }
 
-// This is the application wide default action, for when no arguments are passed.
+// This is the application wide default action, for when no flags or arguments
+// are passed or when a command doesn't exist.
+// Looks like -f flag still works through here though.
 func NoArgsAction(c *cli.Context) {
-	if c.Bool("help") {
-		cli.ShowAppHelp(c)
+	args := c.Args()
+	if len(args) > 0 {
+		msg := "Command not found for '" + strings.Join(args, " ") + "'"
+		logger("fatal", msg)
 	}
+
+	cli.ShowAppHelp(c)
+
+	if sourcefile == "" {
+		logger("fatal", "No .ahoy.yml found. You can use 'ahoy init' to download an example.")
+	}
+
+	if !c.Bool("help") || !c.Bool("version") {
+		logger("fatal", "Missing flag or argument.")
+	}
+
+	// Looks like we never reach here.
+	fmt.Println("ERROR: NoArg Action ")
 }
 
-// This runs before every command so arguments must be passed.
+// This runs before every command so arguments or flags must be passed
 func BeforeCommand(c *cli.Context) error {
 	args := c.Args()
 	if c.Bool("version") {
@@ -275,8 +295,10 @@ func BeforeCommand(c *cli.Context) error {
 	if c.Bool("help") {
 		if len(args) > 0 {
 			cli.ShowCommandHelp(c, args.First())
-			return errors.New("don't continue with commands")
+		} else {
+			cli.ShowAppHelp(c)
 		}
+		return errors.New("don't continue with commands")
 	}
 	//fmt.Printf("%+v\n", args)
 	return nil
@@ -297,6 +319,12 @@ func setupApp(localArgs []string) *cli.App {
 
 	if sourcefile, err := getConfigPath(sourcefile); err == nil {
 		sourcedir = filepath.Dir(sourcefile)
+		// If we don't have a sourcefile, then just supply the default commands.
+		if sourcefile == "" && true {
+			app.Commands = addDefaultCommands(app.Commands)
+			app.Run(os.Args)
+			os.Exit(0)
+		}
 		config, _ := getConfig(sourcefile)
 		app.Commands = getCommands(config)
 		app.Commands = addDefaultCommands(app.Commands)

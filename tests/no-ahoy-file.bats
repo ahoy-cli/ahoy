@@ -8,18 +8,18 @@ teardown() {
   mv tmp.ahoy.yml .ahoy.yml
 }
 
-@test "run ahoy withough a command and without a .ahoy.yml file" {
-  result="$(./ahoy)"
-  echo "$result"
-  [ "$result" -eq 4 ]
+@test "run ahoy without a command and without a .ahoy.yml file" {
+  run ./ahoy
+  [ $status -eq 1 ]
+  [ "${lines[-1]}" == "[fatal] No .ahoy.yml found. You can use 'ahoy init' to download an example." ]
 }
 
 @test "run an ahoy command without a .ahoy.yml file" {
-  result="$(./ahoy something)"
-  [ "$result" -eq 4 ]
+  run ./ahoy something
+  [ "$output" == "[fatal] Command not found for 'something'" ]
 }
 
 @test "run ahoy init without a .ahoy.yml file" {
-  result="$(./ahoy init)"
-  [ "$result" -eq 4 ]
+  run ./ahoy init
+  [ "${lines[-1]}" == "example.ahoy.yml downloaded to the current directory. You can customize it to suit your needs!" ]
 }
