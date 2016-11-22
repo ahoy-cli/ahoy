@@ -11,7 +11,8 @@ teardown() {
 @test "run ahoy without a command and without a .ahoy.yml file" {
   run ./ahoy
   [ $status -eq 1 ]
-  [ "${lines[-1]}" == "[fatal] No .ahoy.yml found. You can use 'ahoy init' to download an example." ]
+  [ "${lines[-2]}" == "[error] No .ahoy.yml found. You can use 'ahoy init' to download an example." ]
+  [ "${lines[-1]}" == "[fatal] Missing flag or argument." ]
 }
 
 @test "run an ahoy command without a .ahoy.yml file" {

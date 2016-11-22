@@ -35,25 +35,30 @@ type Command struct {
 }
 
 var app *cli.App
-var sourcedir string
 var sourcefile string
 var args []string
 var verbose bool
 var bashCompletion bool
 
-var version string
-
 //The build version can be set using the go linker flag `-ldflags "-X main.version=$VERSION"`
 //Complete command: `go build -ldflags "-X main.version=$VERSION"`
+var version string
+
+// AhoyConf stores the global config.
+var AhoyConf struct {
+	srcDir  string
+	srcFile string
+}
+
 func logger(errType string, text string) {
 	errText := ""
 	// Disable the flags which add date and time for instance.
 	log.SetFlags(0)
-
-	if (errType == "error") || (errType == "fatal") || (verbose == true) {
+	if errType != "debug" {
 		errText = "[" + errType + "] " + text + "\n"
 		log.Println(errText)
 	}
+
 	if errType == "fatal" {
 		os.Exit(1)
 	}
@@ -80,18 +85,19 @@ func getConfigPath(sourcefile string) (string, error) {
 		ymlpath := filepath.Join(dir, ".ahoy.yml")
 		//log.Println(ymlpath)
 		if _, err := os.Stat(ymlpath); err == nil {
-			//log.Println("found: ", ymlpath )
+			logger("debug", "Found .ahoy.yml at "+ymlpath)
 			return ymlpath, err
 		}
 		// Chop off the last part of the path.
 		dir = path.Dir(dir)
 	}
+	logger("debug", "Can't find a .ahoy.yml file.")
 	return "", err
 }
 
-func getConfig(sourcefile string) (Config, error) {
+func getConfig(file string) (Config, error) {
 	var config = Config{}
-	yamlFile, err := ioutil.ReadFile(sourcefile)
+	yamlFile, err := ioutil.ReadFile(file)
 	if err != nil {
 		err = errors.New("an ahoy config file couldn't be found in your path. You can create an example one by using 'ahoy init'")
 		return config, err
@@ -124,7 +130,7 @@ func getSubCommands(includes []string) []cli.Command {
 			continue
 		}
 		if include[0] != "/"[0] || include[0] != "~"[0] {
-			include = filepath.Join(sourcedir, include)
+			include = filepath.Join(AhoyConf.srcDir, include)
 		}
 		if _, err := os.Stat(include); err != nil {
 			//Skipping files that cannot be loaded allows us to separate
@@ -195,13 +201,11 @@ func runCommand(name string, c string) {
 
 	cReplace := strings.Replace(c, "{{args}}", strings.Join(args, " "), -1)
 
-	dir := sourcedir
-
 	if verbose {
 		log.Println("===> AHOY", name, "from", sourcefile, ":", cReplace)
 	}
 	cmd := exec.Command("bash", "-c", cReplace)
-	cmd.Dir = dir
+	cmd.Dir = AhoyConf.srcDir
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
@@ -245,6 +249,7 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 
 //TODO Move these to flag.go?
 func init() {
+	logger("debug", "init()")
 	flag.StringVar(&sourcefile, "f", "", "specify the sourcefile")
 	flag.BoolVar(&bashCompletion, "generate-bash-completion", false, "")
 	flag.BoolVar(&verbose, "verbose", false, "")
@@ -252,6 +257,7 @@ func init() {
 
 // BashComplete prints the list of subcommands as the default app completion method
 func BashComplete(c *cli.Context) {
+	logger("debug", "BashComplete()")
 
 	if sourcefile != "" {
 		log.Println(sourcefile)
@@ -276,8 +282,8 @@ func NoArgsAction(c *cli.Context) {
 
 	cli.ShowAppHelp(c)
 
-	if sourcefile == "" {
-		logger("fatal", "No .ahoy.yml found. You can use 'ahoy init' to download an example.")
+	if AhoyConf.srcFile == "" {
+		logger("error", "No .ahoy.yml found. You can use 'ahoy init' to download an example.")
 	}
 
 	if !c.Bool("help") || !c.Bool("version") {
@@ -308,6 +314,7 @@ func BeforeCommand(c *cli.Context) error {
 }
 
 func setupApp(localArgs []string) *cli.App {
+	var err error
 	initFlags(localArgs)
 	// cli stuff
 	app = cli.NewApp()
@@ -320,17 +327,18 @@ func setupApp(localArgs []string) *cli.App {
 	app.BashComplete = BashComplete
 	overrideFlags(app)
 
-	if sourcefile, err := getConfigPath(sourcefile); err != nil {
+	AhoyConf.srcFile, err = getConfigPath(sourcefile)
+	if err != nil {
 		logger("fatal", err.Error())
 	} else {
-		sourcedir = filepath.Dir(sourcefile)
+		AhoyConf.srcDir = filepath.Dir(AhoyConf.srcFile)
 		// If we don't have a sourcefile, then just supply the default commands.
-		if sourcefile == "" && true {
+		if AhoyConf.srcFile == "" {
 			app.Commands = addDefaultCommands(app.Commands)
 			app.Run(os.Args)
 			os.Exit(0)
 		}
-		config, err := getConfig(sourcefile)
+		config, err := getConfig(AhoyConf.srcFile)
 		if err != nil {
 			logger("fatal", err.Error())
 		}
@@ -366,6 +374,7 @@ VERSION:
 }
 
 func main() {
+	logger("debug", "main()")
 	app = setupApp(os.Args[1:])
 	app.Run(os.Args)
 }

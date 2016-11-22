@@ -40,7 +40,7 @@ func TestGetCommands(t *testing.T) {
 func TestGetSubCommand(t *testing.T) {
 	// Since we're not running the app directly, sourcedir doesn't get reset, so
 	// we need to reset it ourselves. TODO: Remove these globals somehow.
-	sourcedir = ""
+	AhoyConf.srcDir = ""
 
 	// When empty return empty list of commands.
 
@@ -121,7 +121,7 @@ func TestGetSubCommand(t *testing.T) {
 	})
 
 	if len(actual) != 1 {
-		t.Error("Sourcedir:", sourcedir)
+		t.Error("Sourcedir:", AhoyConf.srcDir)
 		t.Error("Failed: expect that two commands with the same name get merged into one.", actual)
 	}
 

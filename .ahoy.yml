@@ -9,11 +9,11 @@ commands:
   bats:
     usage: "Run the bats bash testing command."
     cmd: |
-      ahoy build
       bats tests
   test:
     usage: Run automated tests
     cmd: |
+      ahoy build
       FAIL=false
       TESTS=(
         'go vet'
