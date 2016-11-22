@@ -40,7 +40,7 @@ func TestGetCommands(t *testing.T) {
 func TestGetSubCommand(t *testing.T) {
 	// Since we're not running the app directly, sourcedir doesn't get reset, so
 	// we need to reset it ourselves. TODO: Remove these globals somehow.
-	sourcedir = ""
+	AhoyConf.srcDir = ""
 
 	// When empty return empty list of commands.
 
@@ -121,7 +121,7 @@ func TestGetSubCommand(t *testing.T) {
 	})
 
 	if len(actual) != 1 {
-		t.Error("Sourcedir:", sourcedir)
+		t.Error("Sourcedir:", AhoyConf.srcDir)
 		t.Error("Failed: expect that two commands with the same name get merged into one.", actual)
 	}
 
@@ -238,14 +238,11 @@ func TestGetConfigPath(t *testing.T) {
 	// TODO: Passing directory should return default
 }
 
-func TestGetConfigPathPanicOnBogusPath(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("getConfigPath did not fail when passed a bogus path.")
-		}
-	}()
-
-	getConfigPath("~/bogus/path")
+func TestGetConfigPathErrorOnBogusPath(t *testing.T) {
+	_, err := getConfigPath("~/bogus/path")
+	if err == nil {
+		t.Error("getConfigPath did not fail when passed a bogus path.")
+	}
 }
 
 func appRun(args []string) (string, error) {

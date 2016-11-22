@@ -1,5 +1,6 @@
 test:
   pre:
+    - npm install -g bats
     # Make sure this build is using GO > 1.6 for golint to work correctly.
     # On CircleCI, only the Trusty 14.04 build has a newer version.
     - go get -u github.com/golang/lint/golint

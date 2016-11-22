@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/codegangsta/cli"
@@ -34,73 +35,85 @@ type Command struct {
 }
 
 var app *cli.App
-var sourcedir string
 var sourcefile string
 var args []string
 var verbose bool
 var bashCompletion bool
 
-var version string
-
 //The build version can be set using the go linker flag `-ldflags "-X main.version=$VERSION"`
 //Complete command: `go build -ldflags "-X main.version=$VERSION"`
+var version string
+
+// AhoyConf stores the global config.
+var AhoyConf struct {
+	srcDir  string
+	srcFile string
+}
+
 func logger(errType string, text string) {
 	errText := ""
-	if (errType == "error") || (errType == "fatal") || (verbose == true) {
-		errText = "AHOY! [" + errType + "] ==> " + text + "\n"
-		log.Print(errText)
+	// Disable the flags which add date and time for instance.
+	log.SetFlags(0)
+	if errType != "debug" {
+		errText = "[" + errType + "] " + text + "\n"
+		log.Println(errText)
 	}
+
 	if errType == "fatal" {
-		panic(errText)
+		os.Exit(1)
 	}
 }
 
 func getConfigPath(sourcefile string) (string, error) {
 	var err error
+	var config = ""
 
 	// If a specific source file was set, then try to load it directly.
 	if sourcefile != "" {
 		if _, err := os.Stat(sourcefile); err == nil {
 			return sourcefile, err
 		}
-		logger("fatal", "An ahoy config file was specified using -f to be at "+sourcefile+" but couldn't be found. Check your path.")
+		err = errors.New("An ahoy config file was specified using -f to be at " + sourcefile + " but couldn't be found. Check your path.")
+		return config, err
 	}
 
 	dir, err := os.Getwd()
 	if err != nil {
-		log.Fatal(err)
+		return config, err
 	}
 	for dir != "/" && err == nil {
 		ymlpath := filepath.Join(dir, ".ahoy.yml")
 		//log.Println(ymlpath)
 		if _, err := os.Stat(ymlpath); err == nil {
-			//log.Println("found: ", ymlpath )
+			logger("debug", "Found .ahoy.yml at "+ymlpath)
 			return ymlpath, err
 		}
 		// Chop off the last part of the path.
 		dir = path.Dir(dir)
 	}
+	logger("debug", "Can't find a .ahoy.yml file.")
 	return "", err
 }
 
-func getConfig(sourcefile string) (Config, error) {
-
-	yamlFile, err := ioutil.ReadFile(sourcefile)
+func getConfig(file string) (Config, error) {
+	var config = Config{}
+	yamlFile, err := ioutil.ReadFile(file)
 	if err != nil {
-		logger("fatal", "An ahoy config file couldn't be found in your path. You can create an example one by using 'ahoy init'.")
+		err = errors.New("an ahoy config file couldn't be found in your path. You can create an example one by using 'ahoy init'")
+		return config, err
 	}
 
-	var config Config
 	// Extract the yaml file into the config varaible.
 	err = yaml.Unmarshal(yamlFile, &config)
 	if err != nil {
-		panic(err)
+		return config, err
 	}
 
 	// All ahoy files (and imports) must specify the ahoy version.
 	// This is so we can support backwards compatability in the future.
 	if config.AhoyAPI != "v2" {
-		logger("fatal", "Ahoy only supports API version 'v2', but '"+config.AhoyAPI+"' given in "+sourcefile)
+		err = errors.New("Ahoy only supports API version 'v2', but '" + config.AhoyAPI + "' given in " + sourcefile)
+		return config, err
 	}
 
 	return config, err
@@ -117,7 +130,7 @@ func getSubCommands(includes []string) []cli.Command {
 			continue
 		}
 		if include[0] != "/"[0] || include[0] != "~"[0] {
-			include = filepath.Join(sourcedir, include)
+			include = filepath.Join(AhoyConf.srcDir, include)
 		}
 		if _, err := os.Stat(include); err != nil {
 			//Skipping files that cannot be loaded allows us to separate
@@ -188,13 +201,11 @@ func runCommand(name string, c string) {
 
 	cReplace := strings.Replace(c, "{{args}}", strings.Join(args, " "), -1)
 
-	dir := sourcedir
-
 	if verbose {
 		log.Println("===> AHOY", name, "from", sourcefile, ":", cReplace)
 	}
 	cmd := exec.Command("bash", "-c", cReplace)
-	cmd.Dir = dir
+	cmd.Dir = AhoyConf.srcDir
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
@@ -238,6 +249,7 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 
 //TODO Move these to flag.go?
 func init() {
+	logger("debug", "init()")
 	flag.StringVar(&sourcefile, "f", "", "specify the sourcefile")
 	flag.BoolVar(&bashCompletion, "generate-bash-completion", false, "")
 	flag.BoolVar(&verbose, "verbose", false, "")
@@ -245,6 +257,7 @@ func init() {
 
 // BashComplete prints the list of subcommands as the default app completion method
 func BashComplete(c *cli.Context) {
+	logger("debug", "BashComplete()")
 
 	if sourcefile != "" {
 		log.Println(sourcefile)
@@ -257,11 +270,56 @@ func BashComplete(c *cli.Context) {
 	}
 }
 
-func setupApp(args []string) *cli.App {
-	initFlags(args)
-	//log.Println(sourcefile)
+// NoArgsAction is the application wide default action, for when no flags or arguments
+// are passed or when a command doesn't exist.
+// Looks like -f flag still works through here though.
+func NoArgsAction(c *cli.Context) {
+	args := c.Args()
+	if len(args) > 0 {
+		msg := "Command not found for '" + strings.Join(args, " ") + "'"
+		logger("fatal", msg)
+	}
+
+	cli.ShowAppHelp(c)
+
+	if AhoyConf.srcFile == "" {
+		logger("error", "No .ahoy.yml found. You can use 'ahoy init' to download an example.")
+	}
+
+	if !c.Bool("help") || !c.Bool("version") {
+		logger("fatal", "Missing flag or argument.")
+	}
+
+	// Looks like we never reach here.
+	fmt.Println("ERROR: NoArg Action ")
+}
+
+// BeforeCommand runs before every command so arguments or flags must be passed
+func BeforeCommand(c *cli.Context) error {
+	args := c.Args()
+	if c.Bool("version") {
+		fmt.Println(version)
+		return errors.New("don't continue with commands")
+	}
+	if c.Bool("help") {
+		if len(args) > 0 {
+			cli.ShowCommandHelp(c, args.First())
+		} else {
+			cli.ShowAppHelp(c)
+		}
+		return errors.New("don't continue with commands")
+	}
+	//fmt.Printf("%+v\n", args)
+	return nil
+}
+
+func setupApp(localArgs []string) *cli.App {
+	var err error
+	initFlags(localArgs)
 	// cli stuff
 	app = cli.NewApp()
+	app.Action = NoArgsAction
+	app.Before = BeforeCommand
 	app.Name = "ahoy"
 	app.Version = version
 	app.Usage = "Creates a configurable cli app for running commands."
@@ -269,9 +327,21 @@ func setupApp(args []string) *cli.App {
 	app.BashComplete = BashComplete
 	overrideFlags(app)
 
-	if sourcefile, err := getConfigPath(sourcefile); err == nil {
-		sourcedir = filepath.Dir(sourcefile)
-		config, _ := getConfig(sourcefile)
+	AhoyConf.srcFile, err = getConfigPath(sourcefile)
+	if err != nil {
+		logger("fatal", err.Error())
+	} else {
+		AhoyConf.srcDir = filepath.Dir(AhoyConf.srcFile)
+		// If we don't have a sourcefile, then just supply the default commands.
+		if AhoyConf.srcFile == "" {
+			app.Commands = addDefaultCommands(app.Commands)
+			app.Run(os.Args)
+			os.Exit(0)
+		}
+		config, err := getConfig(AhoyConf.srcFile)
+		if err != nil {
+			logger("fatal", err.Error())
+		}
 		app.Commands = getCommands(config)
 		app.Commands = addDefaultCommands(app.Commands)
 		if config.Usage != "" {
@@ -304,6 +374,7 @@ VERSION:
 }
 
 func main() {
+	logger("debug", "main()")
 	app = setupApp(os.Args[1:])
 	app.Run(os.Args)
 }

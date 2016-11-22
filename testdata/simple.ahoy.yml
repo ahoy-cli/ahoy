@@ -1,0 +1,4 @@
+ahoyapi: v2
+commands:
+  echo:
+    cmd: echo {{args}}
