@@ -93,7 +93,7 @@ func getConfig(sourcefile string) (Config, error) {
 	var config = Config{}
 	yamlFile, err := ioutil.ReadFile(sourcefile)
 	if err != nil {
-		err = errors.New("An ahoy config file couldn't be found in your path. You can create an example one by using 'ahoy init'.")
+		err = errors.New("an ahoy config file couldn't be found in your path. You can create an example one by using 'ahoy init'")
 		return config, err
 	}
 
