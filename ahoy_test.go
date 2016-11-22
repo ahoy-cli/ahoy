@@ -238,14 +238,11 @@ func TestGetConfigPath(t *testing.T) {
 	// TODO: Passing directory should return default
 }
 
-func TestGetConfigPathPanicOnBogusPath(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("getConfigPath did not fail when passed a bogus path.")
-		}
-	}()
-
-	getConfigPath("~/bogus/path")
+func TestGetConfigPathErrorOnBogusPath(t *testing.T) {
+	_, err := getConfigPath("~/bogus/path")
+	if err == nil {
+		t.Error("getConfigPath did not fail when passed a bogus path.")
+	}
 }
 
 func appRun(args []string) (string, error) {

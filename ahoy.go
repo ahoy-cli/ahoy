@@ -61,18 +61,20 @@ func logger(errType string, text string) {
 
 func getConfigPath(sourcefile string) (string, error) {
 	var err error
+	var config = ""
 
 	// If a specific source file was set, then try to load it directly.
 	if sourcefile != "" {
 		if _, err := os.Stat(sourcefile); err == nil {
 			return sourcefile, err
 		}
-		logger("fatal", "An ahoy config file was specified using -f to be at "+sourcefile+" but couldn't be found. Check your path.")
+		err = errors.New("An ahoy config file was specified using -f to be at " + sourcefile + " but couldn't be found. Check your path.")
+		return config, err
 	}
 
 	dir, err := os.Getwd()
 	if err != nil {
-		log.Fatal(err)
+		return config, err
 	}
 	for dir != "/" && err == nil {
 		ymlpath := filepath.Join(dir, ".ahoy.yml")
@@ -88,23 +90,24 @@ func getConfigPath(sourcefile string) (string, error) {
 }
 
 func getConfig(sourcefile string) (Config, error) {
-
+	var config = Config{}
 	yamlFile, err := ioutil.ReadFile(sourcefile)
 	if err != nil {
-		logger("fatal", "An ahoy config file couldn't be found in your path. You can create an example one by using 'ahoy init'.")
+		err = errors.New("An ahoy config file couldn't be found in your path. You can create an example one by using 'ahoy init'.")
+		return config, err
 	}
 
-	var config Config
 	// Extract the yaml file into the config varaible.
 	err = yaml.Unmarshal(yamlFile, &config)
 	if err != nil {
-		panic(err)
+		return config, err
 	}
 
 	// All ahoy files (and imports) must specify the ahoy version.
 	// This is so we can support backwards compatability in the future.
 	if config.AhoyAPI != "v2" {
-		logger("fatal", "Ahoy only supports API version 'v2', but '"+config.AhoyAPI+"' given in "+sourcefile)
+		err = errors.New("Ahoy only supports API version 'v2', but '" + config.AhoyAPI + "' given in " + sourcefile)
+		return config, err
 	}
 
 	return config, err
@@ -261,7 +264,7 @@ func BashComplete(c *cli.Context) {
 	}
 }
 
-// This is the application wide default action, for when no flags or arguments
+// NoArgsAction is the application wide default action, for when no flags or arguments
 // are passed or when a command doesn't exist.
 // Looks like -f flag still works through here though.
 func NoArgsAction(c *cli.Context) {
@@ -285,7 +288,7 @@ func NoArgsAction(c *cli.Context) {
 	fmt.Println("ERROR: NoArg Action ")
 }
 
-// This runs before every command so arguments or flags must be passed
+// BeforeCommand runs before every command so arguments or flags must be passed
 func BeforeCommand(c *cli.Context) error {
 	args := c.Args()
 	if c.Bool("version") {
@@ -317,7 +320,9 @@ func setupApp(localArgs []string) *cli.App {
 	app.BashComplete = BashComplete
 	overrideFlags(app)
 
-	if sourcefile, err := getConfigPath(sourcefile); err == nil {
+	if sourcefile, err := getConfigPath(sourcefile); err != nil {
+		logger("fatal", err.Error())
+	} else {
 		sourcedir = filepath.Dir(sourcefile)
 		// If we don't have a sourcefile, then just supply the default commands.
 		if sourcefile == "" && true {
@@ -325,7 +330,10 @@ func setupApp(localArgs []string) *cli.App {
 			app.Run(os.Args)
 			os.Exit(0)
 		}
-		config, _ := getConfig(sourcefile)
+		config, err := getConfig(sourcefile)
+		if err != nil {
+			logger("fatal", err.Error())
+		}
 		app.Commands = getCommands(config)
 		app.Commands = addDefaultCommands(app.Commands)
 		if config.Usage != "" {
