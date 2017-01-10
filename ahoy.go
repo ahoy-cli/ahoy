@@ -19,9 +19,10 @@ import (
 // Config handles the overall configuration in an ahoy.yml file
 // with one Config per file.
 type Config struct {
-	Usage    string
-	AhoyAPI  string
-	Commands map[string]Command
+	Usage      string
+	AhoyAPI    string
+	Commands   map[string]Command
+	Entrypoint []string
 }
 
 // Command is an ahoy command detailed in ahoy.yml files. Multiple
@@ -116,6 +117,10 @@ func getConfig(file string) (Config, error) {
 		return config, err
 	}
 
+	if config.Entrypoint == nil {
+		config.Entrypoint = []string{"bash", "-c", "{{cmd}}", "{{name}}"}
+	}
+
 	return config, err
 }
 
@@ -166,7 +171,6 @@ func getCommands(config Config) []cli.Command {
 
 	for _, name := range keys {
 		cmd := config.Commands[name]
-		cmdName := name
 
 		newCmd := cli.Command{
 			Name:            name,
@@ -180,8 +184,42 @@ func getCommands(config Config) []cli.Command {
 
 		if cmd.Cmd != "" {
 			newCmd.Action = func(c *cli.Context) {
-				args = c.Args()
-				runCommand(cmdName, cmd.Cmd)
+				// For some unclear reason, if we don't add an item at the end here,
+				// the first argument is skipped... actually it's not!
+				// 'bash -c' says that arguments will be passed starting with $0, which also means that
+				// $@ skips the first item. See http://stackoverflow.com/questions/41043163/xargs-sh-c-skipping-the-first-argument
+				var cmdItems []string
+				var cmdArgs []string
+				var cmdEntrypoint []string
+
+				// c.Args()  is not a slice apparently.
+				for _, arg := range c.Args() {
+					cmdArgs = append(cmdArgs, arg)
+				}
+
+				// Replace the entry point placeholders.
+				cmdEntrypoint = config.Entrypoint[:]
+				for i := range cmdEntrypoint {
+					if cmdEntrypoint[i] == "{{cmd}}" {
+						cmdEntrypoint[i] = cmd.Cmd
+					} else if cmdEntrypoint[i] == "{{name}}" {
+						cmdEntrypoint[i] = c.Command.Name
+					}
+				}
+				cmdItems = append(cmdEntrypoint, cmdArgs...)
+
+				if verbose {
+					log.Println("===> AHOY", name, "from", sourcefile, ":", cmdItems)
+				}
+				command := exec.Command(cmdItems[0], cmdItems[1:]...)
+				command.Dir = AhoyConf.srcDir
+				command.Stdout = os.Stdout
+				command.Stdin = os.Stdin
+				command.Stderr = os.Stderr
+				if err := command.Run(); err != nil {
+					fmt.Fprintln(os.Stderr)
+					os.Exit(1)
+				}
 			}
 		}
 
@@ -195,24 +233,6 @@ func getCommands(config Config) []cli.Command {
 	}
 
 	return exportCmds
-}
-
-func runCommand(name string, c string) {
-
-	cReplace := strings.Replace(c, "{{args}}", strings.Join(args, " "), -1)
-
-	if verbose {
-		log.Println("===> AHOY", name, "from", sourcefile, ":", cReplace)
-	}
-	cmd := exec.Command("bash", "-c", cReplace)
-	cmd.Dir = AhoyConf.srcDir
-	cmd.Stdout = os.Stdout
-	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		fmt.Fprintln(os.Stderr)
-		os.Exit(1)
-	}
 }
 
 func addDefaultCommands(commands []cli.Command) []cli.Command {
