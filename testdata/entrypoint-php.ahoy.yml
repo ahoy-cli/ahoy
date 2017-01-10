@@ -1,9 +1,5 @@
 ahoyapi: v2
-entrypoint:
-  - php
-  - "-r"
-  - "{{cmd}}"
-
+entrypoint: [php, "-r", '{{cmd}}']
 commands:
   echo:
     cmd: |
