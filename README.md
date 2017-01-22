@@ -127,6 +127,7 @@ All new features are being added to the v2 (master) branch of ahoy which is stil
   brew uninstall ahoy # Required or you'll get errors
   brew upgrade # Updates the tap
   brew install ahoy --HEAD # Installs ahoy by compiling the latest from the master branch
+  brew reinstall ahoy --HEAD # Use this whenever you want to upgrade to the latest v2 version.
   ahoy # You should see full version that you're using.
 ```
 - Change your `ahoyapi: v1` lines to `ahoyapi: v2`
