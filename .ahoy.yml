@@ -2,7 +2,7 @@ ahoyapi: v2
 commands:
   build:
     usage: Build ahoy with a version automatically set.
-    cmd: bash build.sh {{args}}
+    cmd: bash build.sh "$@"
   install:
     cmd: "go install"
     usage: Build ahoy using go install.
@@ -45,7 +45,7 @@ commands:
         echo "OSX: brew install godep"
         echo "other: go get github.com/tools/godep"
       else
-        godep {{args}}
+        godep "$@"
       fi
   gofmt:
     usage: Clean up go code per code standards.
