@@ -172,6 +172,11 @@ func getCommands(config Config) []cli.Command {
 	for _, name := range keys {
 		cmd := config.Commands[name]
 
+		// Check that a command has 'cmd' OR 'imports' set.
+		if cmd.Cmd == "" && cmd.Imports == nil {
+			logger("fatal", "Command ["+name+"] has neither 'cmd' or 'imports' set. Check your yaml file.")
+		}
+
 		newCmd := cli.Command{
 			Name:            name,
 			SkipFlagParsing: true,
