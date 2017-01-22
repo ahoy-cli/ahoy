@@ -177,6 +177,16 @@ func getCommands(config Config) []cli.Command {
 			logger("fatal", "Command ["+name+"] has neither 'cmd' or 'imports' set. Check your yaml file.")
 		}
 
+		// Check that a command has 'cmd' OR 'imports' set.
+		if cmd.Cmd != "" && cmd.Imports != nil {
+			logger("fatal", "Command ["+name+"] has both 'cmd' and 'imports' set, but only one is allowed. Check your yaml file.")
+		}
+
+		// Check that a command with 'imports' set has a least one entry.
+		if cmd.Imports != nil && len(cmd.Imports) == 0 {
+			logger("fatal", "Command ["+name+"] has 'imports' set, but it is empty. Check your yaml file.")
+		}
+
 		newCmd := cli.Command{
 			Name:            name,
 			SkipFlagParsing: true,
@@ -228,8 +238,11 @@ func getCommands(config Config) []cli.Command {
 			}
 		}
 
-		subCommands := getSubCommands(cmd.Imports)
-		if subCommands != nil {
+		if cmd.Imports != nil {
+			subCommands := getSubCommands(cmd.Imports)
+			if subCommands == nil || len(subCommands) == 0 {
+				logger("fatal", "Command ["+name+"] has 'imports' set, but no commands were found. Check your yaml file.")
+			}
 			newCmd.Subcommands = subCommands
 		}
 
