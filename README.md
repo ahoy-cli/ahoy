@@ -4,7 +4,7 @@
 
 Test Status: master [![CircleCI](https://circleci.com/gh/ahoy-cli/ahoy/tree/master.svg?style=svg)](https://circleci.com/gh/ahoy-cli/ahoy/tree/master)
 
-Ahoy is command line tool that gives each of your projects their own CLI app with with zero code and dependencies. 
+Ahoy is command line tool that gives each of your projects their own CLI app with with zero code and dependencies.
 
 Simply write your commands in a yaml file and ahoy gives you lots of features like:
 * a command listing
@@ -29,7 +29,6 @@ With ahoy, you can turn this into
 - Consitent - Commands always run relative to the .ahoy.yml file, but can be called from any subfolder.
 - Visual - See a list of all of your commands in one place, along with helpful descriptions.
 - Flexible - Commands are specific to a single folder tree, so each repo/workspace can have its own commands
-- Command Templates - Args can be dropped into your commands using `{{args}}`
 - Fully interactive  - your shells (like mysql) and prompts still work.
 - Self-Documenting - Commands and help declared in .ahoy.yml show up as ahoy command help and bash completion of commands (see below)
 
@@ -122,24 +121,41 @@ GLOBAL OPTIONS:
 
 ## Version 2
 
-All new features are being added to the v2 (master) branch of ahoy which is still in alpha and will have breaking changes with v1 ahoy files, so to use ahoy v2, you'll need to do the following: 
+All new features are being added to the v2 (master) branch of ahoy which is still in alpha and will have breaking changes with v1 ahoy files, so to use ahoy v2, you'll need to do the following:
 - Upgrade to the ahoy v2 binary which currently needs to be compiled from source. If you are using homebrew, you can use that to upgrade to v2 using the following:
 ```
-  brew uninstall ahoy # Required or you'll get errors 
+  brew uninstall ahoy # Required or you'll get errors
   brew upgrade # Updates the tap
   brew install ahoy --HEAD # Installs ahoy by compiling the latest from the master branch
   ahoy # You should see full version that you're using.
 ```
 - Change your `ahoyapi: v1` lines to `ahoyapi: v2`
+- Change your `{{args}}` items to the default bash symbol `"$@"`
 
 ### New Features in v2
 - Implements a new feature to import mulitple config files using the "imports" field.
 - Uses the "last in wins" rule to deal with duplicate commands amongst the config files.
+- Better handling of quotes by no longer using `{{args}}`. Use regular bash syntax like `"$@"` for all arguments, or `$1` for the first argument.
+- You can now use a different entrypoint (the thing that runs your commands) instead of bash. Ex. using php, nodejs, python, etc.
+- Plugins are now possible by overriding the entrypoint.
 
-```
+###Example of new yaml setup in v2
+
+```Yaml
+# All files must have v2 set or you'll get an error
+ahoyapi: v2
+
+# You can now override the entrypoint. This is the default if you don't override it.
+# {{cmd}} is replaced with your command and {{name}} is the name of the command that was run (available as $0)
+entrypoint:
+  - bash
+  - "-c"
+  - '{{cmd}}'
+  - '{{name}}'
 commands:
   list:
       usage: List the commands from the imported config files.
+      # These commands will be aggregated together with later files overriding earlier ones if they exist.
       imports:
         - ./confirmation.ahoy.yml
         - ./docker.ahoy.yml
@@ -147,11 +163,10 @@ commands:
 ```
 
 ### Planned v2 features
-- Provide "drivers" or "plugins" for bash, docker-compose, kubernetes (these systems still work now, this would just make it easier)
-- Do specific arg replacement like {{arg1}} and enable specifying specific arguments and flags in the ahoy file itself to cut down on parsing arguments in scripts.
+- Enable specifying specific arguments and flags in the ahoy file itself to cut down on parsing arguments in scripts.
 - Support for more built-in commands or a "verify" yaml option that would create a yes / no prompt for potentially destructive commands. (Are you sure you want to delete all your containers?)
 - Pipe tab completion to another command (allows you to get tab completion)
-
+- Support for configuration
 
 ## Previewing the Read the Docs documentation locally.
 

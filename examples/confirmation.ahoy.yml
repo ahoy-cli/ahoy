@@ -2,7 +2,7 @@ ahoyapi: v2
 commands:
     confirm:
       cmd: |
-        read -r -p "{{args}} [y/N] " response
+        read -r -p "$@ [y/N] " response
         if [ $response = y ]
         then
           true

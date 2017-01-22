@@ -19,7 +19,7 @@ commands:
     cmd: "docker-compose stop && docker-compose rm && ahoy up"
     usage: Start the docker compose-containers.
   exec:
-    cmd: docker exec -it $(docker-compose ps -q cli) bash -c '{{args}}'
+    cmd: docker exec -it $(docker-compose ps -q cli) bash -c "$@"
     usage: run a command in the docker-compose cli service container.
   mysql:
     cmd: "docker exec -it $(docker-compose ps -q cli) bash -c 'mysql -u$DB_ENV_MYSQL_USER -p$DB_ENV_MYSQL_PASSWORD -h$DB_PORT_3306_TCP_ADDR $DB_ENV_MYSQL_DATABASE'"

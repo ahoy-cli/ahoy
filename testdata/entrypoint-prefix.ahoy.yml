@@ -1,0 +1,15 @@
+ahoyapi: v2
+entrypoint:
+  - "bash"
+  - "-c"
+  - |
+      source ./config.sh
+      bash -c "$0" "$@"
+  - '{{cmd}}'
+  - '{{name}}'
+
+commands:
+  echo-test:
+    cmd: |
+      ls "$@"
+      echo $TEST1

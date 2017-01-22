@@ -9,27 +9,27 @@ commands:
     usage: Stop the vagrant box if one exists.
 
   ps:
-    cmd: "docker-compose ps {{args}}"
+    cmd: docker-compose ps "$@"
     usage: List the running docker-compose containers.
 
   start:
-    cmd: "docker-compose start {{args}}"
+    cmd: docker-compose start "$@"
     usage: Start the docker compose-containers.
 
   stop:
-    cmd: "docker-compose stop {{args}}"
+    cmd: docker-compose stop "$@"
     usage: Stop the docker-compose containers.
 
   restart:
-    cmd: "docker-compose restart {{args}}"
+    cmd: docker-compose restart "$@"
     usage: Restart the docker-compose containers.
 
   drush:
-    cmd: "docker-compose run cli drush --root=docroot {{args}}"
+    cmd: docker-compose run cli drush --root=docroot "$@"
     usage: Run drush commands in the cli service container.
 
   bash:
-    cmd: "docker-compose run {{args}} bash"
+    cmd: docker-compose run "$1" bash
     usage: Start a shell in the container (like ssh without actual ssh).
 
   sqlc:
@@ -37,7 +37,7 @@ commands:
     usage: Connect to the default mysql database. Supports piping of data into the command.
 
   behat:
-    cmd: 'docker-compose run cli bash -c "cd docroot/test && composer install --prefer-source --no-interaction && bin/behat -p docker {{args}}"'
+    cmd: docker-compose run cli bash -c "cd docroot/test && composer install --prefer-source --no-interaction && bin/behat -p docker $@"
     usage: Run the behat tests within the container.
 
   behat-init:
