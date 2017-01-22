@@ -1,0 +1,4 @@
+ahoyapi: v2
+commands:
+  missing-completely:
+    usage: This item forgot to add a cmd line.

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
@@ -76,41 +77,30 @@ func TestGetSubCommand(t *testing.T) {
 		t.Error("Something went wrong with the file creation - file2.")
 	}
 
-	config := Config{
-		Usage:   "Test getSubCommands Usage.",
-		AhoyAPI: "v2",
-		Commands: map[string]Command{
-			"test-command": Command{
-				Description: "Testing example Command.",
-				Usage:       "test-command a",
-				Cmd:         "echo a.ahoy.yml",
-				Hide:        false,
-			},
-		},
-	}
-
-	yamlConfig, err := yaml.Marshal(config)
-	if err != nil {
-		t.Error("Error marshalling config for file1")
-	}
-
-	_, err = file1.Write([]byte(yamlConfig))
-
+	yamlConfigA := `
+ahoyapi: v2
+commands:
+  test-command:
+    description: Testing example Command.
+    usage: test-command a
+    cmd: echo "test"
+    hide: false
+`
+	yamlConfigB := `
+ahoyapi: v2
+commands:
+  test-command:
+    description: Testing example Command.
+    usage: test-command b
+    cmd: echo "test"
+    hide: false
+`
+	_, err = file1.Write([]byte(yamlConfigA))
 	if err != nil {
 		t.Error("Error writing to file1.")
 	}
 
-	command := config.Commands["test-command"]
-	command.Usage = "testing-command b"
-	config.Commands["test-command"] = command
-
-	yamlConfig, err = yaml.Marshal(config)
-	if err != nil {
-		t.Error("Error marshalling config for file2")
-	}
-
-	_, err = file2.Write([]byte(yamlConfig))
-
+	_, err = file2.Write([]byte(yamlConfigB))
 	if err != nil {
 		t.Error("Error writing to file2.")
 	}
@@ -125,8 +115,8 @@ func TestGetSubCommand(t *testing.T) {
 		t.Error("Failed: expect that two commands with the same name get merged into one.", actual)
 	}
 
-	if len(actual) > 0 && actual[0].Usage != "testing-command b" {
-		t.Error("Failed: expect that when multiple commands are merged, last one wins.")
+	if len(actual) > 0 && actual[0].Usage != "test-command b" {
+		t.Error("Failed: expect that when multiple commands are merged, last one wins.", actual)
 	}
 
 	// Test commands with different names do not get merged.
@@ -135,20 +125,17 @@ func TestGetSubCommand(t *testing.T) {
 		t.Error("Something went wrong with the file creation - file3.")
 	}
 
-	config.Commands["testing-new-command"] = Command{
-		Description: "Testing new example Command.",
-		Usage:       "test-new-command a",
-		Cmd:         "echo new a.ahoy.yml",
-		Hide:        false,
-	}
-
-	yamlConfig, err = yaml.Marshal(config)
-	if err != nil {
-		t.Error("Error marshalling config for file3")
-	}
-
-	_, err = file3.Write([]byte(yamlConfig))
-
+	//logger("fatal", "test")
+	yamlConfigC := `
+ahoyapi: v2
+commands:
+  test-new-command:
+    description: Testing new example Command.
+    usage: test-new-command a
+    cmd: "echo new a.ahoy.yml"
+    hide: false
+`
+	_, err = file3.Write([]byte(yamlConfigC))
 	if err != nil {
 		t.Error("Error writing to file3.")
 	}
@@ -160,7 +147,8 @@ func TestGetSubCommand(t *testing.T) {
 	})
 
 	if len(actual) != 2 {
-		t.Error("Failed: expect unique commands to be captured separately.")
+		fmt.Printf("x = %#v \n", actual)
+		t.Error("Failed: expect unique commands to be captured separately.", "commands found", actual)
 	}
 
 	file1.Close()
