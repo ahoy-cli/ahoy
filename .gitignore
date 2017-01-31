@@ -3,3 +3,4 @@ docs/_build
 # Ignore the ahoy binary when it's built
 ahoy
 .idea
+builds/*
