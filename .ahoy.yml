@@ -52,6 +52,7 @@ commands:
 
       fi
   godep:
+    usage: Go dependency manager (godep)
     cmd: |
       godep="$(which godep)"
       if [ ! "$godep" ]; then
@@ -64,9 +65,9 @@ commands:
   gofmt:
     usage: Clean up go code per code standards.
     cmd: gofmt -w *.go
-  build-docs:
+  docs-build:
     usage: Build the docs.
     cmd: cd docs && make html
-  deps:
+  docs-deps:
     usage: Install the dependencies from requirements.txt
     cmd: cd docs && pip install -r requirements.txt
