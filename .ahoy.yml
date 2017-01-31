@@ -3,6 +3,20 @@ commands:
   build:
     usage: Build ahoy with a version automatically set.
     cmd: bash build.sh "$@"
+  build-all:
+    usage: Build all of the architecture and OSes that we support.
+    cmd: |
+      os_list=(darwin linux windows)
+      arch=amd64
+      for os in "${os_list[@]}"; do
+        echo "Building ahoy-bin-$os-$arch .."
+        env GOOS="$os" GOARCH="$arch" ahoy build -- -o "builds/ahoy-bin-$os-$arch"
+        if [ $? -ne 0 ]; then
+          "[Error]"
+          exit 1
+        fi
+      done
+
   install:
     cmd: "go install"
     usage: Build ahoy using go install.
