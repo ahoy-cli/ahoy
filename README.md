@@ -4,6 +4,8 @@
 
 Test Status: master [![CircleCI](https://circleci.com/gh/ahoy-cli/ahoy/tree/master.svg?style=svg)](https://circleci.com/gh/ahoy-cli/ahoy/tree/master)
 
+### Note: Ahoy 2.x is now released and is the only supported version.
+
 Ahoy is command line tool that gives each of your projects their own CLI app with with zero code and dependencies.
 
 Simply write your commands in a yaml file and ahoy gives you lots of features like:
@@ -38,9 +40,11 @@ With ahoy, you can turn this into
 Using Homebrew:
 ```
 brew tap ahoy-cli/tap
-# For v1 - stable release
 brew install ahoy
-# For v2 which is still alpha (see below)
+```
+
+OR, For the master branch:
+```
 brew install ahoy --HEAD
 ```
 
@@ -49,89 +53,8 @@ Download and unzip the latest release and move the appropriate binary for your p
 
 Example:
 ```
-sudo wget -q https://github.com/ahoy-cli/ahoy/releases/download/1.1.0/ahoy-`uname -s`-amd64 -O /usr/local/bin/ahoy && sudo chown $USER /usr/local/bin/ahoy && chmod +x /usr/local/bin/ahoy
+sudo wget -q https://github.com/ahoy-cli/ahoy/releases/download/2.0.0/ahoy-`uname -s`-amd64 -O /usr/local/bin/ahoy && sudo chown $USER /usr/local/bin/ahoy && chmod +x /usr/local/bin/ahoy
 ```
-
-### Bash / Zsh Completion
-For Zsh, Just add this to your ~/.zshrc, and your completions will be relative to the directory you're in.
-
-`complete -F "ahoy --generate-bash-completion" ahoy`
-
-For Bash, you'll need to make sure you have bash-completion installed and setup. On OSX with homebrew it looks like this:
-
-`brew install bash bash-completion`
-
-Now make sure you follow the couple installation instructions in the "Caveats" section that homebrew returns. And make sure completion is working for git for instance before you continue (you may need to restart your shell)
-
-Then, (for homebrew) you'll want to create a file at `/usr/local/etc/bash_completion.d/ahoy` with the following:
-
-```Bash
-#! /bin/bash
-
-: ${PROG:=$(basename ${BASH_SOURCE})}
-
-_cli_bash_autocomplete() {
-     local cur opts base
-     COMPREPLY=()
-     cur="${COMP_WORDS[COMP_CWORD]}"
-     opts=$( ${COMP_WORDS[@]:0:$COMP_CWORD} --generate-bash-completion )
-     COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
-     return 0
- }
-
- complete -F _cli_bash_autocomplete $PROG
-```
-
-restart your shell, and you should see ahoy autocomplete when typing `ahoy [TAB]`
-
-## USAGE
-Almost all the commands are actually specified in a .ahoy.yml file placed in your working tree somewhere. Commands that are added there show up as options in ahoy. Here is what it looks like when using the [example.ahoy.yml file](https://github.com/ahoy-cli/ahoy/blob/master/examples/examples.ahoy.yml). To start with this file locally you can run `ahoy init`.
-
-```
-$ ahoy
-NAME:
-   ahoy - Send commands to docker-compose services
-
-USAGE:
-   ahoy [global options] command [command options] [arguments...]
-
-VERSION:
-   0.0.0
-
-COMMANDS:
-   vdown	Stop the vagrant box if one exists.
-   vup		Start the vagrant box if one exists.
-   start	Start the docker compose-containers.
-   stop		Stop the docker-compose containers.
-   restart	Restart the docker-compose containers.
-   drush	Run drush commands in the cli service container.
-   bash		Start a shell in the container (like ssh without actual ssh).
-   sqlc		Connect to the default mysql database. Supports piping of data into the command.
-   behat	Run the behat tests within the container.
-   ps		List the running docker-compose containers.
-   behat-init	Use composer to install behat dependencies.
-   init		Initialize a new .ahoy.yml config file in the current directory.
-   help, h	Shows a list of commands or help for one command
-
-GLOBAL OPTIONS:
-   --help, -h			show help
-   --generate-bash-completion
-   --version, -v		print the version
-```
-
-## Version 2
-
-All new features are being added to the v2 (master) branch of ahoy which is still in alpha and will have breaking changes with v1 ahoy files, so to use ahoy v2, you'll need to do the following:
-- Upgrade to the ahoy v2 binary which currently needs to be compiled from source. If you are using homebrew, you can use that to upgrade to v2 using the following:
-```
-  brew uninstall ahoy # Required or you'll get errors
-  brew upgrade # Updates the tap
-  brew install ahoy --HEAD # Installs ahoy by compiling the latest from the master branch
-  brew reinstall ahoy --HEAD # Use this whenever you want to upgrade to the latest v2 version.
-  ahoy # You should see full version that you're using.
-```
-- Change your `ahoyapi: v1` lines to `ahoyapi: v2`
-- Change your `{{args}}` items to the default bash symbol `"$@"`
 
 ### New Features in v2
 - Implements a new feature to import mulitple config files using the "imports" field.
@@ -154,16 +77,34 @@ entrypoint:
   - '{{cmd}}'
   - '{{name}}'
 commands:
-  list:
+  simple-command:
+      usage: An example of a single-line command.
+      cmd: echo "Do stuff with bash"
+
+  complex-command:
+      usage: Show more advanced features.
+      cmd: | # We support mulit-line commands with pipes.
+          echo "mulit-line bash script";
+          # You can call other ahoy commands.
+          ahoy simple-command
+          # you can take params
+          echo "your params were: $@"
+          # you can use numbered params, same as bash.
+          echo "param1: $1"
+          echo "param2: $2"
+          # Everything bash supports is available, if statements, etc.
+          # Hate bash? Use something else like python in a subscript or change the entrypoint.
+
+  subcommands:
       usage: List the commands from the imported config files.
       # These commands will be aggregated together with later files overriding earlier ones if they exist.
       imports:
-        - ./confirmation.ahoy.yml
-        - ./docker.ahoy.yml
-        - ./examples.ahoy.yml
+        - ./some-file1.ahoy.yml
+        - ./some-file2.ahoy.yml
+        - ./some-file3.ahoy.yml
 ```
 
-### Planned v2 features
+### Planned Features
 - Enable specifying specific arguments and flags in the ahoy file itself to cut down on parsing arguments in scripts.
 - Support for more built-in commands or a "verify" yaml option that would create a yes / no prompt for potentially destructive commands. (Are you sure you want to delete all your containers?)
 - Pipe tab completion to another command (allows you to get tab completion)
