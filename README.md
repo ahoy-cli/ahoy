@@ -6,23 +6,23 @@ Test Status: master [![CircleCI](https://circleci.com/gh/ahoy-cli/ahoy/tree/mast
 
 ### Note: Ahoy 2.x is now released and is the only supported version.
 
-Ahoy is command line tool that gives each of your projects their own CLI app with with zero code and dependencies.
+Ahoy is command line tool that gives each of your projects their own CLI app with zero code and dependencies.
 
-Simply write your commands in a yaml file and ahoy gives you lots of features like:
+Simply write your commands in a YAML file and Ahoy gives you lots of features like:
 * a command listing
 * per-command help text
 * command tab completion
 * run commands from any subdirectory
 
-Essentially, ahoy makes is easy to create aliases and templates for commands that are useful. It was specifically created to help with running interactive commands within docker containers, but it's just as useful for local commands, commands over ssh, or really anything that could be run from the command line in a single clean interface.
+Essentially, Ahoy makes is easy to create aliases and templates for commands that are useful. It was specifically created to help with running interactive commands within Docker containers, but it's just as useful for local commands, commands over ssh, or really anything that could be run from the command line in a single clean interface.
 
 ## Examples
 
-Say you want to import a sql database running in docker-compose using another container called cli. The command could look like this:
+Say you want to import a MySQL database running in docker-compose using another container called cli. The command could look like this:
 
 `docker exec -i $(docker-compose ps -q cli) bash -c 'mysql -u$DB_ENV_MYSQL_USER -p$DB_ENV_MYSQL_PASSWORD -h$DB_PORT_3306_TCP_ADDR $DB_ENV_MYSQL_DATABASE' < some-database.sql`
 
-With ahoy, you can turn this into
+With Ahoy, you can turn this into:
 
 `ahoy mysql-import < some-database.sql`
 
@@ -31,7 +31,7 @@ With ahoy, you can turn this into
 - Consitent - Commands always run relative to the .ahoy.yml file, but can be called from any subfolder.
 - Visual - See a list of all of your commands in one place, along with helpful descriptions.
 - Flexible - Commands are specific to a single folder tree, so each repo/workspace can have its own commands
-- Fully interactive  - your shells (like mysql) and prompts still work.
+- Fully interactive  - your shells (like MySQL) and prompts still work.
 - Self-Documenting - Commands and help declared in .ahoy.yml show up as ahoy command help and bash completion of commands (see below)
 
 ## INSTALLATION
@@ -43,13 +43,13 @@ brew tap ahoy-cli/tap
 brew install ahoy
 ```
 
-OR, For the master branch:
+OR, for the master branch:
 ```
 brew install ahoy --HEAD
 ```
 
 ### Linux
-Download and unzip the latest release and move the appropriate binary for your plaform into someplace in your $PATH and rename it `ahoy`
+Download and unzip the latest release and move the appropriate binary for your plaform into someplace in your $PATH and rename it `ahoy`.
 
 Example:
 ```
@@ -60,12 +60,12 @@ sudo wget -q https://github.com/ahoy-cli/ahoy/releases/download/2.0.0/ahoy-bin-`
 - Implements a new feature to import mulitple config files using the "imports" field.
 - Uses the "last in wins" rule to deal with duplicate commands amongst the config files.
 - Better handling of quotes by no longer using `{{args}}`. Use regular bash syntax like `"$@"` for all arguments, or `$1` for the first argument.
-- You can now use a different entrypoint (the thing that runs your commands) instead of bash. Ex. using php, nodejs, python, etc.
+- You can now use a different entrypoint (the thing that runs your commands) instead of bash. Ex. using PHP, Node.js, Python, etc.
 - Plugins are now possible by overriding the entrypoint.
 
-###Example of new yaml setup in v2
+###Example of new YAML setup in v2
 
-```Yaml
+```YAML
 # All files must have v2 set or you'll get an error
 ahoyapi: v2
 
@@ -106,7 +106,7 @@ commands:
 
 ### Planned Features
 - Enable specifying specific arguments and flags in the ahoy file itself to cut down on parsing arguments in scripts.
-- Support for more built-in commands or a "verify" yaml option that would create a yes / no prompt for potentially destructive commands. (Are you sure you want to delete all your containers?)
+- Support for more built-in commands or a "verify" YAML option that would create a yes / no prompt for potentially destructive commands. (Are you sure you want to delete all your containers?)
 - Pipe tab completion to another command (allows you to get tab completion)
 - Support for configuration
 
