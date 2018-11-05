@@ -117,4 +117,4 @@ commands:
 * Make changes to any of the .md files.
 * Run `ahoy build-docs` (This will convert all the .md files to docs)
 * You should have several html files in docs/_build/html directory of which Home.html and index.html are the parent files.
-* For more information on how to compile the docs from scratch visit: http://read-the-docs.readthedocs.io/en/latest/getting_started.html
+* For more information on how to compile the docs from scratch visit: https://read-the-docs.readthedocs.io/en/latest/intro/getting-started-with-mkdocs.html
