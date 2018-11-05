@@ -32,7 +32,7 @@ With Ahoy, you can turn this into:
 - Visual - See a list of all of your commands in one place, along with helpful descriptions.
 - Flexible - Commands are specific to a single folder tree, so each repo/workspace can have its own commands
 - Fully interactive  - your shells (like MySQL) and prompts still work.
-- Self-Documenting - Commands and help declared in .ahoy.yml show up as ahoy command help and bash completion of commands (see below)
+- Self-Documenting - Commands and help declared in .ahoy.yml show up as ahoy command help and bash completion of commands (see [bash/zsh completion](https://ahoy-cli.readthedocs.io/en/latest/#bash-zsh-completion)).
 
 ## INSTALLATION
 
