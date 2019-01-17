@@ -27,17 +27,21 @@ With Ahoy, you can turn this into:
 `ahoy mysql-import < some-database.sql`
 
 ## FEATURES
+
 - Non-invasive - Use your existing workflow! It can wrap commands and scripts you are already using.
 - Consitent - Commands always run relative to the .ahoy.yml file, but can be called from any subfolder.
 - Visual - See a list of all of your commands in one place, along with helpful descriptions.
-- Flexible - Commands are specific to a single folder tree, so each repo/workspace can have its own commands
+- Flexible - Commands are specific to a single folder tree, so each repo/workspace can have its own commands.
 - Fully interactive  - your shells (like MySQL) and prompts still work.
 - Self-Documenting - Commands and help declared in .ahoy.yml show up as ahoy command help and bash completion of commands (see [bash/zsh completion](https://ahoy-cli.readthedocs.io/en/latest/#bash-zsh-completion)).
+
 
 ## INSTALLATION
 
 ### OSX
+
 Using Homebrew:
+
 ```
 brew tap ahoy-cli/tap
 brew install ahoy
@@ -49,6 +53,7 @@ brew install ahoy --HEAD
 ```
 
 ### Linux
+
 Download and unzip the latest release and move the appropriate binary for your plaform into someplace in your $PATH and rename it `ahoy`.
 
 Example:
@@ -57,13 +62,13 @@ sudo wget -q https://github.com/ahoy-cli/ahoy/releases/download/2.0.0/ahoy-bin-`
 ```
 
 ### New Features in v2
-- Implements a new feature to import mulitple config files using the "imports" field.
+- Implements a new feature to import multiple config files using the "imports" field.
 - Uses the "last in wins" rule to deal with duplicate commands amongst the config files.
 - Better handling of quotes by no longer using `{{args}}`. Use regular bash syntax like `"$@"` for all arguments, or `$1` for the first argument.
 - You can now use a different entrypoint (the thing that runs your commands) instead of bash. Ex. using PHP, Node.js, Python, etc.
 - Plugins are now possible by overriding the entrypoint.
 
-###Example of new YAML setup in v2
+### Example of new YAML setup in v2
 
 ```YAML
 # All files must have v2 set or you'll get an error
@@ -83,8 +88,8 @@ commands:
 
   complex-command:
       usage: Show more advanced features.
-      cmd: | # We support mulit-line commands with pipes.
-          echo "mulit-line bash script";
+      cmd: | # We support multi-line commands with pipes.
+          echo "multi-line bash script";
           # You can call other ahoy commands.
           ahoy simple-command
           # you can take params
@@ -105,10 +110,11 @@ commands:
 ```
 
 ### Planned Features
+
 - Enable specifying specific arguments and flags in the ahoy file itself to cut down on parsing arguments in scripts.
 - Support for more built-in commands or a "verify" YAML option that would create a yes / no prompt for potentially destructive commands. (Are you sure you want to delete all your containers?)
-- Pipe tab completion to another command (allows you to get tab completion)
-- Support for configuration
+- Pipe tab completion to another command (allows you to get tab completion).
+- Support for configuration.
 
 ## Previewing the Read the Docs documentation locally.
 
@@ -117,4 +123,4 @@ commands:
 * Make changes to any of the .md files.
 * Run `ahoy build-docs` (This will convert all the .md files to docs)
 * You should have several html files in docs/_build/html directory of which Home.html and index.html are the parent files.
-* For more information on how to compile the docs from scratch visit: http://read-the-docs.readthedocs.io/en/latest/getting_started.html
+* For more information on how to compile the docs from scratch visit: https://read-the-docs.readthedocs.io/en/latest/intro/getting-started-with-mkdocs.html
