@@ -61,7 +61,7 @@ sudo wget -q https://github.com/ahoy-cli/ahoy/releases/download/2.0.0/ahoy-bin-`
 ```
 
 ### New Features in v2
-- Implements a new feature to import mulitple config files using the "imports" field.
+- Implements a new feature to import multiple config files using the "imports" field.
 - Uses the "last in wins" rule to deal with duplicate commands amongst the config files.
 - Better handling of quotes by no longer using `{{args}}`. Use regular bash syntax like `"$@"` for all arguments, or `$1` for the first argument.
 - You can now use a different entrypoint (the thing that runs your commands) instead of bash. Ex. using PHP, Node.js, Python, etc.
@@ -87,8 +87,8 @@ commands:
 
   complex-command:
       usage: Show more advanced features.
-      cmd: | # We support mulit-line commands with pipes.
-          echo "mulit-line bash script";
+      cmd: | # We support multi-line commands with pipes.
+          echo "multi-line bash script";
           # You can call other ahoy commands.
           ahoy simple-command
           # you can take params
