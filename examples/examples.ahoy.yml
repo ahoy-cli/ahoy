@@ -14,7 +14,7 @@ commands:
 
   start:
     cmd: docker-compose start "$@"
-    usage: Start the docker compose-containers.
+    usage: Start the docker-compose containers.
 
   stop:
     cmd: docker-compose stop "$@"
