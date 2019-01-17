@@ -27,17 +27,20 @@ With Ahoy, you can turn this into:
 `ahoy mysql-import < some-database.sql`
 
 ## FEATURES
+
 - Non-invasive - Use your existing workflow! It can wrap commands and scripts you are already using.
 - Consitent - Commands always run relative to the .ahoy.yml file, but can be called from any subfolder.
 - Visual - See a list of all of your commands in one place, along with helpful descriptions.
-- Flexible - Commands are specific to a single folder tree, so each repo/workspace can have its own commands
+- Flexible - Commands are specific to a single folder tree, so each repo/workspace can have its own commands.
 - Fully interactive  - your shells (like MySQL) and prompts still work.
-- Self-Documenting - Commands and help declared in .ahoy.yml show up as ahoy command help and bash completion of commands (see below)
+- Self-Documenting - Commands and help declared in .ahoy.yml show up as ahoy command help and bash completion of commands (see below).
 
 ## INSTALLATION
 
 ### OSX
+
 Using Homebrew:
+
 ```
 brew tap ahoy-cli/tap
 brew install ahoy
@@ -49,6 +52,7 @@ brew install ahoy --HEAD
 ```
 
 ### Linux
+
 Download and unzip the latest release and move the appropriate binary for your plaform into someplace in your $PATH and rename it `ahoy`.
 
 Example:
@@ -63,7 +67,7 @@ sudo wget -q https://github.com/ahoy-cli/ahoy/releases/download/2.0.0/ahoy-bin-`
 - You can now use a different entrypoint (the thing that runs your commands) instead of bash. Ex. using PHP, Node.js, Python, etc.
 - Plugins are now possible by overriding the entrypoint.
 
-###Example of new YAML setup in v2
+### Example of new YAML setup in v2
 
 ```YAML
 # All files must have v2 set or you'll get an error
@@ -105,10 +109,11 @@ commands:
 ```
 
 ### Planned Features
+
 - Enable specifying specific arguments and flags in the ahoy file itself to cut down on parsing arguments in scripts.
 - Support for more built-in commands or a "verify" YAML option that would create a yes / no prompt for potentially destructive commands. (Are you sure you want to delete all your containers?)
-- Pipe tab completion to another command (allows you to get tab completion)
-- Support for configuration
+- Pipe tab completion to another command (allows you to get tab completion).
+- Support for configuration.
 
 ## Previewing the Read the Docs documentation locally.
 
