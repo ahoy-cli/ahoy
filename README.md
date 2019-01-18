@@ -43,13 +43,14 @@ With Ahoy, you can turn this into:
 Using Homebrew:
 
 ```
-brew tap ahoy-cli/tap
 brew install ahoy
 ```
 
-OR, for the master branch:
+Note that ahoy is in homebrew-core as of 1/18/19, so you don't need to use the old tap.
+If you were previously using it, you can use the following command to remove it:
+
 ```
-brew install ahoy --HEAD
+brew untap ahoy-cli/tap
 ```
 
 ### Linux
