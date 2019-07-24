@@ -1,0 +1,13 @@
+version: 2
+jobs:
+  build:
+    working_directory: /go/src/github.com/ahoy-cli/ahoy
+    docker:
+      - image: circleci/golang
+    steps:
+      - checkout
+      - run: git clone https://github.com/bats-core/bats-core.git && cd bats-core && sudo ./install.sh /usr/local && bats --version && cd -
+      - run: sudo apt install php
+      - run: go get -u golang.org/x/lint/golint
+      - run: bash build.sh -v
+      - run: ./ahoy test
