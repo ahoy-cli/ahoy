@@ -3,7 +3,7 @@ NAME='ahoy'
 COMMIT=$(git rev-parse --short HEAD)
 VERSION=$(git describe --tag $COMMIT)
 if [ -z "$GOPATH" ]; then
-    echo " [Error] You MUST set your \$GOPATH and put this repo within it at \$GOPATH/src/github.com/ahoy-cli/ahoy to build."
+    echo " [Error] You MUST set your \$GOPATH and put this repo within it at \$GOPATH/src/github.com/ocean/ahoy to build."
     exit 1
 fi
 
@@ -11,7 +11,7 @@ IFS=':' read -r -a gopaths <<< "$GOPATH"
 
 dir=`pwd`
 for gopath in "${gopaths[@]}"; do
-    repo_path="$gopath/src/github.com/ahoy-cli/ahoy"
+    repo_path="$gopath/src/github.com/ocean/ahoy"
     if [ "$dir" == "$repo_path" ]; then
         found=true
     fi
@@ -19,7 +19,7 @@ done
 if [ -z "$found" ]; then
     echo "[Error] This repo should be at one of the following paths:"
     for gopath in "${gopaths[@]}"; do
-        echo "$gopath/src/github.com/ahoy-cli/ahoy"
+        echo "$gopath/src/github.com/ocean/ahoy"
     done
     echo "  but instead it is at:"
     echo "  $dir (Move it)"

@@ -13,31 +13,37 @@ default:
 	GO15VENDOREXPERIMENT=1 go build -v
 
 install:
-	cp rocker-compose /usr/local/bin/rocker-compose
-	chmod +x /usr/local/bin/rocker-compose
+	cp ahoy /usr/local/bin/ahoy
+	chmod +x /usr/local/bin/ahoy
 
 cross: dist_dir
-	docker run --rm -ti -v $(shell pwd):/go/src/github.com/grammarly/rocker-compose \
-		-e GOOS=linux -e GOARCH=amd64 -e GO15VENDOREXPERIMENT=1 -e GOPATH=/go \
-		-w /go/src/github.com/grammarly/rocker-compose \
-		dockerhub.grammarly.io/golang-1.5.1-cross:v1 go build \
-		-ldflags "-X main.Version=$(VERSION) -X main.GitCommit=$(GITCOMMIT) -X main.GitBranch=$(GITBRANCH) -X main.BuildTime=$(BUILDTIME)" \
-		-v -o ./dist/linux_amd64/rocker-compose
-
-	docker run --rm -ti -v $(shell pwd):/go/src/github.com/grammarly/rocker-compose \
-		-e GOOS=darwin -e GOARCH=amd64 -e GO15VENDOREXPERIMENT=1 -e GOPATH=/go \
-		-w /go/src/github.com/grammarly/rocker-compose \
-		dockerhub.grammarly.io/golang-1.5.1-cross:v1 go build \
-		-ldflags "-X main.Version=$(VERSION) -X main.GitCommit=$(GITCOMMIT) -X main.GitBranch=$(GITBRANCH) -X main.BuildTime=$(BUILDTIME)" \
-		-v -o ./dist/darwin_amd64/rocker-compose
+	GOOS=linux GOARCH=amd64 GO15VENDOREXPERIMENT=1 \
+	  LDFLAGS="-X main.Version=$(VERSION) -X main.GitCommit=$(GITCOMMIT) -X main.GitBranch=$(GITBRANCH) -X main.BuildTime=$(BUILDTIME)" \
+		go build -v -o ./dist/linux_amd64/ahoy
+	
+	GOOS=linux GOARCH=arm64 GO15VENDOREXPERIMENT=1 \
+		LDFLAGS="-X main.Version=$(VERSION) -X main.GitCommit=$(GITCOMMIT) -X main.GitBranch=$(GITBRANCH) -X main.BuildTime=$(BUILDTIME)" \
+		go build -v -o ./dist/linux_arm64/ahoy
+	
+	GOOS=darwin GOARCH=amd64 GO15VENDOREXPERIMENT=1 \
+		LDFLAGS="-X main.Version=$(VERSION) -X main.GitCommit=$(GITCOMMIT) -X main.GitBranch=$(GITBRANCH) -X main.BuildTime=$(BUILDTIME)" \
+		go build -v -o ./dist/darwin_amd64/ahoy
+	
+	GOOS=darwin GOARCH=arm64 GO15VENDOREXPERIMENT=1 \
+		LDFLAGS="-X main.Version=$(VERSION) -X main.GitCommit=$(GITCOMMIT) -X main.GitBranch=$(GITBRANCH) -X main.BuildTime=$(BUILDTIME)" \
+		go build -v -o ./dist/darwin_arm64/ahoy
 
 cross_tars: cross
-	COPYFILE_DISABLE=1 tar -zcvf ./dist/rocker-compose_linux_amd64.tar.gz -C dist/linux_amd64 rocker-compose
-	COPYFILE_DISABLE=1 tar -zcvf ./dist/rocker-compose_darwin_amd64.tar.gz -C dist/darwin_amd64 rocker-compose
+	COPYFILE_DISABLE=1 tar -zcvf ./dist/ahoy_linux_amd64.tar.gz -C dist/linux_amd64 ahoy
+	COPYFILE_DISABLE=1 tar -zcvf ./dist/ahoy_linux_arm64.tar.gz -C dist/linux_arm64 ahoy
+	COPYFILE_DISABLE=1 tar -zcvf ./dist/ahoy_darwin_amd64.tar.gz -C dist/darwin_amd64 ahoy
+	COPYFILE_DISABLE=1 tar -zcvf ./dist/ahoy_darwin_arm64.tar.gz -C dist/darwin_arm64 ahoy
 
 dist_dir:
 	mkdir -p ./dist/linux_amd64
+	mkdir -p ./dist/linux_arm64
 	mkdir -p ./dist/darwin_amd64
+	mkdir -p ./dist/darwin_arm64
 
 clean:
 	rm -Rf dist
@@ -49,7 +55,7 @@ fmtcheck:
 	$(foreach file,$(SRCS),gofmt $(file) | diff -u $(file) - || exit;)
 
 lint:
-	@ go get github.com/golang/lint/golint
+	@ go get golang.org/x/lint/golint
 	$(foreach file,$(SRCS),fgt golint $(file) || exit;)
 
 vet:
