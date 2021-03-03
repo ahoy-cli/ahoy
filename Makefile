@@ -48,26 +48,22 @@ dist_dir:
 clean:
 	rm -Rf dist
 
-testdeps:
-	@ go get github.com/GeertJohan/fgt
-
 fmtcheck:
 	$(foreach file,$(SRCS),gofmt $(file) | diff -u $(file) - || exit;)
 
 lint:
 	@ go get golang.org/x/lint/golint
-	$(foreach file,$(SRCS),fgt golint $(file) || exit;)
+	$(foreach file,$(SRCS),golint $(file) || exit;)
 
 vet:
-	@ go get golang.org/x/tools/cmd/vet
-	$(foreach pkg,$(PKGS),fgt go vet $(pkg) || exit;)
+	$(foreach pkg,$(PKGS),go vet $(pkg) || exit;)
 
 gocyclo:
-	@ go get github.com/fzipp/gocyclo
-	gocyclo -over 25 ./src
+	@ go get github.com/fzipp/gocyclo/cmd/gocyclo
+	gocyclo -over 25 -avg -ignore "vendor" .
 
-test: testdeps fmtcheck lint vet
-	GO15VENDOREXPERIMENT=1 go test ./src/... $(TESTARGS)
+test: fmtcheck lint vet
+	GO15VENDOREXPERIMENT=1 go test *.go $(TESTARGS)
 
 version:
 	@echo $(VERSION)
