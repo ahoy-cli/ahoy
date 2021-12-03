@@ -1,4 +1,4 @@
-![AHOY logo](http://i65.tinypic.com/vqrwgl.png)
+![AHOY logo](https://avatars.githubusercontent.com/u/19353604)
 
 # AHOY! - Automate and organize your workflows, no matter what technology you use.
 
