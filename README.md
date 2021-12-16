@@ -1,5 +1,3 @@
-![AHOY logo](http://i65.tinypic.com/vqrwgl.png)
-
 # AHOY! - Automate and organize your workflows, no matter what technology you use.
 
 Test Status: master [![CircleCI](https://circleci.com/gh/ahoy-cli/ahoy/tree/master.svg?style=svg)](https://circleci.com/gh/ahoy-cli/ahoy/tree/master)
