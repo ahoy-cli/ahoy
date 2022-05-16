@@ -3,6 +3,7 @@ VERSION ?= $(shell cat VERSION)
 GITCOMMIT := $(shell git rev-parse HEAD 2>/dev/null)
 GITBRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
 BUILDTIME := $(shell TZ=GMT date "+%Y-%m-%d_%H:%M_GMT")
+LDFLAGS := "-X main.Version=$(VERSION) -X main.GitCommit=$(GITCOMMIT) -X main.GitBranch=$(GITBRANCH) -X main.BuildTime=$(BUILDTIME)"
 
 SRCS = $(shell find . -name '*.go' | grep -v '^./vendor/')
 PKGS := $(foreach pkg, $(sort $(dir $(SRCS))), $(pkg))
@@ -10,60 +11,63 @@ PKGS := $(foreach pkg, $(sort $(dir $(SRCS))), $(pkg))
 TESTARGS ?=
 
 default:
-	GO15VENDOREXPERIMENT=1 go build -v
+	go build -v
 
 install:
-	cp rocker-compose /usr/local/bin/rocker-compose
-	chmod +x /usr/local/bin/rocker-compose
+	cp ahoy /usr/local/bin/ahoy
+	chmod +x /usr/local/bin/ahoy
 
-cross: dist_dir
-	docker run --rm -ti -v $(shell pwd):/go/src/github.com/grammarly/rocker-compose \
-		-e GOOS=linux -e GOARCH=amd64 -e GO15VENDOREXPERIMENT=1 -e GOPATH=/go \
-		-w /go/src/github.com/grammarly/rocker-compose \
-		dockerhub.grammarly.io/golang-1.5.1-cross:v1 go build \
-		-ldflags "-X main.Version=$(VERSION) -X main.GitCommit=$(GITCOMMIT) -X main.GitBranch=$(GITBRANCH) -X main.BuildTime=$(BUILDTIME)" \
-		-v -o ./dist/linux_amd64/rocker-compose
-
-	docker run --rm -ti -v $(shell pwd):/go/src/github.com/grammarly/rocker-compose \
-		-e GOOS=darwin -e GOARCH=amd64 -e GO15VENDOREXPERIMENT=1 -e GOPATH=/go \
-		-w /go/src/github.com/grammarly/rocker-compose \
-		dockerhub.grammarly.io/golang-1.5.1-cross:v1 go build \
-		-ldflags "-X main.Version=$(VERSION) -X main.GitCommit=$(GITCOMMIT) -X main.GitBranch=$(GITBRANCH) -X main.BuildTime=$(BUILDTIME)" \
-		-v -o ./dist/darwin_amd64/rocker-compose
+cross: build_dir
+	GOOS=linux GOARCH=amd64 \
+	  LDFLAGS=$(LDFLAGS) \
+		go build -v -o ./builds/linux_amd64/ahoy
+	
+	GOOS=linux GOARCH=arm64 \
+		LDFLAGS=$(LDFLAGS) \
+		go build -v -o ./builds/linux_arm64/ahoy
+	
+	GOOS=darwin GOARCH=amd64  \
+		LDFLAGS=$(LDFLAGS) \
+		go build -v -o ./builds/darwin_amd64/ahoy
+	
+	GOOS=darwin GOARCH=arm64  \
+		LDFLAGS=$(LDFLAGS) \
+		go build -v -o ./builds/darwin_arm64/ahoy
 
 cross_tars: cross
-	COPYFILE_DISABLE=1 tar -zcvf ./dist/rocker-compose_linux_amd64.tar.gz -C dist/linux_amd64 rocker-compose
-	COPYFILE_DISABLE=1 tar -zcvf ./dist/rocker-compose_darwin_amd64.tar.gz -C dist/darwin_amd64 rocker-compose
+	COPYFILE_DISABLE=1 tar -zcvf ./builds/ahoy_linux_amd64.tar.gz -C builds/linux_amd64 ahoy
+	COPYFILE_DISABLE=1 tar -zcvf ./builds/ahoy_linux_arm64.tar.gz -C builds/linux_arm64 ahoy
+	COPYFILE_DISABLE=1 tar -zcvf ./builds/ahoy_darwin_amd64.tar.gz -C builds/darwin_amd64 ahoy
+	COPYFILE_DISABLE=1 tar -zcvf ./builds/ahoy_darwin_arm64.tar.gz -C builds/darwin_arm64 ahoy
 
-dist_dir:
-	mkdir -p ./dist/linux_amd64
-	mkdir -p ./dist/darwin_amd64
+build_dir:
+	mkdir -p ./builds/linux_amd64
+	mkdir -p ./builds/linux_arm64
+	mkdir -p ./builds/darwin_amd64
+	mkdir -p ./builds/darwin_arm64
 
 clean:
-	rm -Rf dist
-
-testdeps:
-	@ go get github.com/GeertJohan/fgt
+	cd builds
+	rm -Rf linux* darwin* *.tar.gz
 
 fmtcheck:
 	$(foreach file,$(SRCS),gofmt $(file) | diff -u $(file) - || exit;)
 
 lint:
-	@ go get github.com/golang/lint/golint
-	$(foreach file,$(SRCS),fgt golint $(file) || exit;)
+	@ go get golang.org/x/lint/golint
+	$(foreach file,$(SRCS),golint $(file) || exit;)
 
 vet:
-	@ go get golang.org/x/tools/cmd/vet
-	$(foreach pkg,$(PKGS),fgt go vet $(pkg) || exit;)
+	$(foreach pkg,$(PKGS),go vet $(pkg) || exit;)
 
 gocyclo:
-	@ go get github.com/fzipp/gocyclo
-	gocyclo -over 25 ./src
+	@ go get github.com/fzipp/gocyclo/cmd/gocyclo
+	gocyclo -over 25 -avg -ignore "vendor" .
 
-test: testdeps fmtcheck lint vet
-	GO15VENDOREXPERIMENT=1 go test ./src/... $(TESTARGS)
+test: fmtcheck lint vet
+	 go test *.go $(TESTARGS)
 
 version:
 	@echo $(VERSION)
 
-.PHONY: clean test fmtcheck lint vet gocyclo version testdeps cross cross_tars dist_dir default install
+.PHONY: clean test fmtcheck lint vet gocyclo version testdeps cross cross_tars build_dir default install
