@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"gopkg.in/yaml.v2"
 )
 
 func TestOverrideExample(t *testing.T) {

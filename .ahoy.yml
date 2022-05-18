@@ -19,8 +19,8 @@ commands:
       done
 
   install:
-    cmd: "go install"
     usage: Build ahoy using go install.
+    cmd: "go install"
 
   bats:
     usage: "Run the bats bash testing command."
@@ -28,7 +28,7 @@ commands:
       bats tests
 
   test:
-    usage: Run automated tests
+    usage: Run automated tests.
     cmd: |
       ahoy build
       FAIL=false
@@ -55,14 +55,14 @@ commands:
       fi
 
   gomod:
-    usage: Fetch Go dependencies (go mod)
+    usage: Fetch Go dependencies (go mod).
     cmd: |
-        go mod tidy
-        go mod vendor
-        go mod verify
+      go mod tidy
+      go mod vendor
+      go mod verify
 
   godep:
-    usage: Use "ahoy gomod" now to fetch Go dependencies (go mod)
+    usage: Use "ahoy gomod" now to fetch Go dependencies (go mod).
     cmd: ahoy gomod
 
   gofmt:
@@ -74,5 +74,5 @@ commands:
     cmd: cd docs && make html
 
   docs-deps:
-    usage: Install the dependencies from requirements.txt
+    usage: Install the dependencies from requirements.txt.
     cmd: cd docs && pip install -r requirements.txt
