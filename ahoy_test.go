@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
+
+	"gopkg.in/yaml.v2"
 )
 
 func TestOverrideExample(t *testing.T) {
@@ -209,14 +211,14 @@ func TestGetConfig(t *testing.T) {
 func TestGetConfigPath(t *testing.T) {
 	// Passinng empty string.
 	pwd, _ := os.Getwd()
-	expected := pwd + "/.ahoy.yml"
+	expected := filepath.Join(pwd, ".ahoy.yml")
 	actual, _ := getConfigPath("")
 	if expected != actual {
 		t.Errorf("ahoy docker override-example: expected - %s; actual - %s", string(expected), string(actual))
 	}
 
 	// Passing known path works as expected
-	expected = pwd + "/.ahoy.yml"
+	expected = filepath.Join(pwd, ".ahoy.yml")
 	actual, _ = getConfigPath(expected)
 
 	if expected != actual {
