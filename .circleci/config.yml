@@ -16,7 +16,7 @@ jobs:
       - checkout
       - run: git clone https://github.com/bats-core/bats-core.git && cd bats-core && sudo ./install.sh /usr/local && bats --version && cd -
       - run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.46.2
-      # - run: sudo apt search php
+      - run: sudo apt search php
       # - run: sudo apt install php
       - go/load-cache
       - go/mod-download
