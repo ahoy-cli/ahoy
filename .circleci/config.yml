@@ -1,13 +1,38 @@
-version: 2
+version: 2.1
+orbs:
+  go: circleci/go@1.7.1
+workflows:
+  main:
+    jobs:
+      - build
+
 jobs:
   build:
-    working_directory: /go/src/github.com/ahoy-cli/ahoy
-    docker:
-      - image: circleci/golang
+    executor: 
+      name: go/default
+      tag: '1.18'
+    working_directory: /home/circleci/go/src/github.com/ahoy-cli/ahoy
     steps:
       - checkout
       - run: git clone https://github.com/bats-core/bats-core.git && cd bats-core && sudo ./install.sh /usr/local && bats --version && cd -
-      - run: sudo apt install php
-      - run: go get -u golang.org/x/lint/golint
-      - run: bash build.sh -v
+      - run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.46.2
+      # - run: sudo apt search php
+      # - run: sudo apt install php
+      - go/load-cache
+      - go/mod-download
+      - run:
+          name: Get Go modules
+          command: |
+            go mod tidy
+            go mod vendor
+            go mod verify
+      - go/save-cache
+      # - run: bash build.sh -v
+      - run: |
+          make
+          make version
+      # - run:
+      #     name: Run GolangCI-Lint
+      #     command: /home/circleci/go/bin/golangci-lint run
+      - run: make test
       - run: ./ahoy test
