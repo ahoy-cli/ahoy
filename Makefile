@@ -1,5 +1,5 @@
 GITCOMMIT := $(shell git rev-parse --short HEAD 2>/dev/null)
-VERSION := $(git describe --tag $(GITCOMMIT))
+VERSION := $(shell git describe --tag $(GITCOMMIT) 2>/dev/null)
 
 GITBRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
 BUILDTIME := $(shell TZ=GMT date "+%Y-%m-%d_%H:%M_GMT")
