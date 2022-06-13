@@ -1,6 +1,6 @@
-VERSION ?= $(shell cat VERSION)
+GITCOMMIT := $(shell git rev-parse --short HEAD 2>/dev/null)
+VERSION := $(git describe --tag $(GITCOMMIT))
 
-GITCOMMIT := $(shell git rev-parse HEAD 2>/dev/null)
 GITBRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
 BUILDTIME := $(shell TZ=GMT date "+%Y-%m-%d_%H:%M_GMT")
 LDFLAGS := "-X main.Version=$(VERSION) -X main.GitCommit=$(GITCOMMIT) -X main.GitBranch=$(GITBRANCH) -X main.BuildTime=$(BUILDTIME)"
@@ -11,7 +11,7 @@ PKGS := $(foreach pkg, $(sort $(dir $(SRCS))), $(pkg))
 TESTARGS ?=
 
 default:
-	go build -v
+	LDFLAGS=$(LDFLAGS) go build -v -o ./ahoy
 
 install:
 	cp ahoy /usr/local/bin/ahoy
@@ -53,21 +53,21 @@ clean:
 fmtcheck:
 	$(foreach file,$(SRCS),gofmt $(file) | diff -u $(file) - || exit;)
 
-lint:
-	@ go get golang.org/x/lint/golint
-	$(foreach file,$(SRCS),golint $(file) || exit;)
+staticcheck:
+	@ go install honnef.co/go/tools/cmd/staticcheck@latest
+	staticcheck ./...
 
 vet:
 	$(foreach pkg,$(PKGS),go vet $(pkg) || exit;)
 
 gocyclo:
-	@ go get github.com/fzipp/gocyclo/cmd/gocyclo
+	@ go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
 	gocyclo -over 25 -avg -ignore "vendor" .
 
-test: fmtcheck lint vet
+test: fmtcheck staticcheck vet
 	 go test *.go $(TESTARGS)
 
 version:
 	@echo $(VERSION)
 
-.PHONY: clean test fmtcheck lint vet gocyclo version testdeps cross cross_tars build_dir default install
+.PHONY: clean test fmtcheck staticcheck vet gocyclo version testdeps cross cross_tars build_dir default install
