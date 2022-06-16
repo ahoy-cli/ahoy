@@ -8,34 +8,41 @@ workflows:
 
 jobs:
   build:
-    executor: 
+    executor:
       name: go/default
       tag: '1.18'
     working_directory: /home/circleci/go/src/github.com/ahoy-cli/ahoy
     steps:
       - checkout
-      - run: git clone https://github.com/bats-core/bats-core.git && cd bats-core && sudo ./install.sh /usr/local && bats --version && cd -
-      - run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.46.2
       - run:
-          name: Install PHP for testing
-          command: |
-            sudo apt update
-            sudo apt install php7.4
+          name: Install BATS.
+          command: git clone https://github.com/bats-core/bats-core.git && cd bats-core && sudo ./install.sh /usr/local && bats --version && cd -
+      - run:
+          name: Install Go linter.
+          command: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.46.2
+      - run:
+          name: Install PHP for testing.
+          command: sudo apt update && sudo apt install php7.4
       - go/load-cache
       - go/mod-download
       - run:
-          name: Get Go modules
+          name: Get Go modules.
           command: |
             go mod tidy
             go mod vendor
             go mod verify
       - go/save-cache
-      # - run: bash build.sh -v
-      - run: |
-          make
-          make version
-      # - run:
-      #     name: Run GolangCI-Lint
-      #     command: /home/circleci/go/bin/golangci-lint run
-      - run: make test
-      - run: ./ahoy test
+      - run:
+          name: Build project.
+          command: |
+            make
+            make version
+      - run:
+          name: Lint code.
+          command: /home/circleci/go/bin/golangci-lint run || true
+      - run:
+          name: Run unit tests.
+          command: make test
+      - run:
+          name: Run functional tests.
+          command: ./ahoy test
