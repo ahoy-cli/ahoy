@@ -11,7 +11,7 @@ PKGS := $(foreach pkg, $(sort $(dir $(SRCS))), $(pkg))
 TESTARGS ?=
 
 default:
-	LDFLAGS=$(LDFLAGS) go build -v -o ./ahoy
+	go build -ldflags $(LDFLAGS) -v -o ./ahoy
 
 install:
 	cp ahoy /usr/local/bin/ahoy
@@ -19,20 +19,16 @@ install:
 
 cross: build_dir
 	GOOS=linux GOARCH=amd64 \
-	  LDFLAGS=$(LDFLAGS) \
-		go build -v -o ./builds/linux_amd64/ahoy
-	
+		go build -ldflags $(LDFLAGS) -v -o ./builds/linux_amd64/ahoy
+
 	GOOS=linux GOARCH=arm64 \
-		LDFLAGS=$(LDFLAGS) \
-		go build -v -o ./builds/linux_arm64/ahoy
-	
+		go build -ldflags $(LDFLAGS) -v -o ./builds/linux_arm64/ahoy
+
 	GOOS=darwin GOARCH=amd64  \
-		LDFLAGS=$(LDFLAGS) \
-		go build -v -o ./builds/darwin_amd64/ahoy
-	
+		go build -ldflags $(LDFLAGS) -v -o ./builds/darwin_amd64/ahoy
+
 	GOOS=darwin GOARCH=arm64  \
-		LDFLAGS=$(LDFLAGS) \
-		go build -v -o ./builds/darwin_arm64/ahoy
+		go build -ldflags $(LDFLAGS) -v -o ./builds/darwin_arm64/ahoy
 
 cross_tars: cross
 	COPYFILE_DISABLE=1 tar -zcvf ./builds/ahoy_linux_amd64.tar.gz -C builds/linux_amd64 ahoy
