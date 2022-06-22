@@ -30,12 +30,10 @@ commands:
   test:
     usage: Run automated tests.
     cmd: |
-      ahoy build
       FAIL=false
       TESTS=(
         'go vet'
         'go test -v -race '
-        'golint -set_exit_status'
         'bats tests'
       )
       for i in "${TESTS[@]}"; do

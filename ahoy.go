@@ -38,7 +38,6 @@ type Command struct {
 
 var app *cli.App
 var sourcefile string
-var args []string
 var verbose bool
 var bashCompletion bool
 
@@ -127,7 +126,7 @@ func getConfig(file string) (Config, error) {
 
 func getSubCommands(includes []string) []cli.Command {
 	subCommands := []cli.Command{}
-	if 0 == len(includes) {
+	if len(includes) == 0 {
 		return subCommands
 	}
 	commands := map[string]cli.Command{}
@@ -241,7 +240,7 @@ func getCommands(config Config) []cli.Command {
 
 		if cmd.Imports != nil {
 			subCommands := getSubCommands(cmd.Imports)
-			if subCommands == nil || len(subCommands) == 0 {
+			if len(subCommands) == 0 {
 				logger("fatal", "Command ["+name+"] has 'imports' set, but no commands were found. Check your yaml file.")
 			}
 			newCmd.Subcommands = subCommands
