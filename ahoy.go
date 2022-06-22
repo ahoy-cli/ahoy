@@ -4,8 +4,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/codegangsta/cli"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"os"
@@ -14,6 +12,9 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/urfave/cli"
+	"gopkg.in/yaml.v2"
 )
 
 // Config handles the overall configuration in an ahoy.yml file
