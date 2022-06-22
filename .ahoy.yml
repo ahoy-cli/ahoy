@@ -3,6 +3,7 @@ commands:
   build:
     usage: Build ahoy with a version automatically set.
     cmd: bash build.sh "$@"
+
   build-all:
     usage: Build all of the architecture and OSes that we support.
     cmd: |
@@ -18,21 +19,21 @@ commands:
       done
 
   install:
-    cmd: "go install"
     usage: Build ahoy using go install.
+    cmd: "go install"
+
   bats:
     usage: "Run the bats bash testing command."
     cmd: |
       bats tests
+
   test:
-    usage: Run automated tests
+    usage: Run automated tests.
     cmd: |
-      ahoy build
       FAIL=false
       TESTS=(
         'go vet'
         'go test -v -race '
-        'golint -set_exit_status'
         'bats tests'
       )
       for i in "${TESTS[@]}"; do
@@ -49,25 +50,27 @@ commands:
         exit 1
       else
         echo "All tests passed."
+      fi
 
-      fi
-  godep:
-    usage: Go dependency manager (godep)
+  gomod:
+    usage: Fetch Go dependencies (go mod).
     cmd: |
-      godep="$(which godep)"
-      if [ ! "$godep" ]; then
-        echo "godep not found, installing it first using:"
-        echo "OSX: brew install godep"
-        echo "other: go get github.com/tools/godep"
-      else
-        godep "$@"
-      fi
+      go mod tidy
+      go mod vendor
+      go mod verify
+
+  godep:
+    usage: Use "ahoy gomod" now to fetch Go dependencies (go mod).
+    cmd: ahoy gomod
+
   gofmt:
     usage: Clean up go code per code standards.
     cmd: gofmt -w *.go
+
   docs-build:
     usage: Build the docs.
     cmd: cd docs && make html
+
   docs-deps:
-    usage: Install the dependencies from requirements.txt
+    usage: Install the dependencies from requirements.txt.
     cmd: cd docs && pip install -r requirements.txt
