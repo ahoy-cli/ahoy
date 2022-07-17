@@ -112,14 +112,14 @@ func getConfig(file string) (Config, error) {
 		return config, err
 	}
 
-	// Extract the yaml file into the config varaible.
+	// Extract the yaml file into the config variable.
 	err = yaml.Unmarshal(yamlFile, &config)
 	if err != nil {
 		return config, err
 	}
 
 	// All ahoy files (and imports) must specify the ahoy version.
-	// This is so we can support backwards compatability in the future.
+	// This is so we can support backwards compatibility in the future.
 	if config.AhoyAPI != "v2" {
 		err = errors.New("Ahoy only supports API version 'v2', but '" + config.AhoyAPI + "' given in " + sourcefile)
 		return config, err
@@ -146,8 +146,8 @@ func getSubCommands(includes []string) []cli.Command {
 			include = filepath.Join(AhoyConf.srcDir, include)
 		}
 		if _, err := os.Stat(include); err != nil {
-			//Skipping files that cannot be loaded allows us to separate
-			//subcommands into public and private.
+			// Skipping files that cannot be loaded allows us to separate
+			// subcommands into public and private.
 			continue
 		}
 		config, _ := getConfig(include)
