@@ -3,10 +3,13 @@ VERSION := $(shell git describe --tag $(GITCOMMIT) 2>/dev/null)
 
 GITBRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
 BUILDTIME := $(shell TZ=GMT date "+%Y-%m-%d_%H:%M_GMT")
-LDFLAGS := "-X main.version=$(VERSION) -X main.GitCommit=$(GITCOMMIT) -X main.GitBranch=$(GITBRANCH) -X main.BuildTime=$(BUILDTIME)"
+LDFLAGS := "-s -w -X main.version=$(VERSION) -X main.GitCommit=$(GITCOMMIT) -X main.GitBranch=$(GITBRANCH) -X main.BuildTime=$(BUILDTIME)"
 
 SRCS = $(shell find . -name '*.go' | grep -v '^./vendor/')
 PKGS := $(foreach pkg, $(sort $(dir $(SRCS))), $(pkg))
+
+OS := linux darwin windows
+ARCH := amd64 arm64
 
 TESTARGS ?=
 
@@ -17,34 +20,20 @@ install:
 	cp ahoy /usr/local/bin/ahoy
 	chmod +x /usr/local/bin/ahoy
 
-cross: build_dir
-	GOOS=linux GOARCH=amd64 \
-		go build -ldflags $(LDFLAGS) -v -o ./builds/linux_amd64/ahoy
-
-	GOOS=linux GOARCH=arm64 \
-		go build -ldflags $(LDFLAGS) -v -o ./builds/linux_arm64/ahoy
-
-	GOOS=darwin GOARCH=amd64  \
-		go build -ldflags $(LDFLAGS) -v -o ./builds/darwin_amd64/ahoy
-
-	GOOS=darwin GOARCH=arm64  \
-		go build -ldflags $(LDFLAGS) -v -o ./builds/darwin_arm64/ahoy
-
-cross_tars: cross
-	COPYFILE_DISABLE=1 tar -zcvf ./builds/ahoy_linux_amd64.tar.gz -C builds/linux_amd64 ahoy
-	COPYFILE_DISABLE=1 tar -zcvf ./builds/ahoy_linux_arm64.tar.gz -C builds/linux_arm64 ahoy
-	COPYFILE_DISABLE=1 tar -zcvf ./builds/ahoy_darwin_amd64.tar.gz -C builds/darwin_amd64 ahoy
-	COPYFILE_DISABLE=1 tar -zcvf ./builds/ahoy_darwin_arm64.tar.gz -C builds/darwin_arm64 ahoy
-
 build_dir:
-	mkdir -p ./builds/linux_amd64
-	mkdir -p ./builds/linux_arm64
-	mkdir -p ./builds/darwin_amd64
-	mkdir -p ./builds/darwin_arm64
+	mkdir -p ./builds
+
+cross: build_dir
+	$(foreach os,$(OS), \
+		$(foreach arch,$(ARCH), \
+			GOOS=$(os) GOARCH=$(arch) go build -trimpath -ldflags $(LDFLAGS) -v -o ./builds/ahoy-bin-$(os)-$(arch); \
+		) \
+	)
+
+	$(foreach arch,$(ARCH),mv ./builds/ahoy-bin-windows-$(arch) ./builds/ahoy-bin-windows-$(arch).exe;)
 
 clean:
-	cd builds
-	rm -Rf linux* darwin* *.tar.gz
+	rm -vRf ./builds/ahoy-bin-*
 
 fmtcheck:
 	$(foreach file,$(SRCS),gofmt $(file) | diff -u $(file) - || exit;)
@@ -66,4 +55,4 @@ test: fmtcheck staticcheck vet
 version:
 	@echo $(VERSION)
 
-.PHONY: clean test fmtcheck staticcheck vet gocyclo version testdeps cross cross_tars build_dir default install
+.PHONY: clean test fmtcheck staticcheck vet gocyclo version testdeps cross build_dir default install
