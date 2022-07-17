@@ -27,7 +27,8 @@ teardown() {
 
 @test "run ahoy init with a existing .ahoy.yml file in the current directory" {
   cp tmp.ahoy.yml .ahoy.yml
-  run ./ahoy init
-  [ "${lines[-1]}" == "Warning: .ahoy.yml found in current directory." ]
+  run ./ahoy init --force
+  [ "${lines[0]}" == "Warning: '--force' parameter passed, overwriting .ahoy.yml in current directory." ]
+  [ "${lines[-1]}" == "Example .ahoy.yml downloaded to the current directory. You can customize it to suit your needs!" ]
   rm .ahoy.yml
 }
