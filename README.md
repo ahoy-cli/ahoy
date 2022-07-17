@@ -34,7 +34,8 @@ With Ahoy, you can turn this into:
 - Consistent - Commands always run relative to the `.ahoy.yml` file, but can be called from any subfolder.
 - Visual - See a list of all your commands in one place, along with helpful descriptions.
 - Flexible - Commands are specific to a single folder tree, so each repo/workspace can have its own commands.
-- Fully interactive - your shells (like MySQL) and prompts still work.
+- Command templates - Args can be dropped into your commands using `{{args}}`
+- Fully interactive - Your shells (like MySQL) and prompts still work.
 - Self-documenting - Commands and help declared in `.ahoy.yml` show up as ahoy command help and shell completion of commands (see [bash/zsh completion](https://ahoy-cli.readthedocs.io/en/latest/#bash-zsh-completion)) is also available.
 
 ## Installation
