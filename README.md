@@ -2,23 +2,23 @@
 
 # AHOY! - Automate and organize your workflows, no matter what technology you use.
 
-Test Status: master [![CircleCI](https://circleci.com/gh/ahoy-cli/ahoy/tree/master.svg?style=svg)](https://circleci.com/gh/ahoy-cli/ahoy/tree/master)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/ahoy-cli/ahoy/tree/master.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/ahoy-cli/ahoy/tree/master) [![Go Report Card](https://goreportcard.com/badge/github.com/ahoy-cli/ahoy)](https://goreportcard.com/report/github.com/ahoy-cli/ahoy)
 
 ### Note: Ahoy 2.x is now released and is the only supported version.
 
 Ahoy is command line tool that gives each of your projects their own CLI app with zero code and dependencies.
 
-Simply write your commands in a YAML file and Ahoy gives you lots of features like:
+Write your commands in a YAML file and then Ahoy gives you lots of features like:
 * a command listing
 * per-command help text
 * command tab completion
 * run commands from any subdirectory
 
-Essentially, Ahoy makes is easy to create aliases and templates for commands that are useful. It was specifically created to help with running interactive commands within Docker containers, but it's just as useful for local commands, commands over ssh, or really anything that could be run from the command line in a single clean interface.
+Ahoy makes it easy to create aliases and templates for commands that are useful. It was created to help with running interactive commands within Docker containers, but it's just as useful for local commands, commands over `ssh`, or really anything that could be run from the command line in a single clean interface.
 
 ## Examples
 
-Say you want to import a MySQL database running in docker-compose using another container called cli. The command could look like this:
+Say you want to import a MySQL database running in `docker-compose` using another container called `cli`. The command could look like this:
 
 `docker exec -i $(docker-compose ps -q cli) bash -c 'mysql -u$DB_ENV_MYSQL_USER -p$DB_ENV_MYSQL_PASSWORD -h$DB_PORT_3306_TCP_ADDR $DB_ENV_MYSQL_DATABASE' < some-database.sql`
 
@@ -26,19 +26,20 @@ With Ahoy, you can turn this into:
 
 `ahoy mysql-import < some-database.sql`
 
-## FEATURES
+[More examples](https://ahoy-cli.readthedocs.io/en/latest/Home.html).
+
+## Features
 
 - Non-invasive - Use your existing workflow! It can wrap commands and scripts you are already using.
-- Consitent - Commands always run relative to the .ahoy.yml file, but can be called from any subfolder.
-- Visual - See a list of all of your commands in one place, along with helpful descriptions.
+- Consistent - Commands always run relative to the `.ahoy.yml` file, but can be called from any subfolder.
+- Visual - See a list of all your commands in one place, along with helpful descriptions.
 - Flexible - Commands are specific to a single folder tree, so each repo/workspace can have its own commands.
-- Fully interactive  - your shells (like MySQL) and prompts still work.
-- Self-Documenting - Commands and help declared in .ahoy.yml show up as ahoy command help and bash completion of commands (see [bash/zsh completion](https://ahoy-cli.readthedocs.io/en/latest/#bash-zsh-completion)).
+- Fully interactive - your shells (like MySQL) and prompts still work.
+- Self-documenting - Commands and help declared in `.ahoy.yml` show up as ahoy command help and shell completion of commands (see [bash/zsh completion](https://ahoy-cli.readthedocs.io/en/latest/#bash-zsh-completion)) is also available.
 
+## Installation
 
-## INSTALLATION
-
-### OSX
+### macOS
 
 Using Homebrew:
 
@@ -46,7 +47,7 @@ Using Homebrew:
 brew install ahoy
 ```
 
-Note that ahoy is in homebrew-core as of 1/18/19, so you don't need to use the old tap.
+Note that `ahoy` is in `homebrew-core` as of 1/18/19, so you don't need to use the old tap.
 If you were previously using it, you can use the following command to remove it:
 
 ```
@@ -55,18 +56,23 @@ brew untap ahoy-cli/tap
 
 ### Linux
 
-Download and unzip the latest release and move the appropriate binary for your plaform into someplace in your $PATH and rename it `ahoy`.
+Download the [latest release from GitHub](https://github.com/ahoy-cli/ahoy/releases), move the appropriate binary for your plaform into someplace in your $PATH and rename it `ahoy`.
 
 Example:
 ```
-sudo wget -q https://github.com/ahoy-cli/ahoy/releases/download/2.0.0/ahoy-bin-`uname -s`-amd64 -O /usr/local/bin/ahoy && sudo chown $USER /usr/local/bin/ahoy && chmod +x /usr/local/bin/ahoy
+os=$(uname -s | tr [:upper:] [:lower:]) && architecture=$(case $(uname -m) in x86_64 | amd64) echo "amd64" ;; aarch64 | arm64 | armv8) echo "arm64" ;; *) echo "amd64" ;; esac) && sudo wget -q https://github.com/ahoy-cli/ahoy/releases/download/2.0.1/ahoy-bin-$os-$architecture -O /usr/local/bin/ahoy && sudo chown $USER /usr/local/bin/ahoy && chmod +x /usr/local/bin/ahoy
 ```
 
-### New Features in v2
+### Windows
+
+For WSL2, use the Linux binary above for your architecture.
+
+## Some additions in v2
+
 - Implements a new feature to import multiple config files using the "imports" field.
 - Uses the "last in wins" rule to deal with duplicate commands amongst the config files.
-- Better handling of quotes by no longer using `{{args}}`. Use regular bash syntax like `"$@"` for all arguments, or `$1` for the first argument.
-- You can now use a different entrypoint (the thing that runs your commands) instead of bash. Ex. using PHP, Node.js, Python, etc.
+- Better handling of quotes by no longer using `{{args}}`. Use regular `bash` syntax like `"$@"` for all arguments, or `$1` for the first argument.
+- You can now use a different entrypoint (the thing that runs your commands) instead of `bash`. E.g. using PHP, Node.js, Python, etc. is possible.
 - Plugins are now possible by overriding the entrypoint.
 
 ### Example of new YAML setup in v2
