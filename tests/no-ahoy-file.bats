@@ -22,5 +22,12 @@ teardown() {
 
 @test "run ahoy init without a .ahoy.yml file" {
   run ./ahoy init
-  [ "${lines[-1]}" == "example.ahoy.yml downloaded to the current directory. You can customize it to suit your needs!" ]
+  [ "${lines[-1]}" == "Example .ahoy.yml downloaded to the current directory. You can customize it to suit your needs!" ]
+}
+
+@test "run ahoy init with a existing .ahoy.yml file in the current directory" {
+  cp tmp.ahoy.yml .ahoy.yml
+  run ./ahoy init
+  [ "${lines[-1]}" == "Warning: .ahoy.yml found in current directory." ]
+  rm .ahoy.yml
 }

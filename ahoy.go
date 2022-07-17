@@ -1,10 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -65,6 +65,14 @@ func logger(errType string, text string) {
 	}
 }
 
+func fileExists(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
+}
+
 func getConfigPath(sourcefile string) (string, error) {
 	var err error
 	var config = ""
@@ -92,13 +100,13 @@ func getConfigPath(sourcefile string) (string, error) {
 		// Chop off the last part of the path.
 		dir = path.Dir(dir)
 	}
-	logger("debug", "Can't find a .ahoy.yml file.")
+	logger("debug", "Can't find an .ahoy.yml file.")
 	return "", err
 }
 
 func getConfig(file string) (Config, error) {
 	var config = Config{}
-	yamlFile, err := ioutil.ReadFile(file)
+	yamlFile, err := os.ReadFile(file)
 	if err != nil {
 		err = errors.New("an ahoy config file couldn't be found in your path. You can create an example one by using 'ahoy init'")
 		return config, err
@@ -258,9 +266,40 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 	defaultInitCmd := cli.Command{
 		Name:  "init",
 		Usage: "Initialize a new .ahoy.yml config file in the current directory.",
+		Flags: []cli.Flag{
+			cli.BoolFlag{
+				Name:  "force",
+				Usage: "force overwriting the .ahoy.yml file in the current directory.",
+			},
+		},
 		Action: func(c *cli.Context) {
+			if fileExists(filepath.Join(".", ".ahoy.yml")) {
+				if c.Bool("force") {
+					fmt.Println("Warning: '--force' parameter passed, overwriting .ahoy.yml in current directory.")
+				} else {
+					fmt.Println("Warning: .ahoy.yml found in current directory.")
+					fmt.Fprint(os.Stderr, "Are you sure you wish to overwrite it with an example file, y/N ? ")
+					reader := bufio.NewReader(os.Stdin)
+					char, _, err := reader.ReadRune()
+					if err != nil {
+						fmt.Println(err)
+					}
+					// If "y" or "Y", continue and overwrite.
+					// Anything else, exit.
+					if char != 'y' && char != 'Y' {
+						fmt.Println("Abort: exiting without overwriting.")
+						os.Exit(0)
+					}
+					if len(c.Args()) > 0 {
+						fmt.Println("Ok, overwriting .ahoy.yml in current directory with specified file.")
+					} else {
+						fmt.Println("Ok, overwriting .ahoy.yml in current directory with example file.")
+					}
+				}
+			}
 			// Grab the URL or use a default for the initial ahoy file.
 			// Allows users to define their own files to call to init.
+			// TODO: Make file downloading OS-independent.
 			var wgetURL = "https://raw.githubusercontent.com/ahoy-cli/ahoy/master/examples/examples.ahoy.yml"
 			if len(c.Args()) > 0 {
 				wgetURL = c.Args()[0]
@@ -273,7 +312,11 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 				fmt.Fprintln(os.Stderr)
 				os.Exit(1)
 			} else {
-				fmt.Println("example.ahoy.yml downloaded to the current directory. You can customize it to suit your needs!")
+				if len(c.Args()) > 0 {
+					fmt.Println("Your specified .ahoy.yml has been downloaded to the current directory.")
+				} else {
+					fmt.Println("Example .ahoy.yml downloaded to the current directory. You can customize it to suit your needs!")
+				}
 			}
 		},
 	}
