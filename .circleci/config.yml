@@ -18,6 +18,13 @@ jobs:
           name: Install BATS.
           command: git clone https://github.com/bats-core/bats-core.git && cd bats-core && sudo ./install.sh /usr/local && bats --version && cd -
       - run:
+          name: Install BATS extras.
+          command: |
+            cd tests
+            git clone https://github.com/bats-core/bats-support.git ./test_helpers/bats-support
+            git clone https://github.com/bats-core/bats-assert.git ./test_helpers/bats-assert
+            cd -
+      - run:
           name: Install Go linter.
           command: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.46.2
       - run:
