@@ -217,8 +217,11 @@ func getCommands(config Config) []cli.Command {
 
 				// c.Args()  is not a slice apparently.
 				for _, arg := range c.Args() {
-					cmdArgs = append(cmdArgs, arg)
+					if arg != "--" {
+						cmdArgs = append(cmdArgs, arg)
+					}
 				}
+				// fmt.Printf("%s : %+v\n", "Args", cmdArgs)
 
 				// Replace the entry point placeholders.
 				cmdEntrypoint = config.Entrypoint[:]
@@ -254,7 +257,7 @@ func getCommands(config Config) []cli.Command {
 			newCmd.Subcommands = subCommands
 		}
 
-		//log.Println("found command: ", name, " > ", cmd.Cmd )
+		// log.Println("found command: ", name, " > ", cmd.Cmd)
 		exportCmds = append(exportCmds, newCmd)
 	}
 
@@ -378,6 +381,7 @@ func NoArgsAction(c *cli.Context) {
 // BeforeCommand runs before every command so arguments or flags must be passed
 func BeforeCommand(c *cli.Context) error {
 	args := c.Args()
+	// fmt.Printf("%+v\n", args)
 	if c.Bool("version") {
 		fmt.Println(version)
 		return errors.New("don't continue with commands")
@@ -390,7 +394,7 @@ func BeforeCommand(c *cli.Context) error {
 		}
 		return errors.New("don't continue with commands")
 	}
-	//fmt.Printf("%+v\n", args)
+	// fmt.Printf("%+v\n", args)
 	return nil
 }
 
