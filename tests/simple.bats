@@ -13,3 +13,8 @@
   result="$(./ahoy -f testdata/simple.ahoy.yml echo something)"
   [ "$result" == "something" ]
 }
+
+@test "run a simple ahoy command (ls -a) with an extra parameter (-l)" {
+  run ./ahoy -f testdata/simple.ahoy.yml list -- -l
+  [ "${#lines[@]}" -gt 13 ]
+}

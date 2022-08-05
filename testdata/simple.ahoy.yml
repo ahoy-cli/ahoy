@@ -2,3 +2,9 @@ ahoyapi: v2
 commands:
   echo:
     cmd: echo "$@"
+
+  list:
+    cmd: ls -a "$@"
+
+  whalesay:
+    cmd: docker run --rm docker/whalesay cowsay -f dragon "$@"
