@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -10,13 +9,13 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func TestOverrideExample(t *testing.T) {
-	expected := "Overrode you.\n"
-	actual, _ := appRun([]string{"ahoy", "-f", "testdata/override-base.ahoy.yml", "docker", "override-example"})
-	if expected != actual {
-		t.Errorf("ahoy docker override-example: expected - %s; actual - %s", string(expected), string(actual))
-	}
-}
+// func TestOverrideExample(t *testing.T) {
+// 	expected := "Overrode you.\n"
+// 	actual, _ := appRun([]string{"ahoy", "-f", "testdata/override-base.ahoy.yml", "docker", "override-example"})
+// 	if expected != actual {
+// 		t.Errorf("ahoy docker override-example: expected - %s; actual - %s", string(expected), string(actual))
+// 	}
+// }
 
 func TestGetCommands(t *testing.T) {
 	// Get Command with no sub Commands.
@@ -235,17 +234,17 @@ func TestGetConfigPathErrorOnBogusPath(t *testing.T) {
 	}
 }
 
-func appRun(args []string) (string, error) {
-	stdout := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
+// func appRun(args []string) (string, error) {
+// 	stdout := os.Stdout
+// 	r, w, _ := os.Pipe()
+// 	os.Stdout = w
 
-	setupApp(args[1:])
-	app.Run(args)
+// 	setupApp(args[1:])
+// 	app.Run(args)
 
-	w.Close()
-	//@aashil thinks this reads from the command line
-	out, _ := io.ReadAll(r)
-	os.Stdout = stdout
-	return string(out), nil
-}
+// 	w.Close()
+// 	//@aashil thinks this reads from the command line
+// 	out, _ := io.ReadAll(r)
+// 	os.Stdout = stdout
+// 	return string(out), nil
+// }

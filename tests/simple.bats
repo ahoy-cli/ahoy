@@ -18,3 +18,8 @@
   run ./ahoy -f testdata/simple.ahoy.yml list -- -l
   [ "${#lines[@]}" -gt 13 ]
 }
+
+@test "override an ahoy command with another command" {
+  result="$(./ahoy -f testdata/override-base.ahoy.yml docker override-example)"
+  [ "$result" == "Overrode you." ]
+}
