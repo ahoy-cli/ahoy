@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/urfave/cli"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 // Config handles the overall configuration in an ahoy.yml file
@@ -41,8 +41,8 @@ var sourcefile string
 var verbose bool
 var bashCompletion bool
 
-//The build version can be set using the go linker flag `-ldflags "-X main.version=$VERSION"`
-//Complete command: `go build -ldflags "-X main.version=$VERSION"`
+// The build version can be set using the go linker flag `-ldflags "-X main.version=$VERSION"`
+// Complete command: `go build -ldflags "-X main.version=$VERSION"`
 var version string
 
 // AhoyConf stores the global config.
@@ -331,7 +331,7 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 	return commands
 }
 
-//TODO Move these to flag.go?
+// TODO Move these to flag.go?
 func init() {
 	logger("debug", "init()")
 	flag.StringVar(&sourcefile, "f", "", "specify the sourcefile")
