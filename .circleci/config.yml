@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  go: circleci/go@1.7.1
+  go: circleci/go@1.7.3
 workflows:
   main:
     jobs:
@@ -10,7 +10,7 @@ jobs:
   build:
     executor:
       name: go/default
-      tag: '1.18'
+      tag: '1.20'
     working_directory: /home/circleci/go/src/github.com/ahoy-cli/ahoy
     steps:
       - checkout
@@ -29,7 +29,7 @@ jobs:
           command: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.46.2
       - run:
           name: Install PHP for testing.
-          command: sudo apt update && sudo apt install php7.4
+          command: sudo apt update && sudo apt install php8.1
       - go/load-cache
       - go/mod-download
       - run:
