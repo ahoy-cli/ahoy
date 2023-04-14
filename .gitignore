@@ -4,3 +4,7 @@ docs/_build
 ahoy
 .idea
 builds/*
+
+dist/
+
+test_helpers/
