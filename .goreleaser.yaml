@@ -1,0 +1,62 @@
+# Goreleaser config for ahoy.
+# Make sure to check the documentation at https://goreleaser.com
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - binary: >-
+      {{ .ProjectName }}-bin-
+      {{- .Os }}-
+      {{- .Arch }}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+      - -v
+    ldflags:
+      - '-s -w -X main.version={{ .Tag }} -X main.GitCommit={{ .ShortCommit }} -X main.GitBranch={{ .Branch }} -X main.BuildTime={{ .Now.Format "2023-04-01_16:45_GMT" }}'
+    no_unique_dist_dir: true
+
+archives:
+  - format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}-
+      {{- .Os }}-
+      {{- .Arch }}
+    # use zip for windows archives
+    format_overrides:
+    - goos: windows
+      format: zip
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+release:
+  github:
+    owner: ahoy-cli
+    name: ahoy
+  draft: true
+  replace_existing_draft: true
+  mode: prepend
+  prerelease: auto
+  target_commitish: '{{ .ShortCommit }}'
+sboms:
+  - artifacts: binary
+
+# The lines beneath this are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/use them.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
