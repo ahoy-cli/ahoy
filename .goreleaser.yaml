@@ -3,6 +3,7 @@
 before:
   hooks:
     - go mod tidy
+
 builds:
   - binary: >-
       {{ .ProjectName }}-bin-
@@ -44,17 +45,19 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
-release:
-  github:
-    owner: ahoy-cli
-    name: ahoy
-  draft: true
-  replace_existing_draft: true
-  mode: prepend
-  prerelease: auto
-  target_commitish: '{{ .ShortCommit }}'
+
 sboms:
   - artifacts: binary
+
+# release:
+#   github:
+#     owner: ahoy-cli
+#     name: ahoy
+#   draft: true
+#   replace_existing_draft: true
+#   mode: prepend
+#   prerelease: auto
+#   target_commitish: '{{ .ShortCommit }}'
 
 # The lines beneath this are called `modelines`. See `:help modeline`
 # Feel free to remove those if you don't want/use them.
