@@ -21,7 +21,7 @@ builds:
       - -trimpath
       - -v
     ldflags:
-      - '-s -w -X main.version={{ .Tag }} -X main.GitCommit={{ .ShortCommit }} -X main.GitBranch={{ .Branch }} -X main.BuildTime={{ .Now.Format "2023-04-01_16:45_GMT" }}'
+      - '-s -w -X main.version={{ .Tag }} -X main.GitCommit={{ .ShortCommit }} -X main.GitBranch={{ .Branch }} -X main.BuildTime={{ .Date }}'
     no_unique_dist_dir: true
 
 archives:
