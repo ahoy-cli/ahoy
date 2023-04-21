@@ -3,6 +3,7 @@
 before:
   hooks:
     - go mod tidy
+
 builds:
   - binary: >-
       {{ .ProjectName }}-bin-
@@ -21,7 +22,7 @@ builds:
       - -trimpath
       - -v
     ldflags:
-      - '-s -w -X main.version={{ .Tag }} -X main.GitCommit={{ .ShortCommit }} -X main.GitBranch={{ .Branch }} -X main.BuildTime={{ .Now.Format "2023-04-01_16:45_GMT" }}'
+      - '-s -w -X main.version={{ .Tag }} -X main.GitCommit={{ .ShortCommit }} -X main.GitBranch={{ .Branch }} -X main.BuildTime={{ .Date }}'
     no_unique_dist_dir: true
 
 archives:
@@ -44,17 +45,19 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
-release:
-  github:
-    owner: ahoy-cli
-    name: ahoy
-  draft: true
-  replace_existing_draft: true
-  mode: prepend
-  prerelease: auto
-  target_commitish: '{{ .ShortCommit }}'
+
 sboms:
   - artifacts: binary
+
+# release:
+#   github:
+#     owner: ahoy-cli
+#     name: ahoy
+#   draft: true
+#   replace_existing_draft: true
+#   mode: prepend
+#   prerelease: auto
+#   target_commitish: '{{ .ShortCommit }}'
 
 # The lines beneath this are called `modelines`. See `:help modeline`
 # Feel free to remove those if you don't want/use them.

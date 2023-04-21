@@ -1,8 +1,8 @@
 GITCOMMIT := $(shell git rev-parse --short HEAD 2>/dev/null)
-VERSION := $(shell git describe --tag $(GITCOMMIT) 2>/dev/null)
+VERSION := $(shell git describe --tags --abbrev=0 $(GITCOMMIT) 2>/dev/null)
 
 GITBRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
-BUILDTIME := $(shell TZ=GMT date "+%Y-%m-%d_%H:%M_GMT")
+BUILDTIME := $(shell TZ=UTC date "+%Y-%m-%dT%H:%M:%SZ")
 LDFLAGS := "-s -w -X main.version=$(VERSION) -X main.GitCommit=$(GITCOMMIT) -X main.GitBranch=$(GITBRANCH) -X main.BuildTime=$(BUILDTIME)"
 
 SRCS = $(shell find . -name '*.go' | grep -v '^./vendor/')
