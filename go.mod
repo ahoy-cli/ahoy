@@ -3,7 +3,7 @@ module github.com/ahoy-cli/ahoy
 go 1.20
 
 require (
-	github.com/urfave/cli v1.22.9
+	github.com/urfave/cli v1.22.13
 	gopkg.in/yaml.v2 v2.4.0
 )
 
