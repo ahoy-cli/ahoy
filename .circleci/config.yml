@@ -1,10 +1,6 @@
 version: 2.1
 orbs:
-  go: circleci/go@1.7.3
-workflows:
-  main:
-    jobs:
-      - build
+  go: circleci/go@1.10.0
 
 jobs:
   build:
@@ -53,3 +49,15 @@ jobs:
       - run:
           name: Run functional tests.
           command: ./ahoy test
+      - run:
+          name: Run tests
+          command: |
+            mkdir -p /tmp/test-reports
+            gotestsum --junitfile /tmp/test-reports/unit-tests.xml
+      - store_test_results:
+          path: /tmp/test-reports
+
+workflows:
+  main:
+    jobs:
+      - build
