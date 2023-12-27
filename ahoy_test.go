@@ -11,6 +11,7 @@ import (
 )
 
 func TestOverrideExample(t *testing.T) {
+	// Override a command with the same command from another imported command file.
 	expected := "Overrode you.\n"
 	actual, _ := appRun([]string{"ahoy", "-f", "testdata/override-base.ahoy.yml", "docker", "override-example"})
 	if expected != actual {
@@ -160,6 +161,7 @@ commands:
 }
 
 func TestGetConfig(t *testing.T) {
+	// Get a config file.
 	testFile, err := os.Create("test_getConfig.yml")
 
 	if err != nil {
@@ -209,7 +211,7 @@ func TestGetConfig(t *testing.T) {
 }
 
 func TestGetConfigPath(t *testing.T) {
-	// Passinng empty string.
+	// Passing an empty string.
 	pwd, _ := os.Getwd()
 	expected := filepath.Join(pwd, ".ahoy.yml")
 	actual, _ := getConfigPath("")
@@ -229,6 +231,7 @@ func TestGetConfigPath(t *testing.T) {
 }
 
 func TestGetConfigPathErrorOnBogusPath(t *testing.T) {
+	// Test getting a bogus config path.
 	_, err := getConfigPath("~/bogus/path")
 	if err == nil {
 		t.Error("getConfigPath did not fail when passed a bogus path.")
