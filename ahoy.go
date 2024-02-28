@@ -33,6 +33,7 @@ type Command struct {
 	Usage       string
 	Cmd         string
 	Hide        bool
+	Optional    bool
 	Imports     []string
 }
 
@@ -252,7 +253,11 @@ func getCommands(config Config) []cli.Command {
 		if cmd.Imports != nil {
 			subCommands := getSubCommands(cmd.Imports)
 			if len(subCommands) == 0 {
-				logger("fatal", "Command ["+name+"] has 'imports' set, but no commands were found. Check your yaml file.")
+				if !cmd.Optional {
+					logger("fatal", "Command ["+name+"] has 'imports' set, but no commands were found. Check your yaml file.")
+				} else {
+					continue
+				}
 			}
 			newCmd.Subcommands = subCommands
 		}
