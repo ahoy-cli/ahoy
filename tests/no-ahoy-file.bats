@@ -6,6 +6,7 @@ setup() {
 
 teardown() {
   mv tmp.ahoy.yml .ahoy.yml
+  rm -rf wget-lo*
 }
 
 @test "Run ahoy without a command and without an .ahoy.yml file" {

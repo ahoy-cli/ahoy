@@ -35,6 +35,7 @@ type Command struct {
 	Hide        bool
 	Optional    bool
 	Imports     []string
+	Aliases     []string
 }
 
 var app *cli.App
@@ -188,7 +189,7 @@ func getCommands(config Config) []cli.Command {
 			logger("fatal", "Command ["+name+"] has neither 'cmd' or 'imports' set. Check your yaml file.")
 		}
 
-		// Check that a command has 'cmd' AND 'imports' set.
+		// Check if a command has 'cmd' AND 'imports' set.
 		if cmd.Cmd != "" && cmd.Imports != nil {
 			logger("fatal", "Command ["+name+"] has both 'cmd' and 'imports' set, but only one is allowed. Check your yaml file.")
 		}
@@ -200,6 +201,7 @@ func getCommands(config Config) []cli.Command {
 
 		newCmd := cli.Command{
 			Name:            name,
+			Aliases:         cmd.Aliases,
 			SkipFlagParsing: true,
 			HideHelp:        cmd.Hide,
 		}
@@ -451,7 +453,7 @@ AUTHOR(S):
    {{range .Authors}}{{ . }}{{end}}
    {{end}}{{if .Commands}}
 COMMANDS:
-{{range .Commands}}{{if not .HideHelp}}   {{join .Names ", "}}{{ if len .Subcommands }}{{" \u25BC"}}{{end}}{{ "\t" }}{{.Usage}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .Flags}}
+{{range .Commands}}{{if not .HideHelp}}   {{join .Names ", "}}{{ if len .Subcommands }}{{" \u25BC"}}{{end}}{{ "\t" }}{{.Usage}} {{if .Aliases}}[ Aliases: {{join .Aliases ", "}} ]{{end}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .Flags}}
 GLOBAL OPTIONS:
    {{range .Flags}}{{.}}
    {{end}}{{end}}{{if .Copyright }}
@@ -461,6 +463,9 @@ COPYRIGHT:
 VERSION:
    {{.Version}}
    {{end}}
+ALIASES:
+    Commands can have aliases for easier invocation. Aliases are displayed next to each command that has them.
+    You can use any of a command's aliases interchangeably with its primary name.
 `
 
 	return app
