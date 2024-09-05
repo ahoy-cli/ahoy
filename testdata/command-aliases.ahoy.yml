@@ -7,5 +7,5 @@ commands:
   
   cowsay:
     usage: A cow says "ahoy!"
-    cmd: docker run rancher/cowsay "ahoy there!"
+    cmd: cowsay "ahoy there!"
     aliases: ["ahoy"]
