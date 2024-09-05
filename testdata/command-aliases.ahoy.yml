@@ -1,0 +1,11 @@
+ahoyapi: v2
+commands:
+  hello:
+    usage: Say hello
+    cmd: echo "Hello, World!"
+    aliases: ["hi", "greet", "ahoy"]
+  
+  cowsay:
+    usage: A cow says "ahoy!"
+    cmd: docker run rancher/cowsay "ahoy there!"
+    aliases: ["ahoy"]
