@@ -1,76 +1,50 @@
 ahoyapi: v2
 commands:
-  build:
-    usage: Build ahoy with a version automatically set.
-    cmd: bash build.sh "$@"
+  vup:
+    cmd: "vagrant up"
+    usage: Start the vagrant box if one exists.
 
-  build-all:
-    usage: Build all of the architecture and OSes that we support.
-    cmd: |
-      os_list=(darwin linux windows)
-      arch=amd64
-      for os in "${os_list[@]}"; do
-        echo "Building ahoy-bin-$os-$arch .."
-        env GOOS="$os" GOARCH="$arch" ahoy build -- -o "builds/ahoy-bin-$os-$arch"
-        if [ $? -ne 0 ]; then
-          "[Error]"
-          exit 1
-        fi
-      done
+  vdown:
+    cmd: "vagrant down"
+    usage: Stop the vagrant box if one exists.
 
-  install:
-    usage: Build ahoy using go install.
-    cmd: "go install"
+  ps:
+    cmd: docker compose ps "$@"
+    usage: List the running Docker Compose containers.
 
-  bats:
-    usage: "Run the bats bash testing command."
-    cmd: |
-      bats tests
+  start:
+    cmd: docker compose start "$@"
+    usage: Start the Docker Compose containers.
 
-  test:
-    usage: Run automated tests.
-    cmd: |
-      FAIL=false
-      TESTS=(
-        'go vet'
-        'go test -v -race '
-        'bats tests'
-      )
-      for i in "${TESTS[@]}"; do
-        printf "\n=== TEST: $i ===\n\n"
-        $i
-        if [ $? -ne 0 ]; then
-          FAIL=true
-        fi
-      done
-      printf "\n=== RESULT ===\n\n"
-      # If any tests failed, then fail.
-      if [ $FAIL == true ]; then
-        echo "Some tests failed."
-        exit 1
-      else
-        echo "All tests passed."
-      fi
+  stop:
+    cmd: docker compose stop "$@"
+    usage: Stop the Docker Compose containers.
 
-  gomod:
-    usage: Fetch Go dependencies (go mod).
-    cmd: |
-      go mod tidy
-      go mod vendor
-      go mod verify
+  restart:
+    cmd: docker compose restart "$@"
+    usage: Restart the Docker Compose containers.
 
-  godep:
-    usage: Use "ahoy gomod" now to fetch Go dependencies (go mod).
-    cmd: ahoy gomod
+  drush:
+    cmd: docker compose run cli drush --root=docroot "$@"
+    usage: Run drush commands in the cli service container.
 
-  gofmt:
-    usage: Clean up go code per code standards.
-    cmd: gofmt -w *.go
+  bash:
+    cmd: docker compose run "$1" bash
+    usage: Start a shell in the container (like ssh without actual ssh).
 
-  docs-build:
-    usage: Build the docs.
-    cmd: cd docs && make html
+  sqlc:
+    cmd: "docker compose run cli drush --root=docroot sqlc"
+    usage: Connect to the default mysql database. Supports piping of data into the command.
 
-  docs-deps:
-    usage: Install the dependencies from requirements.txt.
-    cmd: cd docs && pip install -r requirements.txt
+  behat:
+    cmd: docker compose run cli bash -c "cd docroot/test && composer install --prefer-source --no-interaction && bin/behat -p docker $@"
+    usage: Run the behat tests within the container.
+
+  behat-init:
+    cmd: 'docker compose run cli bash -c "cd docroot/test && composer install --prefer-source --no-interaction"'
+    usage: Use composer to install behat dependencies.
+
+  #This command overrides the up command in the docker.ahoy.yml to test the "last in wins" feature of ahoy
+  up:
+    cmd: "docker compose up -d"
+    usage: Start the Docker Compose containers.
