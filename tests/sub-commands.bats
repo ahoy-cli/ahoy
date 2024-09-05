@@ -59,7 +59,7 @@ teardown() {
   [ "$status" -eq 1 ]
 
   # Check that sub1-cmd and sub2-cmd are listed under main-cmd
-  run ahoy main-cmd --help
+  run ./ahoy main-cmd --help
   [ "$status" -eq 0 ]
   [[ "$output" =~ "sub1-cmd" ]]
   [[ "$output" =~ "sub2-cmd" ]]
