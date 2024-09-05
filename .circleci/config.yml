@@ -6,7 +6,7 @@ jobs:
   build:
     executor:
       name: go/default
-      tag: '1.23'
+      tag: '1.22'
     working_directory: /home/circleci/go/src/github.com/ahoy-cli/ahoy
     steps:
       - checkout
