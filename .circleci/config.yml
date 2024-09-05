@@ -25,7 +25,7 @@ jobs:
           command: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.46.2
       - run:
           name: Install PHP for testing.
-          command: sudo apt update && sudo apt install php8.1 cowsay
+          command: sudo apt update && sudo apt install php8.1
       - go/load-cache
       - go/mod-download
       - run:

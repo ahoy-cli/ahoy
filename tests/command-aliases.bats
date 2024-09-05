@@ -24,8 +24,8 @@ load 'test_helpers/bats-assert/load'
   [ "$status" -eq 1 ]
 }
 
-@test "A cow says ahoy" {
-  run ./ahoy -f testdata/command-aliases.ahoy.yml cowsay
+@test "Say ahoy there" {
+  run ./ahoy -f testdata/command-aliases.ahoy.yml ahoy-there
   [[ "$output" =~ "ahoy there!" ]]
   [ "$status" -eq 0 ]
 
