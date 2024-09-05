@@ -143,7 +143,9 @@ func getSubCommands(includes []string) []cli.Command {
 		if len(include) == 0 {
 			continue
 		}
-		if include[0] != "/"[0] || include[0] != "~"[0] {
+		// If the include path is not absolute or a home directory path,
+		// prepend the source directory to make it relative to the config file.
+		if !strings.HasPrefix(include, "/") && !strings.HasPrefix(include, "~") {
 			include = filepath.Join(AhoyConf.srcDir, include)
 		}
 		if _, err := os.Stat(include); err != nil {
@@ -186,7 +188,7 @@ func getCommands(config Config) []cli.Command {
 			logger("fatal", "Command ["+name+"] has neither 'cmd' or 'imports' set. Check your yaml file.")
 		}
 
-		// Check that a command has 'cmd' OR 'imports' set.
+		// Check that a command has 'cmd' AND 'imports' set.
 		if cmd.Cmd != "" && cmd.Imports != nil {
 			logger("fatal", "Command ["+name+"] has both 'cmd' and 'imports' set, but only one is allowed. Check your yaml file.")
 		}
@@ -262,7 +264,7 @@ func getCommands(config Config) []cli.Command {
 			newCmd.Subcommands = subCommands
 		}
 
-		// log.Println("found command: ", name, " > ", cmd.Cmd)
+		// log.Println("Source file:", sourcefile, "- found command:", name, ">", cmd.Cmd)
 		exportCmds = append(exportCmds, newCmd)
 	}
 
@@ -376,11 +378,12 @@ func NoArgsAction(c *cli.Context) {
 	}
 
 	if !c.Bool("help") || !c.Bool("version") {
-		logger("fatal", "Missing flag or argument.")
+		logger("warn", "Missing flag or argument.")
+		os.Exit(1)
 	}
 
-	// Looks like we never reach here.
-	fmt.Println("ERROR: NoArg Action ")
+	// Exit gracefully if we get to here.
+	os.Exit(0)
 }
 
 // BeforeCommand runs before every command so arguments or flags must be passed
