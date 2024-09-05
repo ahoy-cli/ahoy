@@ -1,5 +1,6 @@
 # Goreleaser config for ahoy.
 # Make sure to check the documentation at https://goreleaser.com
+version: 2
 before:
   hooks:
     - go mod tidy
@@ -22,7 +23,7 @@ builds:
       - -trimpath
       - -v
     ldflags:
-      - '-s -w -X main.version={{ .Tag }} -X main.GitCommit={{ .ShortCommit }} -X main.GitBranch={{ .Branch }} -X main.BuildTime={{ .Date }}'
+      - "-s -w -X main.version={{ .Tag }} -X main.GitCommit={{ .ShortCommit }} -X main.GitBranch={{ .Branch }} -X main.BuildTime={{ .Date }}"
     no_unique_dist_dir: true
 
 archives:
@@ -33,22 +34,21 @@ archives:
       {{- .Arch }}
     # use zip for windows archives
     format_overrides:
-    - goos: windows
-      format: zip
+      - goos: windows
+        format: zip
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 snapshot:
-  name_template: "{{ incpatch .Version }}-next"
+  version_template: "{{ incpatch .Version }}-next"
 changelog:
   sort: asc
   filters:
     exclude:
-      - '^docs:'
-      - '^test:'
+      - "^docs:"
+      - "^test:"
 
 sboms:
   - artifacts: binary
-
 # release:
 #   github:
 #     owner: ahoy-cli
