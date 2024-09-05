@@ -1,12 +1,12 @@
 version: 2.1
 orbs:
-  go: circleci/go@1.10.0
+  go: circleci/go@1.11.0
 
 jobs:
   build:
     executor:
       name: go/default
-      tag: '1.20'
+      tag: '1.22'
     working_directory: /home/circleci/go/src/github.com/ahoy-cli/ahoy
     steps:
       - checkout

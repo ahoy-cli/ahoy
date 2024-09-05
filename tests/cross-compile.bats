@@ -3,7 +3,7 @@
 load 'test_helpers/bats-support/load'
 load 'test_helpers/bats-assert/load'
 
-@test "test cross compilation command lifecycle" {
+@test "Test cross compilation command lifecycle" {
   run make clean
   assert_success
   assert_output --partial 'rm -vRf ./builds/ahoy-bin-*'
