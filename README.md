@@ -68,6 +68,39 @@ os=$(uname -s | tr [:upper:] [:lower:]) && architecture=$(case $(uname -m) in x8
 
 For WSL2, use the Linux binary above for your architecture.
 
+## Command Aliases
+
+Ahoy now supports command aliases. This feature allows you to define alternative names for your commands, making them more convenient to use and remember.
+
+### Usage
+
+In your `.ahoy.yml` file, you can add an `aliases` field to any command definition. The `aliases` field should be an array of strings, each representing one or more alternative names for the command.
+
+Example:
+
+```yaml
+ahoyapi: v2
+commands:
+  hello:
+    usage: Say hello
+    cmd: echo "Hello, World!"
+    aliases: ["hi", "greet"]
+```
+
+In this example, the `hello` command can also be invoked using `hi` or `greet`.
+
+### Benefits
+
+- Improved usability: Users can call commands using shorter or more intuitive names.
+- Flexibility: You can provide multiple ways to access the same functionality without duplicating command definitions.
+- Backward compatibility: You can introduce new, more descriptive command names while keeping old names as aliases.
+
+### Notes
+
+- Aliases are displayed in the help output for each command.
+- Bash completion works with aliases as well as primary command names.
+- **If multiple commands share the same alias, the "last in wins" rule is used and the last matching command will be executed.**
+
 ## Some additions in v2
 
 - Implements a new feature to import multiple config files using the "imports" field.
@@ -117,18 +150,9 @@ commands:
         - ./some-file3.ahoy.yml
 ```
 
-### Planned Features
+## Planned Features
 
 - Enable specifying specific arguments and flags in the ahoy file itself to cut down on parsing arguments in scripts.
 - Support for more built-in commands or a "verify" YAML option that would create a yes / no prompt for potentially destructive commands. (Are you sure you want to delete all your containers?)
 - Pipe tab completion to another command (allows you to get tab completion).
 - Support for configuration.
-
-## Previewing the Read the Docs documentation locally.
-
-* Change to the `./docs` directory.
-* Run `ahoy deps` to install the python dependencies.
-* Make changes to any of the .md files.
-* Run `ahoy build-docs` (This will convert all the .md files to docs)
-* You should have several html files in docs/_build/html directory of which Home.html and index.html are the parent files.
-* For more information on how to compile the docs from scratch visit: https://read-the-docs.readthedocs.io/en/latest/intro/getting-started-with-mkdocs.html

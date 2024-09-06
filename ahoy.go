@@ -33,7 +33,9 @@ type Command struct {
 	Usage       string
 	Cmd         string
 	Hide        bool
+	Optional    bool
 	Imports     []string
+	Aliases     []string
 }
 
 var app *cli.App
@@ -142,7 +144,9 @@ func getSubCommands(includes []string) []cli.Command {
 		if len(include) == 0 {
 			continue
 		}
-		if include[0] != "/"[0] || include[0] != "~"[0] {
+		// If the include path is not absolute or a home directory path,
+		// prepend the source directory to make it relative to the config file.
+		if !strings.HasPrefix(include, "/") && !strings.HasPrefix(include, "~") {
 			include = filepath.Join(AhoyConf.srcDir, include)
 		}
 		if _, err := os.Stat(include); err != nil {
@@ -185,7 +189,7 @@ func getCommands(config Config) []cli.Command {
 			logger("fatal", "Command ["+name+"] has neither 'cmd' or 'imports' set. Check your yaml file.")
 		}
 
-		// Check that a command has 'cmd' OR 'imports' set.
+		// Check if a command has 'cmd' AND 'imports' set.
 		if cmd.Cmd != "" && cmd.Imports != nil {
 			logger("fatal", "Command ["+name+"] has both 'cmd' and 'imports' set, but only one is allowed. Check your yaml file.")
 		}
@@ -197,6 +201,7 @@ func getCommands(config Config) []cli.Command {
 
 		newCmd := cli.Command{
 			Name:            name,
+			Aliases:         cmd.Aliases,
 			SkipFlagParsing: true,
 			HideHelp:        cmd.Hide,
 		}
@@ -252,12 +257,16 @@ func getCommands(config Config) []cli.Command {
 		if cmd.Imports != nil {
 			subCommands := getSubCommands(cmd.Imports)
 			if len(subCommands) == 0 {
-				logger("fatal", "Command ["+name+"] has 'imports' set, but no commands were found. Check your yaml file.")
+				if !cmd.Optional {
+					logger("fatal", "Command ["+name+"] has 'imports' set, but no commands were found. Check your yaml file.")
+				} else {
+					continue
+				}
 			}
 			newCmd.Subcommands = subCommands
 		}
 
-		// log.Println("found command: ", name, " > ", cmd.Cmd)
+		// log.Println("Source file:", sourcefile, "- found command:", name, ">", cmd.Cmd)
 		exportCmds = append(exportCmds, newCmd)
 	}
 
@@ -371,11 +380,12 @@ func NoArgsAction(c *cli.Context) {
 	}
 
 	if !c.Bool("help") || !c.Bool("version") {
-		logger("fatal", "Missing flag or argument.")
+		logger("warn", "Missing flag or argument.")
+		os.Exit(1)
 	}
 
-	// Looks like we never reach here.
-	fmt.Println("ERROR: NoArg Action ")
+	// Exit gracefully if we get to here.
+	os.Exit(0)
 }
 
 // BeforeCommand runs before every command so arguments or flags must be passed
@@ -443,7 +453,7 @@ AUTHOR(S):
    {{range .Authors}}{{ . }}{{end}}
    {{end}}{{if .Commands}}
 COMMANDS:
-{{range .Commands}}{{if not .HideHelp}}   {{join .Names ", "}}{{ if len .Subcommands }}{{" \u25BC"}}{{end}}{{ "\t" }}{{.Usage}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .Flags}}
+{{range .Commands}}{{if not .HideHelp}}   {{join .Names ", "}}{{ if len .Subcommands }}{{" \u25BC"}}{{end}}{{ "\t" }}{{.Usage}} {{if .Aliases}}[ Aliases: {{join .Aliases ", "}} ]{{end}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .Flags}}
 GLOBAL OPTIONS:
    {{range .Flags}}{{.}}
    {{end}}{{end}}{{if .Copyright }}
@@ -453,6 +463,9 @@ COPYRIGHT:
 VERSION:
    {{.Version}}
    {{end}}
+ALIASES:
+    Commands can have aliases for easier invocation. Aliases are displayed next to each command that has them.
+    You can use any of a command's aliases interchangeably with its primary name.
 `
 
 	return app

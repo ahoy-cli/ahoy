@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 
-@test "override bash entrypoint to add additional flags" {
+@test "Override bash entrypoint to add additional flags" {
   run ./ahoy -f testdata/entrypoint-bash.ahoy.yml echo something
   [ $status -eq 0 ]
   echo "$output"
@@ -10,7 +10,7 @@
 
 }
 
-@test "override bash entrypoint to use php instead" {
+@test "Override bash entrypoint to use PHP instead" {
   run ./ahoy -f testdata/entrypoint-php.ahoy.yml echo something
   [ $status -eq 0 ]
   echo "$output"

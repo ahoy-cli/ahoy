@@ -1,0 +1,10 @@
+ahoyapi: v2
+commands:
+  optional-cmd:
+    usage: These imports are optional
+    imports:
+      - testdata/non-existent-file.yml
+    optional: true
+  regular-cmd:
+    usage: This is a regular command
+    cmd: echo "This is a regular command"
