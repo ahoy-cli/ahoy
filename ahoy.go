@@ -33,6 +33,7 @@ type Command struct {
 	Description string
 	Usage       string
 	Cmd         string
+	Env         string
 	Hide        bool
 	Optional    bool
 	Imports     []string
@@ -273,6 +274,11 @@ func getCommands(config Config) []cli.Command {
 					}
 				}
 				cmdItems = append(cmdEntrypoint, cmdArgs...)
+				
+				// If defined, included specified command-level environment variables
+				if cmd.Env != "" {
+					envVars = append(envVars, getEnvironmentVars(cmd.Env)...)
+				}
 
 				if verbose {
 					log.Println("===> AHOY", name, "from", sourcefile, ":", cmdItems)
