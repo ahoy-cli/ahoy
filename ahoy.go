@@ -172,9 +172,38 @@ func getSubCommands(includes []string) []cli.Command {
 	return subCommands
 }
 
+// Given a filepath, return a string array of environment variables.
+func getEnvironmentVars(envFile string) []string {
+	var envVars []string
+	
+	env, err := os.ReadFile(envFile)
+	if err != nil {
+		return nil
+	}
+	
+	lines := strings.Split(string(env), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		
+		// Ignore empty lines and comments (lines starting with '#').
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		envVars = append(envVars, line)
+	}
+
+	return envVars
+}
+
 func getCommands(config Config) []cli.Command {
 	exportCmds := []cli.Command{}
 
+	// Get environment variables defined in '.env' file
+	// located in the Ahoy source directory.
+	globalEnvFile := filepath.Join(AhoyConf.srcDir, ".env")
+	envVars := getEnvironmentVars(globalEnvFile)
+	
 	var keys []string
 	for k := range config.Commands {
 		keys = append(keys, k)
@@ -247,6 +276,7 @@ func getCommands(config Config) []cli.Command {
 				command.Stdout = os.Stdout
 				command.Stdin = os.Stdin
 				command.Stderr = os.Stderr
+				command.Env = append(command.Env, envVars...)
 				if err := command.Run(); err != nil {
 					fmt.Fprintln(os.Stderr)
 					os.Exit(1)
