@@ -201,7 +201,7 @@ func getCommands(config Config) []cli.Command {
 	exportCmds := []cli.Command{}
 	envVars := []string{}
 
-	// If a global environment variable file is defined, use that too.
+	// Get environment variables from the 'global' environment variable file, if it is defined.
 	if config.Env != "" {
 		globalEnvFile := filepath.Join(AhoyConf.srcDir, config.Env)
 		envVars = append(envVars, getEnvironmentVars(globalEnvFile)...)
@@ -271,7 +271,9 @@ func getCommands(config Config) []cli.Command {
 				}
 				cmdItems = append(cmdEntrypoint, cmdArgs...)
 
-				// If defined, included specified command-level environment variables
+				// If defined, included specified command-level environment variables.
+				// Note that this will intentionally override any conflicting variables
+				// defined in the 'global' env file.
 				if cmd.Env != "" {
 					cmdEnvFile := filepath.Join(AhoyConf.srcDir, cmd.Env)
 					envVars = append(envVars, getEnvironmentVars(cmdEnvFile)...)
