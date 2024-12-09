@@ -180,7 +180,8 @@ func getEnvironmentVars(envFile string) []string {
 	
 	env, err := os.ReadFile(envFile)
 	if err != nil {
-		return nil
+        logger("fatal", "Invalid env file: " + envFile)
+        return nil
 	}
 	
 	lines := strings.Split(string(env), "\n")
@@ -200,15 +201,12 @@ func getEnvironmentVars(envFile string) []string {
 
 func getCommands(config Config) []cli.Command {
 	exportCmds := []cli.Command{}
-
-	// Get environment variables defined in '.env' file
-	// located in the Ahoy source directory.
-	globalEnvFile := filepath.Join(AhoyConf.srcDir, ".env")
-	envVars := getEnvironmentVars(globalEnvFile)
+    envVars := []string{}
 
 	// If a global environment variable file is defined, use that too.
 	if config.Env != "" {
-		envVars = append(envVars, getEnvironmentVars(config.Env)...)
+        globalEnvFile := filepath.Join(AhoyConf.srcDir, config.Env)
+		envVars = append(envVars, getEnvironmentVars(globalEnvFile)...)
 	}
 	
 	var keys []string
@@ -277,7 +275,8 @@ func getCommands(config Config) []cli.Command {
 				
 				// If defined, included specified command-level environment variables
 				if cmd.Env != "" {
-					envVars = append(envVars, getEnvironmentVars(cmd.Env)...)
+                    cmdEnvFile := filepath.Join(AhoyConf.srcDir, cmd.Env)
+					envVars = append(envVars, getEnvironmentVars(cmdEnvFile)...)
 				}
 
 				if verbose {
