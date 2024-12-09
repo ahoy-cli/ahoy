@@ -187,15 +187,13 @@ func getEnvironmentVars(envFile string) []string {
 	lines := strings.Split(string(env), "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
-		
+
 		// Ignore empty lines and comments (lines starting with '#').
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-
 		envVars = append(envVars, line)
 	}
-
 	return envVars
 }
 
@@ -205,8 +203,8 @@ func getCommands(config Config) []cli.Command {
 
 	// If a global environment variable file is defined, use that too.
 	if config.Env != "" {
-        globalEnvFile := filepath.Join(AhoyConf.srcDir, config.Env)
-		envVars = append(envVars, getEnvironmentVars(globalEnvFile)...)
+        	globalEnvFile := filepath.Join(AhoyConf.srcDir, config.Env)
+        	envVars = append(envVars, getEnvironmentVars(globalEnvFile)...)
 	}
 	
 	var keys []string
@@ -275,7 +273,7 @@ func getCommands(config Config) []cli.Command {
 				
 				// If defined, included specified command-level environment variables
 				if cmd.Env != "" {
-                    cmdEnvFile := filepath.Join(AhoyConf.srcDir, cmd.Env)
+                    			cmdEnvFile := filepath.Join(AhoyConf.srcDir, cmd.Env)
 					envVars = append(envVars, getEnvironmentVars(cmdEnvFile)...)
 				}
 
