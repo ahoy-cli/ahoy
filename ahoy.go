@@ -177,13 +177,13 @@ func getSubCommands(includes []string) []cli.Command {
 // Given a filepath, return a string array of environment variables.
 func getEnvironmentVars(envFile string) []string {
 	var envVars []string
-	
+
 	env, err := os.ReadFile(envFile)
 	if err != nil {
-        logger("fatal", "Invalid env file: " + envFile)
-        return nil
+		logger("fatal", "Invalid env file: "+envFile)
+		return nil
 	}
-	
+
 	lines := strings.Split(string(env), "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
@@ -199,14 +199,14 @@ func getEnvironmentVars(envFile string) []string {
 
 func getCommands(config Config) []cli.Command {
 	exportCmds := []cli.Command{}
-    envVars := []string{}
+	envVars := []string{}
 
 	// If a global environment variable file is defined, use that too.
 	if config.Env != "" {
-        	globalEnvFile := filepath.Join(AhoyConf.srcDir, config.Env)
-        	envVars = append(envVars, getEnvironmentVars(globalEnvFile)...)
+		globalEnvFile := filepath.Join(AhoyConf.srcDir, config.Env)
+		envVars = append(envVars, getEnvironmentVars(globalEnvFile)...)
 	}
-	
+
 	var keys []string
 	for k := range config.Commands {
 		keys = append(keys, k)
@@ -270,10 +270,10 @@ func getCommands(config Config) []cli.Command {
 					}
 				}
 				cmdItems = append(cmdEntrypoint, cmdArgs...)
-				
+
 				// If defined, included specified command-level environment variables
 				if cmd.Env != "" {
-                    			cmdEnvFile := filepath.Join(AhoyConf.srcDir, cmd.Env)
+					cmdEnvFile := filepath.Join(AhoyConf.srcDir, cmd.Env)
 					envVars = append(envVars, getEnvironmentVars(cmdEnvFile)...)
 				}
 
