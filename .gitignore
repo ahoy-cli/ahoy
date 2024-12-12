@@ -2,7 +2,6 @@
 docs/_build
 # Ignore the ahoy binary when it's built
 ahoy
-!autocompletions/zsh/ahoy
 
 .idea
 builds/*
