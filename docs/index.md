@@ -54,22 +54,12 @@ sudo wget -q https://github.com/ahoy-cli/ahoy/releases/download/1.1.0/ahoy-`unam
 sudo wget -q https://github.com/ahoy-cli/ahoy/releases/download/2.0.0/ahoy-bin-`uname -s`-amd64 -O /usr/local/bin/ahoy && sudo chown $USER /usr/local/bin/ahoy && chmod +x /usr/local/bin/ahoy
 ```
 
-### Bash / Zsh Completion
-For Zsh, there are two options. If you are using Oh-My-Zsh, you can install our custom plugin by downloading the `autocomplete/zsh/ahoy` folder and placing it in the Oh-My-Zsh custom plugin folder,
-usually located at `~/.oh-my-zsh/custom/plugin`. Then you must enable it in your `./zshrc`:
+## Autocompletions
 
-```
-plugins=(
-    # other plugins...
-    ahoy
-)
+### Zsh
+For Zsh completions, we have a standalone plugin available at [ahoy-cli/zsh-ahoy](https://github.com/ahoy-cli/zsh-ahoy).
 
-```
-Alternatively, if you don't use Oh-My-Zsh you can save the `autocomplete/zsh/ahoy-zsh-autocomplete` file somewhere and source it in your `~/.zshrc`:
-
-```
-source /path/to/ahoy-zsh-autocomplete
-```
+### Bash
 
 For Bash, you'll need to make sure you have bash-completion installed and setup. On OSX with homebrew it looks like this:
 
