@@ -55,9 +55,21 @@ sudo wget -q https://github.com/ahoy-cli/ahoy/releases/download/2.0.0/ahoy-bin-`
 ```
 
 ### Bash / Zsh Completion
-For Zsh, Just add this to your ~/.zshrc, and your completions will be relative to the directory you're in.
+For Zsh, there are two options. If you are using Oh-My-Zsh, you can install our custom plugin by downloading the `autocomplete/zsh/ahoy` folder and placing it in the Oh-My-Zsh custom plugin folder,
+usually located at `~/.oh-my-zsh/custom/plugin`. Then you must enable it in your `./zshrc`:
 
-`complete -F "ahoy --generate-bash-completion" ahoy`
+```
+plugins=(
+    # other plugins...
+    ahoy
+)
+
+```
+Alternatively, if you don't use Oh-My-Zsh you can save the `autocomplete/zsh/ahoy-zsh-autocomplete` file somewhere and source it in your `~/.zshrc`:
+
+```
+source /path/to/ahoy-zsh-autocomplete
+```
 
 For Bash, you'll need to make sure you have bash-completion installed and setup. On OSX with homebrew it looks like this:
 
