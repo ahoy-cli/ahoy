@@ -24,6 +24,7 @@ type Config struct {
 	AhoyAPI    string
 	Commands   map[string]Command
 	Entrypoint []string
+	Env        string
 }
 
 // Command is an ahoy command detailed in ahoy.yml files. Multiple
@@ -32,6 +33,7 @@ type Command struct {
 	Description string
 	Usage       string
 	Cmd         string
+	Env         string
 	Hide        bool
 	Optional    bool
 	Imports     []string
@@ -172,8 +174,38 @@ func getSubCommands(includes []string) []cli.Command {
 	return subCommands
 }
 
+// Given a filepath, return a string array of environment variables.
+func getEnvironmentVars(envFile string) []string {
+	var envVars []string
+
+	env, err := os.ReadFile(envFile)
+	if err != nil {
+		logger("fatal", "Invalid env file: "+envFile)
+		return nil
+	}
+
+	lines := strings.Split(string(env), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
+		// Ignore empty lines and comments (lines starting with '#').
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		envVars = append(envVars, line)
+	}
+	return envVars
+}
+
 func getCommands(config Config) []cli.Command {
 	exportCmds := []cli.Command{}
+	envVars := []string{}
+
+	// Get environment variables from the 'global' environment variable file, if it is defined.
+	if config.Env != "" {
+		globalEnvFile := filepath.Join(AhoyConf.srcDir, config.Env)
+		envVars = append(envVars, getEnvironmentVars(globalEnvFile)...)
+	}
 
 	var keys []string
 	for k := range config.Commands {
@@ -239,6 +271,14 @@ func getCommands(config Config) []cli.Command {
 				}
 				cmdItems = append(cmdEntrypoint, cmdArgs...)
 
+				// If defined, included specified command-level environment variables.
+				// Note that this will intentionally override any conflicting variables
+				// defined in the 'global' env file.
+				if cmd.Env != "" {
+					cmdEnvFile := filepath.Join(AhoyConf.srcDir, cmd.Env)
+					envVars = append(envVars, getEnvironmentVars(cmdEnvFile)...)
+				}
+
 				if verbose {
 					log.Println("===> AHOY", name, "from", sourcefile, ":", cmdItems)
 				}
@@ -247,6 +287,7 @@ func getCommands(config Config) []cli.Command {
 				command.Stdout = os.Stdout
 				command.Stdin = os.Stdin
 				command.Stderr = os.Stderr
+				command.Env = append(command.Env, envVars...)
 				if err := command.Run(); err != nil {
 					fmt.Fprintln(os.Stderr)
 					os.Exit(1)
