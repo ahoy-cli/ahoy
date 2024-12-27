@@ -26,8 +26,8 @@ jobs:
       - run:
           name: Install PHP for testing.
           command: sudo apt update && sudo apt install php8.1
-      - go/load-cache
-      - go/mod-download
+      # - go/load-cache
+      # - go/mod-download
       - run:
           name: Get Go modules.
           command: |
