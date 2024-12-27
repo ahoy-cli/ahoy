@@ -187,7 +187,7 @@ func TestGetConfig(t *testing.T) {
 	testYaml, err := yaml.Marshal(expected)
 
 	if err != nil {
-		t.Error("Something went wrong mashalling the test object.")
+		t.Error("Something went wrong marshalling the test object.")
 	}
 
 	testFile.Write([]byte(testYaml))
@@ -199,11 +199,11 @@ func TestGetConfig(t *testing.T) {
 	}
 
 	if config.Usage != expected.Usage {
-		t.Errorf("Expected config.Usage to be %s, but actaul is %s", expected.Usage, config.Usage)
+		t.Errorf("Expected config.Usage to be %s, but actual is %s", expected.Usage, config.Usage)
 	}
 
 	if config.Commands["test-command"].Cmd != expected.Commands["test-command"].Cmd {
-		t.Errorf("Expected config.Commands['test-command'].cmd to be %s, but actaul is %s", expected.Commands["test-command"].Cmd, config.Commands["test-command"].Cmd)
+		t.Errorf("Expected config.Commands['test-command'].cmd to be %s, but actual is %s", expected.Commands["test-command"].Cmd, config.Commands["test-command"].Cmd)
 	}
 
 	testFile.Close()
