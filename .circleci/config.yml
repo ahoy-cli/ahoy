@@ -55,6 +55,7 @@ jobs:
           name: Run tests
           command: |
             mkdir -p /tmp/test-reports
+            cd v2
             gotestsum --junitfile /tmp/test-reports/unit-tests.xml
       - store_test_results:
           path: /tmp/test-reports
