@@ -140,6 +140,15 @@
         "code",
         "doc"
       ]
+    },
+    {
+      "login": "arafalov",
+      "name": "Alexandre Rafalovitch",
+      "avatar_url": "https://avatars.githubusercontent.com/u/64153?v=4",
+      "profile": "http://www.linkedin.com/in/alexandrerafalovitch",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7,
