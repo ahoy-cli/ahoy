@@ -5,8 +5,7 @@ GITBRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
 BUILDTIME := $(shell TZ=UTC date "+%Y-%m-%dT%H:%M:%SZ")
 LDFLAGS := "-s -w -X main.version=$(VERSION) -X main.GitCommit=$(GITCOMMIT) -X main.GitBranch=$(GITBRANCH) -X main.BuildTime=$(BUILDTIME)"
 
-SRCS = $(shell find . -name '*.go' | grep -v '^./vendor/')
-PKGS := $(foreach pkg, $(sort $(dir $(SRCS))), $(pkg))
+SRCS = $(shell find . -name '*.go' | grep -E -v '^./vendor/')
 
 OS := linux darwin windows
 ARCH := amd64 arm64
@@ -43,14 +42,14 @@ staticcheck:
 	staticcheck ./...
 
 vet:
-	$(foreach pkg,$(PKGS),go vet $(pkg) || exit;)
+	go vet ./...
 
 gocyclo:
 	@ go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
 	gocyclo -over 25 -avg -ignore "vendor" .
 
 test: fmtcheck staticcheck vet
-	 go test *.go $(TESTARGS)
+	go test ./*.go $(TESTARGS)
 
 version:
 	@echo $(VERSION)

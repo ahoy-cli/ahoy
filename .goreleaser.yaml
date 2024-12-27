@@ -3,10 +3,11 @@
 version: 2
 before:
   hooks:
-    - go mod tidy
+    - cd v2 && go mod tidy
 
 builds:
-  - binary: >-
+  - dir: v2
+    binary: >-
       {{ .ProjectName }}-bin-
       {{- .Os }}-
       {{- .Arch }}
@@ -19,6 +20,10 @@ builds:
     goarch:
       - amd64
       - arm64
+      - arm
+    ignore:
+      - goos: windows
+        goarch: arm
     flags:
       - -trimpath
       - -v
@@ -36,10 +41,13 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
+
 checksum:
-  name_template: "checksums.txt"
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
+
 changelog:
   sort: asc
   filters:
@@ -49,6 +57,13 @@ changelog:
 
 sboms:
   - artifacts: binary
+
+binary_signs:
+  - signature: "${artifact}.sig"
+
+signs:
+  - artifacts: checksum
+
 # release:
 #   github:
 #     owner: ahoy-cli

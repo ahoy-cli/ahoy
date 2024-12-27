@@ -1,4 +1,4 @@
-module github.com/ahoy-cli/ahoy
+module github.com/ahoy-cli/ahoy/v2
 
 go 1.20
 
