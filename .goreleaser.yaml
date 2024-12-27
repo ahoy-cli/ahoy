@@ -21,8 +21,6 @@ builds:
       - amd64
       - arm64
       - arm
-    goarm64:
-      - v9.0
     ignore:
       - goos: windows
         goarch: arm
@@ -43,10 +41,13 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
+
 checksum:
-  name_template: "checksums.txt"
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
+
 changelog:
   sort: asc
   filters:
@@ -58,7 +59,7 @@ sboms:
   - artifacts: binary
 
 binary_signs:
-  - {}
+  - signature: "${artifact}.sig"
 
 signs:
   - artifacts: checksum
