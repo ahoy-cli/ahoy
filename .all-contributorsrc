@@ -8,7 +8,7 @@
   ],
   "imageSize": 64,
   "commit": true,
-  "commitConvention": "eslint",
+  "commitConvention": "angular",
   "contributors": [
     {
       "login": "jackwrfuller",
@@ -45,8 +45,27 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "ocean",
+      "name": "Drew Robinson",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4443?v=4",
+      "profile": "https://github.com/ocean",
+      "contributions": [
+        "code",
+        "bug",
+        "content",
+        "doc",
+        "ideas",
+        "infra",
+        "maintenance",
+        "platform",
+        "question",
+        "review",
+        "security",
+        "test"
+      ]
     }
   ],
-  "contributorsPerLine": 7,
-  "linkToUsage": true
+  "contributorsPerLine": 7
 }
