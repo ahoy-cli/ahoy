@@ -170,6 +170,10 @@ commands:
 - Pipe tab completion to another command (allows you to get tab completion).
 - Support for configuration.
 
+## Sponsors 💰 👏
+
+- [<img src="https://www.drevops.com/img/drevops_logo_horiz_black.png" width="128px;"><br />Alex Skrypnyk - DrevOps](https://drevops.com)
+
 ## Contributors ✨
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
