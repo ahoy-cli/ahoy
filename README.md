@@ -36,7 +36,7 @@ With Ahoy, you can turn this into:
 - Flexible - Commands are specific to a single folder tree, so each repo/workspace can have its own commands.
 - Command templates - Args can be dropped into your commands using `{{args}}`
 - Fully interactive - Your shells (like MySQL) and prompts still work.
-- Self-documenting - Commands and help declared in `.ahoy.yml` show up as ahoy command help and shell completion of commands (see [bash/zsh completion](https://ahoy-cli.readthedocs.io/en/latest/#bash-zsh-completion)) is also available.
+- Self-documenting - Commands and help declared in `.ahoy.yml` show up as ahoy command help and shell completion of commands (see [bash/zsh completion](https://ahoy-cli.readthedocs.io/en/latest/#bash-zsh-completion)) is also available. We now have a dedicated Zsh plugin for completions at [ahoy-cli/zsh-ahoy](https://github.com/ahoy-cli/zsh-ahoy).
 
 ## Installation
 
@@ -100,6 +100,16 @@ In this example, the `hello` command can also be invoked using `hi` or `greet`.
 - Aliases are displayed in the help output for each command.
 - Bash completion works with aliases as well as primary command names.
 - **If multiple commands share the same alias, the "last in wins" rule is used and the last matching command will be executed.**
+
+## Shell autocompletions
+
+### Zsh
+
+For Zsh completions, we have a standalone plugin available at [ahoy-cli/zsh-ahoy](https://github.com/ahoy-cli/zsh-ahoy).
+
+### Bash
+
+For Bash, you'll need to make sure you have bash-completion installed and setup. See [bash/zsh completion](https://ahoy-cli.readthedocs.io/en/latest/#bash-zsh-completion) for further instructions.
 
 ## Some additions in v2
 
