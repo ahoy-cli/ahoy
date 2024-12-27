@@ -121,6 +121,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "marji",
+      "name": "Marji Cermak",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1254919?v=4",
+      "profile": "https://morpht.com/",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7
