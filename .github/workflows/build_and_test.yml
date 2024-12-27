@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./v2
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+        cache: true
+
+    - name: Install BATS
+      run: |
+        git clone https://github.com/bats-core/bats-core.git
+        cd bats-core
+        sudo ./install.sh /usr/local
+        bats --version
+        cd ..
+
+    - name: Install BATS extras
+      run: |
+        cd tests
+        git clone https://github.com/bats-core/bats-support.git ./test_helpers/bats-support
+        git clone https://github.com/bats-core/bats-assert.git ./test_helpers/bats-assert
+        cd ..
+
+    - name: Install Go linter
+      run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.46.2
+
+    - name: Install PHP
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y php8.3
+
+    - name: Get dependencies
+      run: |
+        go mod tidy
+        go mod vendor
+        go mod verify
+
+    - name: Build
+      run: |
+        make
+        make version
+
+    - name: Lint
+      run: golangci-lint run || true
+
+    - name: Run unit tests
+      run: make test
+
+    - name: Run functional tests
+      run: ./ahoy test
+
+    - name: Run tests with coverage
+      run: |
+        go install gotest.tools/gotestsum@latest
+        mkdir -p /tmp/test-reports
+        gotestsum --junitfile /tmp/test-reports/unit-tests.xml
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: /tmp/test-reports/
+        retention-days: 30
