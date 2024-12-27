@@ -112,6 +112,15 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "mlncn",
+      "name": "Benjamin Melançon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/27131?v=4",
+      "profile": "https://agaric.coop/",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7
