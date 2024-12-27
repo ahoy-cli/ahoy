@@ -103,6 +103,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "msound",
+      "name": "Mani Soundararajan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/432912?v=4",
+      "profile": "https://msound.net/",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7
