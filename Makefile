@@ -14,16 +14,17 @@ ARCH := amd64 arm64
 TESTARGS ?=
 
 default:
-	go build -ldflags $(LDFLAGS) -v -o ./ahoy
+  cd v2 && go build -ldflags $(LDFLAGS) -v -o ./ahoy
 
 install:
-	cp ahoy /usr/local/bin/ahoy
+	cp ./v2/ahoy /usr/local/bin/ahoy
 	chmod +x /usr/local/bin/ahoy
 
 build_dir:
-	mkdir -p ./builds
+	mkdir -p ./v2/builds
 
 cross: build_dir
+	cd v2
 	$(foreach os,$(OS), \
 		$(foreach arch,$(ARCH), \
 			GOOS=$(os) GOARCH=$(arch) go build -trimpath -ldflags $(LDFLAGS) -v -o ./builds/ahoy-bin-$(os)-$(arch); \
@@ -33,7 +34,7 @@ cross: build_dir
 	$(foreach arch,$(ARCH),mv ./builds/ahoy-bin-windows-$(arch) ./builds/ahoy-bin-windows-$(arch).exe;)
 
 clean:
-	rm -vRf ./builds/ahoy-bin-*
+	rm -vRf ./v2/builds/ahoy-bin-*
 
 fmtcheck:
 	$(foreach file,$(SRCS),gofmt $(file) | diff -u $(file) - || exit;)
@@ -47,10 +48,10 @@ vet:
 
 gocyclo:
 	@ go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
-	gocyclo -over 25 -avg -ignore "vendor" .
+	gocyclo -over 25 -avg -ignore "vendor" ./v2
 
 test: fmtcheck staticcheck vet
-	 go test *.go $(TESTARGS)
+	 go test ./v2/*.go $(TESTARGS)
 
 version:
 	@echo $(VERSION)

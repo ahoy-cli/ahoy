@@ -3,10 +3,11 @@
 version: 2
 before:
   hooks:
-    - go mod tidy
+    - cd v2 && go mod tidy
 
 builds:
-  - binary: >-
+  - dir: v2
+    binary: >-
       {{ .ProjectName }}-bin-
       {{- .Os }}-
       {{- .Arch }}
@@ -19,6 +20,12 @@ builds:
     goarch:
       - amd64
       - arm64
+      - arm
+    goarm64:
+      - v9.0
+    ignore:
+      - goos: windows
+        goarch: arm
     flags:
       - -trimpath
       - -v
@@ -49,6 +56,13 @@ changelog:
 
 sboms:
   - artifacts: binary
+
+binary_signs:
+  - {}
+
+signs:
+  - artifacts: checksum
+
 # release:
 #   github:
 #     owner: ahoy-cli
