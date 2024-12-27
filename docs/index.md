@@ -54,10 +54,12 @@ sudo wget -q https://github.com/ahoy-cli/ahoy/releases/download/1.1.0/ahoy-`unam
 sudo wget -q https://github.com/ahoy-cli/ahoy/releases/download/2.0.0/ahoy-bin-`uname -s`-amd64 -O /usr/local/bin/ahoy && sudo chown $USER /usr/local/bin/ahoy && chmod +x /usr/local/bin/ahoy
 ```
 
-### Bash / Zsh Completion
-For Zsh, Just add this to your ~/.zshrc, and your completions will be relative to the directory you're in.
+## Autocompletions
 
-`complete -F "ahoy --generate-bash-completion" ahoy`
+### Zsh
+For Zsh completions, we have a standalone plugin available at [ahoy-cli/zsh-ahoy](https://github.com/ahoy-cli/zsh-ahoy).
+
+### Bash
 
 For Bash, you'll need to make sure you have bash-completion installed and setup. On OSX with homebrew it looks like this:
 
