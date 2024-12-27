@@ -85,6 +85,15 @@
         "security",
         "test"
       ]
+    },
+    {
+      "login": "acouch",
+      "name": "Aaron Couch",
+      "avatar_url": "https://avatars.githubusercontent.com/u/512243?v=4",
+      "profile": "https://github.com/acouch",
+      "contributions": [
+        "doc"
+      ]
     }
   ],
   "contributorsPerLine": 7
