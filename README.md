@@ -1,4 +1,7 @@
 ![AHOY logo](https://avatars.githubusercontent.com/u/19353604?s=250&v=4)
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-13-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 # AHOY! - Automate and organize your workflows, no matter what technology you use.
 
@@ -36,7 +39,7 @@ With Ahoy, you can turn this into:
 - Flexible - Commands are specific to a single folder tree, so each repo/workspace can have its own commands.
 - Command templates - Args can be dropped into your commands using `{{args}}`
 - Fully interactive - Your shells (like MySQL) and prompts still work.
-- Self-documenting - Commands and help declared in `.ahoy.yml` show up as ahoy command help and shell completion of commands (see [bash/zsh completion](https://ahoy-cli.readthedocs.io/en/latest/#bash-zsh-completion)) is also available.
+- Self-documenting - Commands and help declared in `.ahoy.yml` show up as ahoy command help and shell completion of commands (see [bash/zsh completion](https://ahoy-cli.readthedocs.io/en/latest/#bash-zsh-completion)) is also available. We now have a dedicated Zsh plugin for completions at [ahoy-cli/zsh-ahoy](https://github.com/ahoy-cli/zsh-ahoy).
 
 ## Installation
 
@@ -101,6 +104,16 @@ In this example, the `hello` command can also be invoked using `hi` or `greet`.
 - Bash completion works with aliases as well as primary command names.
 - **If multiple commands share the same alias, the "last in wins" rule is used and the last matching command will be executed.**
 
+## Shell autocompletions
+
+### Zsh
+
+For Zsh completions, we have a standalone plugin available at [ahoy-cli/zsh-ahoy](https://github.com/ahoy-cli/zsh-ahoy).
+
+### Bash
+
+For Bash, you'll need to make sure you have bash-completion installed and setup. See [bash/zsh completion](https://ahoy-cli.readthedocs.io/en/latest/#bash-zsh-completion) for further instructions.
+
 ## Some additions in v2
 
 - Implements a new feature to import multiple config files using the "imports" field.
@@ -156,3 +169,43 @@ commands:
 - Support for more built-in commands or a "verify" YAML option that would create a yes / no prompt for potentially destructive commands. (Are you sure you want to delete all your containers?)
 - Pipe tab completion to another command (allows you to get tab completion).
 - Support for configuration.
+
+## Sponsors 💰 👏
+
+- [<img src="https://www.drevops.com/img/drevops_logo_horiz_black.png" width="128px;"><br />Alex Skrypnyk - DrevOps](https://drevops.com)
+
+## Contributors ✨
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/acouch"><img src="https://avatars.githubusercontent.com/u/512243?v=4?s=64" width="64px;" alt="Aaron Couch"/><br /><sub><b>Aaron Couch</b></sub></a><br /><a href="https://github.com/ahoy-cli/Ahoy/commits?author=acouch" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/aashil"><img src="https://avatars.githubusercontent.com/u/6216576?v=4?s=64" width="64px;" alt="Aashil Patel"/><br /><sub><b>Aashil Patel</b></sub></a><br /><a href="https://github.com/ahoy-cli/Ahoy/commits?author=aashil" title="Code">💻</a> <a href="https://github.com/ahoy-cli/Ahoy/commits?author=aashil" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.drevops.com/"><img src="https://avatars.githubusercontent.com/u/378794?v=4?s=64" width="64px;" alt="Alex Skrypnyk"/><br /><sub><b>Alex Skrypnyk</b></sub></a><br /><a href="https://github.com/ahoy-cli/Ahoy/issues?q=author%3AAlexSkrypnyk" title="Bug reports">🐛</a> <a href="https://github.com/ahoy-cli/Ahoy/pulls?q=is%3Apr+reviewed-by%3AAlexSkrypnyk" title="Reviewed Pull Requests">👀</a> <a href="#question-AlexSkrypnyk" title="Answering Questions">💬</a> <a href="#promotion-AlexSkrypnyk" title="Promotion">📣</a> <a href="#ideas-AlexSkrypnyk" title="Ideas, Planning, & Feedback">🤔</a> <a href="#financial-AlexSkrypnyk" title="Financial">💵</a> <a href="#security-AlexSkrypnyk" title="Security">🛡️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="http://www.linkedin.com/in/alexandrerafalovitch"><img src="https://avatars.githubusercontent.com/u/64153?v=4?s=64" width="64px;" alt="Alexandre Rafalovitch"/><br /><sub><b>Alexandre Rafalovitch</b></sub></a><br /><a href="https://github.com/ahoy-cli/Ahoy/commits?author=arafalov" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/hanoii"><img src="https://avatars.githubusercontent.com/u/677879?v=4?s=64" width="64px;" alt="Ariel Barreiro"/><br /><sub><b>Ariel Barreiro</b></sub></a><br /><a href="https://github.com/ahoy-cli/Ahoy/commits?author=hanoii" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://agaric.coop/"><img src="https://avatars.githubusercontent.com/u/27131?v=4?s=64" width="64px;" alt="Benjamin Melançon"/><br /><sub><b>Benjamin Melançon</b></sub></a><br /><a href="https://github.com/ahoy-cli/Ahoy/commits?author=mlncn" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ocean"><img src="https://avatars.githubusercontent.com/u/4443?v=4?s=64" width="64px;" alt="Drew Robinson"/><br /><sub><b>Drew Robinson</b></sub></a><br /><a href="https://github.com/ahoy-cli/Ahoy/commits?author=ocean" title="Code">💻</a> <a href="https://github.com/ahoy-cli/Ahoy/issues?q=author%3Aocean" title="Bug reports">🐛</a> <a href="#content-ocean" title="Content">🖋</a> <a href="https://github.com/ahoy-cli/Ahoy/commits?author=ocean" title="Documentation">📖</a> <a href="#ideas-ocean" title="Ideas, Planning, & Feedback">🤔</a> <a href="#infra-ocean" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#maintenance-ocean" title="Maintenance">🚧</a> <a href="#platform-ocean" title="Packaging/porting to new platform">📦</a> <a href="#question-ocean" title="Answering Questions">💬</a> <a href="https://github.com/ahoy-cli/Ahoy/pulls?q=is%3Apr+reviewed-by%3Aocean" title="Reviewed Pull Requests">👀</a> <a href="#security-ocean" title="Security">🛡️</a> <a href="https://github.com/ahoy-cli/Ahoy/commits?author=ocean" title="Tests">⚠️</a></td>
+    </tr>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://www.elijahlynn.net/"><img src="https://avatars.githubusercontent.com/u/1504756?v=4?s=64" width="64px;" alt="Elijah Lynn"/><br /><sub><b>Elijah Lynn</b></sub></a><br /><a href="https://github.com/ahoy-cli/Ahoy/commits?author=ElijahLynn" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://botsandbrains.com/"><img src="https://avatars.githubusercontent.com/u/377330?v=4?s=64" width="64px;" alt="Frank Carey"/><br /><sub><b>Frank Carey</b></sub></a><br /><a href="https://github.com/ahoy-cli/Ahoy/commits?author=frankcarey" title="Code">💻</a> <a href="https://github.com/ahoy-cli/Ahoy/issues?q=author%3Afrankcarey" title="Bug reports">🐛</a> <a href="#content-frankcarey" title="Content">🖋</a> <a href="https://github.com/ahoy-cli/Ahoy/commits?author=frankcarey" title="Documentation">📖</a> <a href="#ideas-frankcarey" title="Ideas, Planning, & Feedback">🤔</a> <a href="#infra-frankcarey" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#maintenance-frankcarey" title="Maintenance">🚧</a> <a href="#platform-frankcarey" title="Packaging/porting to new platform">📦</a> <a href="#question-frankcarey" title="Answering Questions">💬</a> <a href="https://github.com/ahoy-cli/Ahoy/pulls?q=is%3Apr+reviewed-by%3Afrankcarey" title="Reviewed Pull Requests">👀</a> <a href="#security-frankcarey" title="Security">🛡️</a> <a href="https://github.com/ahoy-cli/Ahoy/commits?author=frankcarey" title="Tests">⚠️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/jackwrfuller"><img src="https://avatars.githubusercontent.com/u/78133717?v=4?s=64" width="64px;" alt="Jack Fuller"/><br /><sub><b>Jack Fuller</b></sub></a><br /><a href="https://github.com/ahoy-cli/Ahoy/issues?q=author%3Ajackwrfuller" title="Bug reports">🐛</a> <a href="https://github.com/ahoy-cli/Ahoy/commits?author=jackwrfuller" title="Code">💻</a> <a href="https://github.com/ahoy-cli/Ahoy/commits?author=jackwrfuller" title="Documentation">📖</a> <a href="https://github.com/ahoy-cli/Ahoy/commits?author=jackwrfuller" title="Tests">⚠️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://msound.net/"><img src="https://avatars.githubusercontent.com/u/432912?v=4?s=64" width="64px;" alt="Mani Soundararajan"/><br /><sub><b>Mani Soundararajan</b></sub></a><br /><a href="https://github.com/ahoy-cli/Ahoy/commits?author=msound" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://morpht.com/"><img src="https://avatars.githubusercontent.com/u/1254919?v=4?s=64" width="64px;" alt="Marji Cermak"/><br /><sub><b>Marji Cermak</b></sub></a><br /><a href="https://github.com/ahoy-cli/Ahoy/commits?author=marji" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/dkinzer"><img src="https://avatars.githubusercontent.com/u/444215?v=4?s=64" width="64px;" alt="david kinzer (he/him)"/><br /><sub><b>david kinzer (he/him)</b></sub></a><br /><a href="https://github.com/ahoy-cli/Ahoy/commits?author=dkinzer" title="Code">💻</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
