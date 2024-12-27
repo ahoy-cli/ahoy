@@ -35,10 +35,11 @@ jobs:
             go mod tidy
             go mod vendor
             go mod verify
-      - go/save-cache
+      # - go/save-cache
       - run:
           name: Build project.
           command: |
+            cd v2
             make
             make version
       - run:
@@ -46,10 +47,10 @@ jobs:
           command: /home/circleci/go/bin/golangci-lint run || true
       - run:
           name: Run unit tests.
-          command: make test
+          command: cd v2 && make test
       - run:
           name: Run functional tests.
-          command: ./ahoy test
+          command: cd v2 && ./ahoy test
       - run:
           name: Run tests
           command: |
