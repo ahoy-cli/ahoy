@@ -1,0 +1,25 @@
+{
+  "projectName": "Ahoy",
+  "projectOwner": "ahoy-cli",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 64,
+  "commit": true,
+  "commitConvention": "eslint",
+  "contributors": [
+    {
+      "login": "jackwrfuller",
+      "name": "jackwrfuller",
+      "avatar_url": "https://avatars.githubusercontent.com/u/78133717?v=4",
+      "profile": "https://github.com/jackwrfuller",
+      "contributions": [
+        "bug"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "linkToUsage": true
+}
