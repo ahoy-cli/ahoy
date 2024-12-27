@@ -67,10 +67,6 @@ commands:
     usage: Clean up go code per code standards.
     cmd: gofmt -w *.go
 
-  docs-build:
-    usage: Build the docs.
-    cmd: cd docs && make html
-
-  docs-deps:
-    usage: Install the dependencies from requirements.txt.
-    cmd: cd docs && pip install -r requirements.txt
+  cowsay:
+    usage: A cow says something.
+    cmd: cowsay "$@"
