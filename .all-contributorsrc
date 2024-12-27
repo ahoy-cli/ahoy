@@ -65,6 +65,26 @@
         "security",
         "test"
       ]
+    },
+    {
+      "login": "frankcarey",
+      "name": "Frank Carey",
+      "avatar_url": "https://avatars.githubusercontent.com/u/377330?v=4",
+      "profile": "https://botsandbrains.com/",
+      "contributions": [
+        "code",
+        "bug",
+        "content",
+        "doc",
+        "ideas",
+        "infra",
+        "maintenance",
+        "platform",
+        "question",
+        "review",
+        "security",
+        "test"
+      ]
     }
   ],
   "contributorsPerLine": 7
