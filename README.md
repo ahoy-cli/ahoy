@@ -7,8 +7,6 @@
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/ahoy-cli/ahoy/tree/master.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/ahoy-cli/ahoy/tree/master) [![Go Report Card](https://goreportcard.com/badge/github.com/ahoy-cli/ahoy)](https://goreportcard.com/report/github.com/ahoy-cli/ahoy)
 
-### Note: Ahoy 2.x is now released and is the only supported version.
-
 Ahoy is command line tool that gives each of your projects their own CLI app with zero code and dependencies.
 
 Write your commands in a YAML file and then Ahoy gives you lots of features like:
@@ -57,13 +55,6 @@ Using Homebrew / Linuxbrew:
 
 ```
 brew install ahoy
-```
-
-Note that `ahoy` is in `homebrew-core` as of 1/18/19, so you don't need to use the old tap.
-If you were previously using it, you can use the following command to remove it:
-
-```
-brew untap ahoy-cli/tap
 ```
 
 ### Linux
