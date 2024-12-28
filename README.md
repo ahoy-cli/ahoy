@@ -37,15 +37,23 @@ With Ahoy, you can turn this into:
 - Consistent - Commands always run relative to the `.ahoy.yml` file, but can be called from any subfolder.
 - Visual - See a list of all your commands in one place, along with helpful descriptions.
 - Flexible - Commands are specific to a single folder tree, so each repo/workspace can have its own commands.
-- Command templates - Args can be dropped into your commands using `{{args}}`
+- Command templates - Use regular `bash` syntax like `"$@"` for all arguments, or `$1` for the first argument.
 - Fully interactive - Your shells (like MySQL) and prompts still work.
-- Self-documenting - Commands and help declared in `.ahoy.yml` show up as ahoy command help and shell completion of commands (see [bash/zsh completion](https://ahoy-cli.readthedocs.io/en/latest/#bash-zsh-completion)) is also available. We now have a dedicated Zsh plugin for completions at [ahoy-cli/zsh-ahoy](https://github.com/ahoy-cli/zsh-ahoy).
+- Import multiple config files using the "imports" field.
+- Uses the "last in wins" rule to deal with duplicate commands amongst the config files.
+- [Command aliases](#command-aliases) - oft-used or long commands can have aliases.
+- Use a different entrypoint (the thing that runs your commands) if you wish, instead of `bash`. E.g. using PHP, Node.js, Python, etc. is possible.
+- Plugins are possible by overriding the entrypoint.
+- Self-documenting - Commands and help declared in `.ahoy.yml` show up as ahoy command help and [shell completion](#shell-autocompletions) of commands (see [bash/zsh completion](https://ahoy-cli.readthedocs.io/en/latest/#bash-zsh-completion)) is also available. We now have a dedicated Zsh plugin for completions at [ahoy-cli/zsh-ahoy](https://github.com/ahoy-cli/zsh-ahoy).
+- Support for [environment variables](#environment-variables) at both file and command level using the `env` field
+- Environment variables from a global file are loaded first, then command-specific variables override them
+- Environment files use standard shell format with one variable per line, comments supported
 
 ## Installation
 
 ### macOS
 
-Using Homebrew:
+Using Homebrew / Linuxbrew:
 
 ```
 brew install ahoy
@@ -70,6 +78,38 @@ os=$(uname -s | tr '[:upper:]' '[:lower:]') && architecture=$(case $(uname -m) i
 ### Windows
 
 For WSL2, use the Linux binary above for your architecture.
+
+## Environment Variables
+
+An example of the newly added environment variable support.
+
+#### Ahoy YAML config file:
+
+```yaml
+ahoyapi: v2
+
+# Global environment file relative to .ahoy.yml
+env: .env
+
+commands:
+  db-import:
+    # Command-specific environment file, overrides global vars
+    env: .env.db
+    usage: Import a database
+    cmd: mysql -u$DB_USER -p$DB_PASSWORD $DB_NAME < $1
+```
+
+#### Env files:
+```sh
+# Global .env file
+DB_USER=root
+DB_PASSWORD=root
+
+# Command-specific .env.db file
+DB_USER=custom_user
+DB_PASSWORD=secret
+DB_NAME=mydb
+```
 
 ## Command Aliases
 
@@ -114,15 +154,7 @@ For Zsh completions, we have a standalone plugin available at [ahoy-cli/zsh-ahoy
 
 For Bash, you'll need to make sure you have bash-completion installed and setup. See [bash/zsh completion](https://ahoy-cli.readthedocs.io/en/latest/#bash-zsh-completion) for further instructions.
 
-## Some additions in v2
-
-- Implements a new feature to import multiple config files using the "imports" field.
-- Uses the "last in wins" rule to deal with duplicate commands amongst the config files.
-- Better handling of quotes by no longer using `{{args}}`. Use regular `bash` syntax like `"$@"` for all arguments, or `$1` for the first argument.
-- You can now use a different entrypoint (the thing that runs your commands) instead of `bash`. E.g. using PHP, Node.js, Python, etc. is possible.
-- Plugins are now possible by overriding the entrypoint.
-
-### Example of new YAML setup in v2
+## Example of the YAML file setup
 
 ```YAML
 # All files must have v2 set or you'll get an error
