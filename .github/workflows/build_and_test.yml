@@ -43,7 +43,7 @@ jobs:
     - name: Install PHP
       run: |
         sudo apt-get update
-        sudo apt-get install -y php8.3
+        sudo apt-get install -y php8.1
 
     - name: Get dependencies
       run: |
