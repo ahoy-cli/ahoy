@@ -6,7 +6,7 @@
 version: 2
 updates:
   - package-ecosystem: "gomod" # See documentation for possible values
-    directory: "/" # Location of package manifests
+    directory: "/v2/" # Location of package manifests
     schedule:
       interval: "weekly"
     assignees:
@@ -14,7 +14,7 @@ updates:
 
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
-    directory: "/"
+    directory: "/v2/"
     schedule:
       interval: "weekly"
     assignees:
