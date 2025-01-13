@@ -2,6 +2,7 @@
 
 @test "Command-level variables can be defined and used" {
     run ./ahoy -f testdata/env.ahoy.yml test-cmd
+    echo "$output"
     [[ "$output" == "123456789" ]]
 }
 
@@ -18,4 +19,15 @@
 @test "Fail when attempting to load invalid env files" {
     run ./ahoy -f testdata/env.ahoy.yml test-invalid-env
     [ $status -eq 1 ]
+}
+
+@test "Multiple global env files can be defined" {
+    run ./ahoy -f testdata/env-multiple.ahoy.yml test-global
+    [[ "$output" = "global" ]]
+
+    run ./ahoy -f testdata/env-multiple.ahoy.yml test-command
+    [[ "$output" = "123456789" ]]
+
+    run ./ahoy -f testdata/env-multiple.ahoy.yml test-overridden
+    [[ "$output" = "after" ]]
 }

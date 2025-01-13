@@ -24,7 +24,7 @@ type Config struct {
 	AhoyAPI    string
 	Commands   map[string]Command
 	Entrypoint []string
-	Env        string
+	Env        []string
 }
 
 // Command is an ahoy command detailed in ahoy.yml files. Multiple
@@ -202,9 +202,11 @@ func getCommands(config Config) []cli.Command {
 	envVars := []string{}
 
 	// Get environment variables from the 'global' environment variable file, if it is defined.
-	if config.Env != "" {
-		globalEnvFile := filepath.Join(AhoyConf.srcDir, config.Env)
-		envVars = append(envVars, getEnvironmentVars(globalEnvFile)...)
+	if config.Env != nil {
+        for _, file := range config.Env {
+            globalEnvFile := filepath.Join(AhoyConf.srcDir, file)
+            envVars = append(envVars, getEnvironmentVars(globalEnvFile)...)
+        }
 	}
 
 	var keys []string

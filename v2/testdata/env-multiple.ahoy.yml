@@ -1,0 +1,11 @@
+ahoyapi: v2
+env:
+  - .env
+  - .env.cmd
+commands:
+  test-global:
+    cmd: echo $GLOBAL
+  test-command:
+    cmd: echo $COMMAND 
+  test-overridden:
+    cmd: echo $TO_BE_OVERRIDDEN
