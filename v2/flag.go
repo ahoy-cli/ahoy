@@ -3,30 +3,33 @@ package main
 import (
 	"flag"
 
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 )
 
 var globalFlags = []cli.Flag{
-	cli.BoolFlag{
-		Name:        "verbose, v",
+	&cli.BoolFlag{
+		Name:        "verbose",
+        Aliases: []string{"v"},
 		Usage:       "Output extra details like the commands to be run.",
-		EnvVar:      "AHOY_VERBOSE",
+		EnvVars:      []string{"AHOY_VERBOSE"},
 		Destination: &verbose,
 	},
-	cli.StringFlag{
-		Name:        "file, f",
+	&cli.StringFlag{
+		Name:        "file",
+        Aliases: []string{"f"},
 		Usage:       "Use a specific ahoy file.",
 		Destination: &sourcefile,
 	},
-	cli.BoolFlag{
-		Name:  "help, h",
+	&cli.BoolFlag{
+		Name:  "help",
+        Aliases: []string{"h"},
 		Usage: "show help",
 	},
-	cli.BoolFlag{
+	&cli.BoolFlag{
 		Name:  "version",
 		Usage: "print the version",
 	},
-	cli.BoolFlag{
+	&cli.BoolFlag{
 		Name: "generate-bash-completion",
 	},
 }

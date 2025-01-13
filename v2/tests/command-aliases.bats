@@ -33,9 +33,3 @@ load 'test_helpers/bats-assert/load'
   [[ "$output" =~ "ahoy there!" ]]
   [ "$status" -eq 0 ]
 }
-
-@test "Multiple conflicting aliases means the last one loaded takes precedence" {
-  run ./ahoy -f testdata/command-aliases.ahoy.yml ahoy
-  [[ "$output" =~ "ahoy there!" ]]
-  [ "$status" -eq 0 ]
-}

@@ -13,7 +13,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/urfave/cli"
+	"github.com/urfave/cli/v2"
 	"gopkg.in/yaml.v2"
 )
 
@@ -22,7 +22,7 @@ import (
 type Config struct {
 	Usage      string
 	AhoyAPI    string
-	Commands   map[string]Command
+	Commands   map[string]*Command
 	Entrypoint []string
 	Env        string
 }
@@ -136,12 +136,12 @@ func getConfig(file string) (Config, error) {
 	return config, err
 }
 
-func getSubCommands(includes []string) []cli.Command {
-	subCommands := []cli.Command{}
+func getSubCommands(includes []string) []*cli.Command {
+	subCommands := []*cli.Command{}
 	if len(includes) == 0 {
 		return subCommands
 	}
-	commands := map[string]cli.Command{}
+	commands := map[string]*cli.Command{}
 	for _, include := range includes {
 		if len(include) == 0 {
 			continue
@@ -197,8 +197,8 @@ func getEnvironmentVars(envFile string) []string {
 	return envVars
 }
 
-func getCommands(config Config) []cli.Command {
-	exportCmds := []cli.Command{}
+func getCommands(config Config) []*cli.Command {
+	exportCmds := []*cli.Command{}
 	envVars := []string{}
 
 	// Get environment variables from the 'global' environment variable file, if it is defined.
@@ -231,7 +231,7 @@ func getCommands(config Config) []cli.Command {
 			logger("fatal", "Command ["+name+"] has 'imports' set, but it is empty. Check your yaml file.")
 		}
 
-		newCmd := cli.Command{
+		newCmd := &cli.Command{
 			Name:            name,
 			Aliases:         cmd.Aliases,
 			SkipFlagParsing: true,
@@ -243,7 +243,7 @@ func getCommands(config Config) []cli.Command {
 		}
 
 		if cmd.Cmd != "" {
-			newCmd.Action = func(c *cli.Context) {
+			newCmd.Action = func(c *cli.Context) error {
 				// For some unclear reason, if we don't add an item at the end here,
 				// the first argument is skipped... actually it's not!
 				// 'bash -c' says that arguments will be passed starting with $0, which also means that
@@ -253,7 +253,7 @@ func getCommands(config Config) []cli.Command {
 				var cmdEntrypoint []string
 
 				// c.Args()  is not a slice apparently.
-				for _, arg := range c.Args() {
+				for _, arg := range c.Args().Slice() {
 					if arg != "--" {
 						cmdArgs = append(cmdArgs, arg)
 					}
@@ -292,6 +292,7 @@ func getCommands(config Config) []cli.Command {
 					fmt.Fprintln(os.Stderr)
 					os.Exit(1)
 				}
+                return nil
 			}
 		}
 
@@ -314,18 +315,18 @@ func getCommands(config Config) []cli.Command {
 	return exportCmds
 }
 
-func addDefaultCommands(commands []cli.Command) []cli.Command {
+func addDefaultCommands(commands []*cli.Command) []*cli.Command {
 
-	defaultInitCmd := cli.Command{
+	defaultInitCmd := &cli.Command{
 		Name:  "init",
 		Usage: "Initialize a new .ahoy.yml config file in the current directory.",
 		Flags: []cli.Flag{
-			cli.BoolFlag{
+			&cli.BoolFlag{
 				Name:  "force",
 				Usage: "force overwriting the .ahoy.yml file in the current directory.",
 			},
 		},
-		Action: func(c *cli.Context) {
+		Action: func(c *cli.Context) error {
 			if fileExists(filepath.Join(".", ".ahoy.yml")) {
 				if c.Bool("force") {
 					fmt.Println("Warning: '--force' parameter passed, overwriting .ahoy.yml in current directory.")
@@ -343,7 +344,7 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 						fmt.Println("Abort: exiting without overwriting.")
 						os.Exit(0)
 					}
-					if len(c.Args()) > 0 {
+					if c.Args().Len() > 0 {
 						fmt.Println("Ok, overwriting .ahoy.yml in current directory with specified file.")
 					} else {
 						fmt.Println("Ok, overwriting .ahoy.yml in current directory with example file.")
@@ -354,8 +355,8 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 			// Allows users to define their own files to call to init.
 			// TODO: Make file downloading OS-independent.
 			var wgetURL = "https://raw.githubusercontent.com/ahoy-cli/ahoy/master/examples/examples.ahoy.yml"
-			if len(c.Args()) > 0 {
-				wgetURL = c.Args()[0]
+			if c.Args().Len() > 0 {
+				wgetURL = c.Args().Get(0)
 			}
 			grabYaml := "wget " + wgetURL + " -O .ahoy.yml"
 			cmd := exec.Command("bash", "-c", grabYaml)
@@ -365,12 +366,13 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 				fmt.Fprintln(os.Stderr)
 				os.Exit(1)
 			} else {
-				if len(c.Args()) > 0 {
+				if c.Args().Len() > 0 {
 					fmt.Println("Your specified .ahoy.yml has been downloaded to the current directory.")
 				} else {
 					fmt.Println("Example .ahoy.yml downloaded to the current directory. You can customize it to suit your needs!")
 				}
 			}
+            return nil
 		},
 	}
 
@@ -407,10 +409,10 @@ func BashComplete(c *cli.Context) {
 // NoArgsAction is the application wide default action, for when no flags or arguments
 // are passed or when a command doesn't exist.
 // Looks like -f flag still works through here though.
-func NoArgsAction(c *cli.Context) {
+func NoArgsAction(c *cli.Context) error {
 	args := c.Args()
-	if len(args) > 0 {
-		msg := "Command not found for '" + strings.Join(args, " ") + "'"
+	if args.Len() > 0 {
+		msg := "Command not found for '" + strings.Join(args.Slice(), " ") + "'"
 		logger("fatal", msg)
 	}
 
@@ -427,6 +429,7 @@ func NoArgsAction(c *cli.Context) {
 
 	// Exit gracefully if we get to here.
 	os.Exit(0)
+    return nil
 }
 
 // BeforeCommand runs before every command so arguments or flags must be passed
@@ -438,7 +441,7 @@ func BeforeCommand(c *cli.Context) error {
 		return errors.New("don't continue with commands")
 	}
 	if c.Bool("help") {
-		if len(args) > 0 {
+		if args.Len() > 0 {
 			cli.ShowCommandHelp(c, args.First())
 		} else {
 			cli.ShowAppHelp(c)
