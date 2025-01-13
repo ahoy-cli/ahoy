@@ -292,7 +292,7 @@ func getCommands(config Config) []*cli.Command {
 					fmt.Fprintln(os.Stderr)
 					os.Exit(1)
 				}
-                return nil
+				return nil
 			}
 		}
 
@@ -372,7 +372,7 @@ func addDefaultCommands(commands []*cli.Command) []*cli.Command {
 					fmt.Println("Example .ahoy.yml downloaded to the current directory. You can customize it to suit your needs!")
 				}
 			}
-            return nil
+			return nil
 		},
 	}
 
@@ -429,7 +429,7 @@ func NoArgsAction(c *cli.Context) error {
 
 	// Exit gracefully if we get to here.
 	os.Exit(0)
-    return nil
+	return nil
 }
 
 // BeforeCommand runs before every command so arguments or flags must be passed
