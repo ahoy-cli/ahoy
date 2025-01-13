@@ -203,10 +203,10 @@ func getCommands(config Config) []cli.Command {
 
 	// Get environment variables from the 'global' environment variable file, if it is defined.
 	if config.Env != nil {
-        for _, file := range config.Env {
-            globalEnvFile := filepath.Join(AhoyConf.srcDir, file)
-            envVars = append(envVars, getEnvironmentVars(globalEnvFile)...)
-        }
+		for _, file := range config.Env {
+			globalEnvFile := filepath.Join(AhoyConf.srcDir, file)
+			envVars = append(envVars, getEnvironmentVars(globalEnvFile)...)
+		}
 	}
 
 	var keys []string
