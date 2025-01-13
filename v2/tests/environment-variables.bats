@@ -2,7 +2,6 @@
 
 @test "Command-level variables can be defined and used" {
     run ./ahoy -f testdata/env.ahoy.yml test-cmd
-    echo "$output"
     [[ "$output" == "123456789" ]]
 }
 
@@ -31,3 +30,14 @@
     run ./ahoy -f testdata/env-multiple.ahoy.yml test-overridden
     [[ "$output" = "after" ]]
 }
+
+@test "Multiple command env files can be defined" {
+    run ./ahoy -f testdata/env-multiple.ahoy.yml test-cmd-multiple-1
+    echo $output
+    [[ "$output" = "unique" ]]
+
+    run ./ahoy -f testdata/env-multiple.ahoy.yml test-cmd-multiple-2
+    echo $output
+    [[ "$output" = "local2" ]]
+}
+

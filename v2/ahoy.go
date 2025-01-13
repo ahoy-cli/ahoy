@@ -33,7 +33,7 @@ type Command struct {
 	Description string
 	Usage       string
 	Cmd         string
-	Env         string
+	Env         []string
 	Hide        bool
 	Optional    bool
 	Imports     []string
@@ -276,9 +276,12 @@ func getCommands(config Config) []cli.Command {
 				// If defined, included specified command-level environment variables.
 				// Note that this will intentionally override any conflicting variables
 				// defined in the 'global' env file.
-				if cmd.Env != "" {
-					cmdEnvFile := filepath.Join(AhoyConf.srcDir, cmd.Env)
-					envVars = append(envVars, getEnvironmentVars(cmdEnvFile)...)
+				if cmd.Env != nil {
+                    for _, file := range cmd.Env {
+                        cmdEnvFile := filepath.Join(AhoyConf.srcDir, file)
+                        envVars = append(envVars, getEnvironmentVars(cmdEnvFile)...)
+
+                    }
 				}
 
 				if verbose {

@@ -9,3 +9,13 @@ commands:
     cmd: echo $COMMAND 
   test-overridden:
     cmd: echo $TO_BE_OVERRIDDEN
+  test-cmd-multiple-1:
+    cmd: echo $UNIQUE
+    env:
+      - .env.local1
+      - .env.local2
+  test-cmd-multiple-2:
+    cmd: echo $TO_BE_OVERRIDDEN 
+    env:
+      - .env.local1
+      - .env.local2
