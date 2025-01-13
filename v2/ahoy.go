@@ -277,11 +277,11 @@ func getCommands(config Config) []cli.Command {
 				// Note that this will intentionally override any conflicting variables
 				// defined in the 'global' env file.
 				if cmd.Env != nil {
-                    for _, file := range cmd.Env {
-                        cmdEnvFile := filepath.Join(AhoyConf.srcDir, file)
-                        envVars = append(envVars, getEnvironmentVars(cmdEnvFile)...)
+					for _, file := range cmd.Env {
+						cmdEnvFile := filepath.Join(AhoyConf.srcDir, file)
+						envVars = append(envVars, getEnvironmentVars(cmdEnvFile)...)
 
-                    }
+					}
 				}
 
 				if verbose {
