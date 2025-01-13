@@ -9,21 +9,21 @@ import (
 var globalFlags = []cli.Flag{
 	&cli.BoolFlag{
 		Name:        "verbose",
-        Aliases: []string{"v"},
+		Aliases:     []string{"v"},
 		Usage:       "Output extra details like the commands to be run.",
-		EnvVars:      []string{"AHOY_VERBOSE"},
+		EnvVars:     []string{"AHOY_VERBOSE"},
 		Destination: &verbose,
 	},
 	&cli.StringFlag{
 		Name:        "file",
-        Aliases: []string{"f"},
+		Aliases:     []string{"f"},
 		Usage:       "Use a specific ahoy file.",
 		Destination: &sourcefile,
 	},
 	&cli.BoolFlag{
-		Name:  "help",
-        Aliases: []string{"h"},
-		Usage: "show help",
+		Name:    "help",
+		Aliases: []string{"h"},
+		Usage:   "show help",
 	},
 	&cli.BoolFlag{
 		Name:  "version",
