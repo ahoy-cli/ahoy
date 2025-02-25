@@ -65,7 +65,7 @@ func TestGetSubCommand(t *testing.T) {
 	}
 
 	// Commands with same name are merged, last one wins.
-	err := os.MkdirAll("testing", 0755)
+	err := os.MkdirAll("testing", 0o755)
 	if err != nil {
 		t.Error("Something went wrong creating the 'testing' directory")
 	}
@@ -128,7 +128,7 @@ commands:
 		t.Error("Something went wrong with the file creation - file3.")
 	}
 
-	//logger("fatal", "test")
+	// logger("fatal", "test")
 	yamlConfigC := `
 ahoyapi: v2
 commands:
@@ -163,7 +163,6 @@ commands:
 func TestGetConfig(t *testing.T) {
 	// Get a config file.
 	testFile, err := os.Create("test_getConfig.yml")
-
 	if err != nil {
 		t.Error("Something went wrong creating the test file.")
 	}
@@ -185,7 +184,6 @@ func TestGetConfig(t *testing.T) {
 		},
 	}
 	testYaml, err := yaml.Marshal(expected)
-
 	if err != nil {
 		t.Error("Something went wrong marshalling the test object.")
 	}
@@ -193,7 +191,6 @@ func TestGetConfig(t *testing.T) {
 	testFile.Write([]byte(testYaml))
 
 	config, err := getConfig("test_getConfig.yml")
-
 	if err != nil {
 		t.Error("Something went wrong trying to load the config file.")
 	}

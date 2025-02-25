@@ -1,0 +1,44 @@
+linters:
+  disable-all: true
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    - asciicheck
+    - bodyclose
+    - dogsled
+    - exhaustive
+    - copyloopvar
+    - gocognit
+    - goconst
+    - gofmt
+    - goheader
+    - goimports
+    - gosec
+    - misspell
+    - nakedret
+    - nestif
+    - noctx
+    - rowserrcheck
+    - sqlclosecheck
+    - unconvert
+    - unparam
+    - whitespace
+
+issues:
+  exclude:
+    - "composite literal uses unkeyed fields"
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gosec
+        - noctx
+        - unparam
+        - bodyclose
+    - path: fixtures.go
+      linters:
+        - gosec
