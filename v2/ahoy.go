@@ -289,7 +289,7 @@ func getCommands(config Config) []cli.Command {
 				command.Stdout = os.Stdout
 				command.Stdin = os.Stdin
 				command.Stderr = os.Stderr
-				command.Env = append(command.Env, envVars...)
+				command.Env = append(command.Environ(), envVars...)
 				if err := command.Run(); err != nil {
 					fmt.Fprintln(os.Stderr)
 					os.Exit(1)
