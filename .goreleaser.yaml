@@ -32,7 +32,7 @@ builds:
     no_unique_dist_dir: true
 
 archives:
-  - format: tar.gz
+  - formats: [ 'tar.gz' ]
     name_template: >-
       {{ .ProjectName }}-
       {{- .Os }}-
@@ -40,7 +40,7 @@ archives:
     # use zip for windows archives
     format_overrides:
       - goos: windows
-        format: zip
+        formats: [ 'zip' ]
 
 checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
