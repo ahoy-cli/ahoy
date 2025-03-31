@@ -41,7 +41,6 @@ func flagSet(name string, flags []cli.Flag) *flag.FlagSet {
 }
 
 func initFlags(incomingFlags []string) {
-
 	// Reset the sourcedir for when we're testing. Otherwise the global state
 	// is preserved between the tests.
 	AhoyConf.srcDir = ""
