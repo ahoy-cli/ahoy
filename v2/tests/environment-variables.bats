@@ -19,3 +19,10 @@
     run ./ahoy -f testdata/env.ahoy.yml test-invalid-env
     [ $status -eq 1 ]
 }
+
+@test "Existing environment variables are not clobbered by .env file loading" {
+    # This variable should be kept and be available to an ahoy command.
+    export ENV_CLOBBER_TEST=1234
+    run ./ahoy -f testdata/env.ahoy.yml test-keep-established-env-vars
+    [[ "$output" = "1234" ]]
+}

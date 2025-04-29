@@ -40,10 +40,12 @@ type Command struct {
 	Aliases     []string
 }
 
-var app *cli.App
-var sourcefile string
-var verbose bool
-var bashCompletion bool
+var (
+	app            *cli.App
+	sourcefile     string
+	verbose        bool
+	bashCompletion bool
+)
 
 // The build version can be set using the go linker flag `-ldflags "-X main.version=$VERSION"`
 // Complete command: `go build -ldflags "-X main.version=$VERSION"`
@@ -79,7 +81,7 @@ func fileExists(filename string) bool {
 
 func getConfigPath(sourcefile string) (string, error) {
 	var err error
-	var config = ""
+	config := ""
 
 	// If a specific source file was set, then try to load it directly.
 	if sourcefile != "" {
@@ -96,7 +98,7 @@ func getConfigPath(sourcefile string) (string, error) {
 	}
 	for dir != "/" && err == nil {
 		ymlpath := filepath.Join(dir, ".ahoy.yml")
-		//log.Println(ymlpath)
+		// log.Println(ymlpath)
 		if _, err := os.Stat(ymlpath); err == nil {
 			logger("debug", "Found .ahoy.yml at "+ymlpath)
 			return ymlpath, err
@@ -109,7 +111,7 @@ func getConfigPath(sourcefile string) (string, error) {
 }
 
 func getConfig(file string) (Config, error) {
-	var config = Config{}
+	config := Config{}
 	yamlFile, err := os.ReadFile(file)
 	if err != nil {
 		err = errors.New("an ahoy config file couldn't be found in your path. You can create an example one by using 'ahoy init'")
@@ -287,7 +289,7 @@ func getCommands(config Config) []cli.Command {
 				command.Stdout = os.Stdout
 				command.Stdin = os.Stdin
 				command.Stderr = os.Stderr
-				command.Env = append(command.Env, envVars...)
+				command.Env = append(command.Environ(), envVars...)
 				if err := command.Run(); err != nil {
 					fmt.Fprintln(os.Stderr)
 					os.Exit(1)
@@ -315,7 +317,6 @@ func getCommands(config Config) []cli.Command {
 }
 
 func addDefaultCommands(commands []cli.Command) []cli.Command {
-
 	defaultInitCmd := cli.Command{
 		Name:  "init",
 		Usage: "Initialize a new .ahoy.yml config file in the current directory.",
@@ -353,7 +354,7 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 			// Grab the URL or use a default for the initial ahoy file.
 			// Allows users to define their own files to call to init.
 			// TODO: Make file downloading OS-independent.
-			var wgetURL = "https://raw.githubusercontent.com/ahoy-cli/ahoy/master/examples/examples.ahoy.yml"
+			wgetURL := "https://raw.githubusercontent.com/ahoy-cli/ahoy/master/examples/examples.ahoy.yml"
 			if len(c.Args()) > 0 {
 				wgetURL = c.Args()[0]
 			}
