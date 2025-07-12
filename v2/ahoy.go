@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -96,7 +95,10 @@ func getConfigPath(sourcefile string) (string, error) {
 	if err != nil {
 		return config, err
 	}
-	for dir != "/" && err == nil {
+
+	// Keep track of the previous directory to detect when we've reached the root
+	prevDir := ""
+	for dir != prevDir && err == nil {
 		ymlpath := filepath.Join(dir, ".ahoy.yml")
 		// log.Println(ymlpath)
 		if _, err := os.Stat(ymlpath); err == nil {
@@ -104,7 +106,8 @@ func getConfigPath(sourcefile string) (string, error) {
 			return ymlpath, err
 		}
 		// Chop off the last part of the path.
-		dir = path.Dir(dir)
+		prevDir = dir
+		dir = filepath.Dir(dir)
 	}
 	logger("debug", "Can't find an .ahoy.yml file.")
 	return "", err
