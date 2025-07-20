@@ -6,7 +6,7 @@
   [ $status -ne 0 ]
   echo "$output"
   [ "${#lines[@]}" -gt 10 ]
-  [ "${lines[-1]}" == "[warn] Missing flag or argument." ]
+  [ "${lines[$((${#lines[@]}-1))]}" == "[warn] Missing flag or argument." ]
 }
 
 @test "Run a simple ahoy command: echo" {

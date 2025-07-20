@@ -5,6 +5,13 @@ GITBRANCH := $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
 BUILDTIME := $(shell TZ=UTC date "+%Y-%m-%dT%H:%M:%SZ")
 LDFLAGS := "-s -w -X main.version=$(VERSION) -X main.GitCommit=$(GITCOMMIT) -X main.GitBranch=$(GITBRANCH) -X main.BuildTime=$(BUILDTIME)"
 
+# Set binary name based on OS
+ifeq ($(OS),Windows_NT)
+    BINARY_NAME := ahoy.exe
+else
+    BINARY_NAME := ahoy
+endif
+
 SRCS = $(shell find . -name '*.go' | grep -E -v '^./vendor/')
 
 OS := linux darwin windows
@@ -13,7 +20,7 @@ ARCH := amd64 arm64
 TESTARGS ?=
 
 default:
-	go build -ldflags $(LDFLAGS) -v -o ./ahoy
+	go build -ldflags $(LDFLAGS) -v -o ./$(BINARY_NAME)
 
 install:
 	cp ahoy /usr/local/bin/ahoy
@@ -25,11 +32,12 @@ build_dir:
 cross: build_dir
 	$(foreach os,$(OS), \
 		$(foreach arch,$(ARCH), \
-			GOOS=$(os) GOARCH=$(arch) go build -trimpath -ldflags $(LDFLAGS) -v -o ./builds/ahoy-bin-$(os)-$(arch); \
+			$(if $(filter windows,$(os)), \
+				GOOS=$(os) GOARCH=$(arch) go build -trimpath -ldflags $(LDFLAGS) -v -o ./builds/ahoy-bin-$(os)-$(arch).exe, \
+				GOOS=$(os) GOARCH=$(arch) go build -trimpath -ldflags $(LDFLAGS) -v -o ./builds/ahoy-bin-$(os)-$(arch) \
+			); \
 		) \
 	)
-
-	$(foreach arch,$(ARCH),mv ./builds/ahoy-bin-windows-$(arch) ./builds/ahoy-bin-windows-$(arch).exe;)
 
 clean:
 	rm -vRf ./builds/ahoy-bin-*

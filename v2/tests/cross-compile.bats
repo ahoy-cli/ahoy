@@ -14,7 +14,6 @@ load 'test_helpers/bats-assert/load'
 
   run make cross
   assert_success
-  assert_output --partial 'mv ./builds/ahoy-bin-windows-amd64 ./builds/ahoy-bin-windows-amd64.exe; mv ./builds/ahoy-bin-windows-arm64 ./builds/ahoy-bin-windows-arm64.exe;'
 
   run ls ./builds/ahoy-*
   assert_output --partial 'ahoy-bin-darwin-amd64'
