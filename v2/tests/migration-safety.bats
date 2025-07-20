@@ -116,11 +116,12 @@
 
 @test "Config file discovery continues to work" {
   # Test that .ahoy.yml discovery in parent directories works
+  
+  # Get absolute path to ahoy binary before changing directories
+  AHOY_PATH="$(realpath ./ahoy)"
+  
   mkdir -p /tmp/migration-test/subdir
   cp testdata/simple.ahoy.yml /tmp/migration-test/.ahoy.yml
-  
-  # Get absolute path to ahoy binary
-  AHOY_PATH="$(pwd)/ahoy"
   
   cd /tmp/migration-test/subdir
   
@@ -169,6 +170,10 @@ EOF
 
 @test "Working directory behavior is preserved" {
   # Test that commands run in the correct working directory
+  
+  # Get absolute path to ahoy binary before changing directories
+  AHOY_PATH="$(realpath ./ahoy)"
+  
   mkdir -p /tmp/workdir-test
   cat > /tmp/workdir-test/.ahoy.yml << 'EOF'
 ahoyapi: v2
@@ -177,9 +182,6 @@ commands:
     usage: Test working directory
     cmd: pwd
 EOF
-  
-  # Get absolute path to ahoy binary
-  AHOY_PATH="$(pwd)/ahoy"
   
   cd /tmp/workdir-test
   run timeout 10s "$AHOY_PATH" pwd-test
