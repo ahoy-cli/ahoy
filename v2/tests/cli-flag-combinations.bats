@@ -84,9 +84,10 @@
   [ $status -ne 0 ]
   [[ "$output" == *"error"* ]] || [[ "$output" == *"fatal"* ]]
   
-  # Test with invalid flag
+  # Test with invalid flag - urfave/cli shows help instead of erroring (good UX)
   run ./ahoy --invalid-flag
-  [ $status -ne 0 ]
+  [ $status -eq 0 ]
+  [[ "$output" == *"flag provided but not defined"* ]]
 }
 
 @test "Environment variable flags work correctly" {
