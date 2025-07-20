@@ -56,12 +56,6 @@ jobs:
         if: runner.os != 'Windows'
         run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.46.2
 
-      - name: Install Go linter (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b "$(go env GOPATH)/bin" v1.46.2
-        shell: bash
-
       - name: Install PHP (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -87,17 +81,20 @@ jobs:
           make
           make version
 
-      - name: Lint (Linux/macOS)
+      - name: Lint
         if: runner.os != 'Windows'
         run: golangci-lint run || true
 
-      - name: Lint (Windows)
-        if: runner.os == 'Windows'
-        run: golangci-lint run || echo "Linting completed with warnings"
-        shell: bash
-
-      - name: Run unit tests
+      - name: Run unit tests (Linux/macOS)
+        if: runner.os != 'Windows'
         run: make test
+
+      - name: Run unit tests (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          go fmt ./...
+          go vet ./...
+          go test ./...
 
       - name: Run functional tests (Linux/macOS)
         if: runner.os != 'Windows'
