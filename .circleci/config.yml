@@ -28,7 +28,7 @@ jobs:
           command: go install gotest.tools/gotestsum@latest
       - run:
           name: Install PHP for testing.
-          command: sudo apt update && sudo apt install php8.4
+          command: sudo apt update && sudo apt install php
       # - go/load-cache
       # - go/mod-download
       - run:
