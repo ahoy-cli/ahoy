@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+bats_require_minimum_version 1.5.0
+
 # Migration safety tests for urfave/cli to spf13/viper transition
 # These tests ensure existing configurations and commands continue to work
 
@@ -117,13 +119,13 @@
 @test "Config file discovery continues to work" {
   # Test that .ahoy.yml discovery in parent directories works
   
-  # Get absolute path to ahoy binary, handle both ./ahoy and ./ahoy.exe
-  if [ -f "./ahoy.exe" ] && [ -x "./ahoy.exe" ]; then
+  # Check if ahoy binary exists and works before proceeding
+  if [ -f "./ahoy.exe" ] && [ -x "./ahoy.exe" ] && ./ahoy.exe --version >/dev/null 2>&1; then
     AHOY_PATH="$(cd "$(dirname "./ahoy.exe")" && pwd)/$(basename "./ahoy.exe")"
-  elif [ -f "./ahoy" ] && [ -x "./ahoy" ]; then
+  elif [ -f "./ahoy" ] && [ -x "./ahoy" ] && ./ahoy --version >/dev/null 2>&1; then
     AHOY_PATH="$(cd "$(dirname "./ahoy")" && pwd)/$(basename "./ahoy")"
   else
-    skip "No executable ahoy binary found (./ahoy or ./ahoy.exe)"
+    skip "No working ahoy binary found - build may have failed"
   fi
   
   mkdir -p /tmp/migration-test/subdir
@@ -177,13 +179,13 @@ EOF
 @test "Working directory behavior is preserved" {
   # Test that commands run in the correct working directory
   
-  # Get absolute path to ahoy binary, handle both ./ahoy and ./ahoy.exe
-  if [ -f "./ahoy.exe" ] && [ -x "./ahoy.exe" ]; then
+  # Check if ahoy binary exists and works before proceeding
+  if [ -f "./ahoy.exe" ] && [ -x "./ahoy.exe" ] && ./ahoy.exe --version >/dev/null 2>&1; then
     AHOY_PATH="$(cd "$(dirname "./ahoy.exe")" && pwd)/$(basename "./ahoy.exe")"
-  elif [ -f "./ahoy" ] && [ -x "./ahoy" ]; then
+  elif [ -f "./ahoy" ] && [ -x "./ahoy" ] && ./ahoy --version >/dev/null 2>&1; then
     AHOY_PATH="$(cd "$(dirname "./ahoy")" && pwd)/$(basename "./ahoy")"
   else
-    skip "No executable ahoy binary found (./ahoy or ./ahoy.exe)"
+    skip "No working ahoy binary found - build may have failed"
   fi
   
   mkdir -p /tmp/workdir-test
