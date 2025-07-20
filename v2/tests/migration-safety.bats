@@ -117,8 +117,14 @@
 @test "Config file discovery continues to work" {
   # Test that .ahoy.yml discovery in parent directories works
   
-  # Get absolute path to ahoy binary before changing directories
-  AHOY_PATH="$(realpath ./ahoy)"
+  # Get absolute path to ahoy binary, handle both ./ahoy and ./ahoy.exe
+  if [ -f "./ahoy.exe" ] && [ -x "./ahoy.exe" ]; then
+    AHOY_PATH="$(cd "$(dirname "./ahoy.exe")" && pwd)/$(basename "./ahoy.exe")"
+  elif [ -f "./ahoy" ] && [ -x "./ahoy" ]; then
+    AHOY_PATH="$(cd "$(dirname "./ahoy")" && pwd)/$(basename "./ahoy")"
+  else
+    skip "No executable ahoy binary found (./ahoy or ./ahoy.exe)"
+  fi
   
   mkdir -p /tmp/migration-test/subdir
   cp testdata/simple.ahoy.yml /tmp/migration-test/.ahoy.yml
@@ -171,8 +177,14 @@ EOF
 @test "Working directory behavior is preserved" {
   # Test that commands run in the correct working directory
   
-  # Get absolute path to ahoy binary before changing directories
-  AHOY_PATH="$(realpath ./ahoy)"
+  # Get absolute path to ahoy binary, handle both ./ahoy and ./ahoy.exe
+  if [ -f "./ahoy.exe" ] && [ -x "./ahoy.exe" ]; then
+    AHOY_PATH="$(cd "$(dirname "./ahoy.exe")" && pwd)/$(basename "./ahoy.exe")"
+  elif [ -f "./ahoy" ] && [ -x "./ahoy" ]; then
+    AHOY_PATH="$(cd "$(dirname "./ahoy")" && pwd)/$(basename "./ahoy")"
+  else
+    skip "No executable ahoy binary found (./ahoy or ./ahoy.exe)"
+  fi
   
   mkdir -p /tmp/workdir-test
   cat > /tmp/workdir-test/.ahoy.yml << 'EOF'
