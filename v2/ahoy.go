@@ -23,7 +23,7 @@ type Config struct {
 	AhoyAPI    string
 	Commands   map[string]Command
 	Entrypoint []string
-	Env        string
+	Env        StringArray
 }
 
 // Command is an ahoy command detailed in ahoy.yml files. Multiple
@@ -32,7 +32,7 @@ type Command struct {
 	Description string
 	Usage       string
 	Cmd         string
-	Env         string
+	Env         StringArray
 	Hide        bool
 	Optional    bool
 	Imports     []string
@@ -183,9 +183,13 @@ func getSubCommands(includes []string) []cli.Command {
 func getEnvironmentVars(envFile string) []string {
 	var envVars []string
 
+	// We allow non-existent "env" files, so skip if file doesn't exist.
+	if !fileExists(envFile) {
+		return nil
+	}
+
 	env, err := os.ReadFile(envFile)
 	if err != nil {
-		logger("fatal", "Invalid env file: "+envFile)
 		return nil
 	}
 
@@ -207,9 +211,14 @@ func getCommands(config Config) []cli.Command {
 	envVars := []string{}
 
 	// Get environment variables from the 'global' environment variable file, if it is defined.
-	if config.Env != "" {
-		globalEnvFile := filepath.Join(AhoyConf.srcDir, config.Env)
-		envVars = append(envVars, getEnvironmentVars(globalEnvFile)...)
+	if len(config.Env) > 0 {
+		for _, envPath := range config.Env {
+			globalEnvFile := filepath.Join(AhoyConf.srcDir, envPath)
+			vars := getEnvironmentVars(globalEnvFile)
+			if vars != nil {
+				envVars = append(envVars, vars...)
+			}
+		}
 	}
 
 	var keys []string
@@ -279,9 +288,14 @@ func getCommands(config Config) []cli.Command {
 				// If defined, included specified command-level environment variables.
 				// Note that this will intentionally override any conflicting variables
 				// defined in the 'global' env file.
-				if cmd.Env != "" {
-					cmdEnvFile := filepath.Join(AhoyConf.srcDir, cmd.Env)
-					envVars = append(envVars, getEnvironmentVars(cmdEnvFile)...)
+				if len(cmd.Env) > 0 {
+					for _, envPath := range cmd.Env {
+						cmdEnvFile := filepath.Join(AhoyConf.srcDir, envPath)
+						vars := getEnvironmentVars(cmdEnvFile)
+						if vars != nil {
+							envVars = append(envVars, vars...)
+						}
+					}
 				}
 
 				if verbose {
