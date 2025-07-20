@@ -39,8 +39,17 @@ jobs:
         run: |
           git clone https://github.com/bats-core/bats-core.git
           cd bats-core
+          # Create proper directory structure that BATS expects
           New-Item -ItemType Directory -Force -Path "C:\bats\bin"
+          New-Item -ItemType Directory -Force -Path "C:\bats\libexec\bats-core"
+          
+          # Copy the main bats script
           Copy-Item "bin\bats" "C:\bats\bin\bats"
+          
+          # Copy the core BATS files that are expected
+          Copy-Item "libexec\bats-core\*" "C:\bats\libexec\bats-core\" -Recurse -Force
+          
+          # Add to PATH
           echo "C:\bats\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           cd ..
         shell: pwsh
@@ -106,8 +115,12 @@ jobs:
           # List files to see what was built
           dir ahoy*
 
-          # Binary should be correctly named ahoy.exe
-          .\ahoy.exe test
+          # Test that the binary works (issue #147 fix validation)
+          .\ahoy.exe --version
+          .\ahoy.exe --help
+          
+          # Test with a simple config file
+          .\ahoy.exe -f testdata\simple.ahoy.yml echo "Windows functional test passed"
         shell: pwsh
 
       - name: Run tests with coverage (Linux/macOS)
