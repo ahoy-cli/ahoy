@@ -102,8 +102,13 @@ jobs:
 
       - name: Run functional tests (Windows)
         if: runner.os == 'Windows'
-        run: .\ahoy.exe test
-        shell: cmd
+        run: |
+          # List files to see what was built
+          dir ahoy*
+          
+          # Go automatically adds .exe on Windows, so the binary should be ahoy.exe
+          ./ahoy.exe test
+        shell: pwsh
 
       - name: Run tests with coverage (Linux/macOS)
         if: runner.os != 'Windows'
