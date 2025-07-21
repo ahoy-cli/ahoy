@@ -143,7 +143,10 @@ func getConfig(file string) (Config, error) {
 	if !skipValidation {
 		validationResult := ValidateConfig(config, file)
 		if len(validationResult.Issues) > 0 {
-			PrintValidationIssues(validationResult)
+			// Only show validation issues in verbose mode or if there are errors
+			if verbose || validationResult.HasError {
+				PrintValidationIssues(validationResult)
+			}
 
 			// If there are errors, exit
 			if validationResult.HasError {
