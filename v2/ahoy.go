@@ -44,6 +44,7 @@ var (
 	sourcefile     string
 	verbose        bool
 	bashCompletion bool
+	skipValidation bool
 )
 
 // The build version can be set using the go linker flag `-ldflags "-X main.version=$VERSION"`
@@ -138,6 +139,18 @@ func getConfig(file string) (Config, error) {
 		config.Entrypoint = []string{"bash", "-c", "{{cmd}}", "{{name}}"}
 	}
 
+	// Run validation and show warnings/errors (unless skipped for doctor command)
+	if !skipValidation {
+		validationResult := ValidateConfig(config, file)
+		if len(validationResult.Issues) > 0 {
+			PrintValidationIssues(validationResult)
+
+			// If there are errors, exit
+			if validationResult.HasError {
+				os.Exit(1)
+			}
+		}
+	}
 	return config, err
 }
 
@@ -161,7 +174,11 @@ func getSubCommands(includes []string) []cli.Command {
 			// subcommands into public and private.
 			continue
 		}
-		config, _ := getConfig(include)
+		config, err := getConfig(include)
+		if err != nil {
+			logger("warn", "Failed to load import file '"+include+"': "+err.Error())
+			continue
+		}
 		includeCommands := getCommands(config)
 		for _, command := range includeCommands {
 			commands[command.Name] = command
@@ -318,8 +335,46 @@ func getCommands(config Config) []cli.Command {
 			subCommands := getSubCommands(cmd.Imports)
 			if len(subCommands) == 0 {
 				if !cmd.Optional {
-					logger("fatal", "Command ["+name+"] has 'imports' set, but no commands were found. Check your yaml file.")
+					// Enhanced error message with more context
+					currentVersion := GetAhoyVersion()
+					errorMsg := fmt.Sprintf("Command [%s] has 'imports' set, but no commands were found.", name)
+
+					// Check if any import files are missing
+					missingFiles := []string{}
+					for _, importPath := range cmd.Imports {
+						fullPath := importPath
+						if !strings.HasPrefix(importPath, "/") && !strings.HasPrefix(importPath, "~") {
+							fullPath = filepath.Join(AhoyConf.srcDir, importPath)
+						}
+						if !fileExists(fullPath) {
+							missingFiles = append(missingFiles, importPath)
+						}
+					}
+
+					if len(missingFiles) > 0 {
+						errorMsg += fmt.Sprintf("\n\nMissing import files: %s", strings.Join(missingFiles, ", "))
+						errorMsg += "\n\nSolutions:"
+						errorMsg += "\n1. Create the missing files"
+						errorMsg += "\n2. Mark imports as optional with 'optional: true'"
+						if !VersionSupports(currentVersion, "optional_imports") {
+							errorMsg += fmt.Sprintf("\n3. Upgrade Ahoy to v%s+ for optional import support", FeatureSupport["optional_imports"])
+						}
+						errorMsg += "\n\nFor more help, run: ahoy doctor"
+					}
+
+					logger("fatal", errorMsg)
 				} else {
+					// Check if this version supports optional imports
+					currentVersion := GetAhoyVersion()
+					if !VersionSupports(currentVersion, "optional_imports") {
+						errorMsg := fmt.Sprintf("Command [%s] uses 'optional: true' but this Ahoy version (%s) doesn't support optional imports.", name, currentVersion)
+						errorMsg += fmt.Sprintf("\n\nThis feature requires Ahoy %s or later.", FeatureSupport["optional_imports"])
+						errorMsg += "\n\nSolutions:"
+						errorMsg += "\n1. Upgrade Ahoy to the latest version"
+						errorMsg += "\n2. Remove 'optional: true' and create the missing import files"
+						errorMsg += "\n\nFor more help, run: ahoy doctor"
+						logger("fatal", errorMsg)
+					}
 					continue
 				}
 			}
@@ -392,9 +447,35 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 		},
 	}
 
+	defaultDoctorCmd := cli.Command{
+		Name:  "doctor",
+		Usage: "Diagnose configuration issues and provide recommendations.",
+		Action: func(c *cli.Context) {
+			configFile := AhoyConf.srcFile
+			if configFile == "" {
+				// Try to find a config file
+				var err error
+				configFile, err = getConfigPath("")
+				if err != nil || configFile == "" {
+					fmt.Println("Warning: No .ahoy.yml file found")
+					fmt.Println("Run 'ahoy init' to create a new configuration file")
+					return
+				}
+			}
+
+			// Skip validation during config loading for doctor command
+			skipValidation = true
+			result := RunDoctor(configFile)
+			skipValidation = false
+			PrintDoctorReport(result)
+		}}
+
 	// Don't add default commands if they've already been set.
 	if c := app.Command(defaultInitCmd.Name); c == nil {
 		commands = append(commands, defaultInitCmd)
+	}
+	if c := app.Command(defaultDoctorCmd.Name); c == nil {
+		commands = append(commands, defaultDoctorCmd)
 	}
 	return commands
 }
