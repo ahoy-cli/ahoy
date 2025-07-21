@@ -27,7 +27,33 @@ With Ahoy, you can turn this into:
 
 `ahoy mysql-import < some-database.sql`
 
-[More examples](https://ahoy-cli.readthedocs.io/en/latest/Home.html).
+## 🚀 Quick Start
+
+Get started immediately with our comprehensive examples file:
+
+```bash
+# Create a new project with example commands
+ahoy init
+
+# Or download the examples file directly
+curl -o .ahoy.yml https://raw.githubusercontent.com/ahoy-cli/ahoy/master/examples/examples.ahoy.yml
+```
+
+The examples file includes **30+ ready-to-use commands** for:
+- **Development Environment** - `up`, `down`, `restart`, `status`
+- **Testing & Quality** - `test`, `lint` with multi-language support
+- **Database Operations** - `db`, `db:backup` for MySQL/PostgreSQL
+- **Build & Deployment** - `build`, `deploy` with safety checks
+- **Drupal Integration** - `drush`, `cr`, `uli`, `cex`, `cim` for Drupal projects
+
+**📋 [View the complete examples file →](examples/examples.ahoy.yml)**
+
+Try it out:
+```bash
+ahoy status    # Show service status
+ahoy urls      # Show available URLs  
+ahoy shell     # Open a shell in your container
+```
 
 ## Features
 
