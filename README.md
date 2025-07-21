@@ -72,9 +72,9 @@ For WSL2, use the Linux binary above for your architecture.
 
 ## Environment Variables
 
-An example of the newly added environment variable support.
+Ahoy supports loading environment variables from files at both global and command levels, with support for multiple environment files.
 
-#### Ahoy YAML config file:
+#### Single Environment File (backwards compatible):
 
 ```yaml
 ahoyapi: v2
@@ -90,7 +90,28 @@ commands:
     cmd: mysql -u$DB_USER -p$DB_PASSWORD $DB_NAME < $1
 ```
 
-#### Env files:
+#### Multiple Environment Files (new feature):
+
+```yaml
+ahoyapi: v2
+
+# Multiple global environment files loaded in order
+env:
+  - .env.base
+  - .env.local
+  - .env.override
+
+commands:
+  deploy:
+    # Multiple command-specific env files
+    env:
+      - .env.deploy
+      - .env.secrets
+    usage: Deploy the application
+    cmd: ./deploy.sh
+```
+
+#### Environment File Format:
 ```sh
 # Global .env file
 DB_USER=root
@@ -101,6 +122,13 @@ DB_USER=custom_user
 DB_PASSWORD=secret
 DB_NAME=mydb
 ```
+
+**Key Features:**
+- Files are loaded in order, with later files overriding earlier ones
+- Command-level env files override global env files
+- Non-existent files are gracefully ignored
+- Supports comments and empty lines in env files
+- Maintains full backwards compatibility with single file syntax
 
 ## Command Aliases
 
