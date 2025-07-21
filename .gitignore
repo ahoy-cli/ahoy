@@ -1,11 +1,20 @@
-# Ignore the items build by sphinx for read the docs.
+# Ignorables.
+
+# Docs
 docs/_build
-# Ignore the ahoy binary when it's built
-ahoy
 
+# IDEs
 .idea
-builds/*
 
+# Builds
+ahoy
+builds/
 dist/
 
+# Testing
 test_helpers/
+
+# Agents
+.claude/
+AGENT.md
+CLAUDE.md
