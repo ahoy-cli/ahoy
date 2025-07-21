@@ -1,6 +1,10 @@
 # Goreleaser config for ahoy.
 # Make sure to check the documentation at https://goreleaser.com
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 version: 2
+
+env:
+  - GO111MODULE=on
 before:
   hooks:
     - cd v2 && go mod tidy
@@ -29,6 +33,7 @@ builds:
       - -v
     ldflags:
       - "-s -w -X main.version={{ .Tag }} -X main.GitCommit={{ .ShortCommit }} -X main.GitBranch={{ .Branch }} -X main.BuildTime={{ .Date }}"
+    mod_timestamp: "{{ .CommitTimestamp }}"
     no_unique_dist_dir: true
 
 archives:
@@ -57,12 +62,21 @@ changelog:
 
 sboms:
   - artifacts: binary
-
-binary_signs:
-  - signature: "${artifact}.sig"
+    documents:
+      - "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}.sbom"
 
 signs:
-  - artifacts: checksum
+  - cmd: gpg
+    args:
+      - "--batch"
+      - "-u"
+      - "{{ .Env.GPG_FINGERPRINT }}"
+      - "--output"
+      - "${signature}"
+      - "--detach-sign"
+      - "${artifact}"
+    artifacts: checksum
+    output: true
 
 # release:
 #   github:

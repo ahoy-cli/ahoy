@@ -1,0 +1,12 @@
+ahoyapi: v2
+env:
+  - ./.env
+  - ./.env.doesnotexist
+  - ./.env.multiple
+commands:
+  test-global-multiple:
+    cmd: echo $GLOBAL
+
+  test-cmd-multiple-override:
+    cmd: echo $SECOND_COMMAND
+    env: .env.cmd
