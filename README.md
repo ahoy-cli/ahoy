@@ -223,7 +223,7 @@ commands:
 
 ## Sponsors 💰 👏
 
-- [<img src="https://avatars.githubusercontent.com/u/378794?s=160&v=4" width="160px;"><br />Alex Skrypnyk - DrevOps](https://drevops.com)
+- [<img src="https://avatars.githubusercontent.com/u/378794?s=100&v=4" width="100px;"><br />Alex Skrypnyk - DrevOps](https://drevops.com)
 
 ## Contributors ✨
 
