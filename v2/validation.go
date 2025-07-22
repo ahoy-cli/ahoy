@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -28,10 +29,10 @@ type ValidationResult struct {
 
 // FeatureSupport defines which features are supported in which versions
 var FeatureSupport = map[string]string{
-	"optional_imports":   "v2.2.0",
-	"multiple_env_files": "v2.0.0", // Actually supported since the beginning via StringArray
 	"command_aliases":    "v2.1.0",
-	"schema_validation":  "v2.3.0", // This version we're implementing
+	"optional_imports":   "v2.2.0",
+	"multiple_env_files": "v2.5.0",
+	"schema_validation":  "v2.6.0", // This version we're implementing
 }
 
 // GetAhoyVersion returns the current Ahoy version
@@ -72,15 +73,28 @@ func VersionSupports(currentVersion, feature string) bool {
 // compareVersions compares two semantic version strings
 // Returns: -1 if v1 < v2, 0 if v1 == v2, 1 if v1 > v2
 func compareVersions(v1, v2 string) int {
-	// Simple version comparison for now
-	// This could be enhanced with proper semver parsing
-	if v1 == v2 {
-		return 0
+	// Strip 'v' prefix if present
+	v1 = strings.TrimPrefix(v1, "v")
+	v2 = strings.TrimPrefix(v2, "v")
+
+	parts1 := strings.Split(v1, ".")
+	parts2 := strings.Split(v2, ".")
+
+	for i := 0; i < 3; i++ {
+		var p1, p2 int
+		if i < len(parts1) {
+			p1, _ = strconv.Atoi(parts1[i])
+		}
+		if i < len(parts2) {
+			p2, _ = strconv.Atoi(parts2[i])
+		}
+		if p1 < p2 {
+			return -1
+		} else if p1 > p2 {
+			return 1
+		}
 	}
-	if v1 > v2 {
-		return 1
-	}
-	return -1
+	return 0
 }
 
 // ValidateConfig performs comprehensive validation of an Ahoy configuration
@@ -207,6 +221,10 @@ func validateImport(cmdName, importPath string, optional bool, configFile, curre
 	fullPath := importPath
 	if !strings.HasPrefix(importPath, "/") && !strings.HasPrefix(importPath, "~") {
 		fullPath = filepath.Join(configDir, importPath)
+	} else if strings.HasPrefix(importPath, "~") {
+		if home, err := os.UserHomeDir(); err == nil {
+			fullPath = filepath.Join(home, importPath[2:])
+		}
 	}
 
 	if !fileExists(fullPath) {

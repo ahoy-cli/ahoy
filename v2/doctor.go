@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -117,6 +118,10 @@ func checkImportFiles(config Config, configFile string) []ImportFileStatus {
 			fullPath := importPath
 			if !strings.HasPrefix(importPath, "/") && !strings.HasPrefix(importPath, "~") {
 				fullPath = filepath.Join(configDir, importPath)
+			} else if strings.HasPrefix(importPath, "~") {
+				if home, err := os.UserHomeDir(); err == nil {
+					fullPath = filepath.Join(home, importPath[2:])
+				}
 			}
 
 			importFiles = append(importFiles, ImportFileStatus{
