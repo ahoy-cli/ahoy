@@ -1,11 +1,11 @@
 ![AHOY logo](https://avatars.githubusercontent.com/u/19353604?s=250&v=4)
-<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-14-orange.svg?style=flat)](#contributors-)
-<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 # AHOY! - Automate and organize your workflows, no matter what technology you use.
 
 [![Build and test](https://github.com/ahoy-cli/ahoy/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/ahoy-cli/ahoy/actions/workflows/build_and_test.yml) [![Go Report Card](https://goreportcard.com/badge/github.com/ahoy-cli/ahoy)](https://goreportcard.com/report/github.com/ahoy-cli/ahoy)
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-14-orange.svg?style=flat)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Ahoy is command line tool that gives each of your projects their own CLI app with zero code and dependencies.
 
