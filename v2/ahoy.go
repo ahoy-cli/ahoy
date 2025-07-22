@@ -79,6 +79,32 @@ func fileExists(filename string) bool {
 	return !info.IsDir()
 }
 
+// expandPath expands a file path, handling tilde expansion and relative paths.
+// For absolute paths (starting with / or C:\ on Windows), returns the path as-is.
+// For tilde paths (starting with ~), expands to user home directory.
+// For relative paths, joins with the provided base directory.
+func expandPath(path, baseDir string) string {
+	if filepath.IsAbs(path) {
+		// Absolute path, return as-is
+		return path
+	} else if strings.HasPrefix(path, "~") {
+		// Tilde path, expand to home directory
+		if home, err := os.UserHomeDir(); err == nil {
+			// Handle both ~/path and ~\path (Windows)
+			remainder := path[1:]
+			if len(remainder) > 0 && (remainder[0] == '/' || remainder[0] == '\\') {
+				remainder = remainder[1:]
+			}
+			return filepath.Join(home, remainder)
+		}
+		// If we can't get home dir, return original path
+		return path
+	} else {
+		// Relative path, join with base directory
+		return filepath.Join(baseDir, path)
+	}
+}
+
 func getConfigPath(sourcefile string) (string, error) {
 	var err error
 	config := ""
@@ -168,10 +194,8 @@ func getSubCommands(includes []string) []cli.Command {
 			continue
 		}
 		// If the include path is not absolute or a home directory path,
-		// prepend the source directory to make it relative to the config file.
-		if !strings.HasPrefix(include, "/") && !strings.HasPrefix(include, "~") {
-			include = filepath.Join(AhoyConf.srcDir, include)
-		}
+		// Expand path (handles tilde, absolute, and relative paths)
+		include = expandPath(include, AhoyConf.srcDir)
 		if _, err := os.Stat(include); err != nil {
 			// Skipping files that cannot be loaded allows us to separate
 			// subcommands into public and private.
@@ -345,10 +369,7 @@ func getCommands(config Config) []cli.Command {
 					// Check if any import files are missing
 					missingFiles := []string{}
 					for _, importPath := range cmd.Imports {
-						fullPath := importPath
-						if !strings.HasPrefix(importPath, "/") && !strings.HasPrefix(importPath, "~") {
-							fullPath = filepath.Join(AhoyConf.srcDir, importPath)
-						}
+						fullPath := expandPath(importPath, AhoyConf.srcDir)
 						if !fileExists(fullPath) {
 							missingFiles = append(missingFiles, importPath)
 						}

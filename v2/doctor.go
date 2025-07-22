@@ -2,9 +2,7 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
-	"strings"
 )
 
 // DoctorResult contains comprehensive diagnostic information
@@ -115,14 +113,7 @@ func checkImportFiles(config Config, configFile string) []ImportFileStatus {
 
 	for cmdName, cmd := range config.Commands {
 		for _, importPath := range cmd.Imports {
-			fullPath := importPath
-			if !strings.HasPrefix(importPath, "/") && !strings.HasPrefix(importPath, "~") {
-				fullPath = filepath.Join(configDir, importPath)
-			} else if strings.HasPrefix(importPath, "~") {
-				if home, err := os.UserHomeDir(); err == nil {
-					fullPath = filepath.Join(home, importPath[2:])
-				}
-			}
+			fullPath := expandPath(importPath, configDir)
 
 			importFiles = append(importFiles, ImportFileStatus{
 				Path:     importPath,

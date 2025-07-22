@@ -218,14 +218,7 @@ func validateImport(cmdName, importPath string, optional bool, configFile, curre
 
 	// Make path relative to config file
 	configDir := filepath.Dir(configFile)
-	fullPath := importPath
-	if !strings.HasPrefix(importPath, "/") && !strings.HasPrefix(importPath, "~") {
-		fullPath = filepath.Join(configDir, importPath)
-	} else if strings.HasPrefix(importPath, "~") {
-		if home, err := os.UserHomeDir(); err == nil {
-			fullPath = filepath.Join(home, importPath[2:])
-		}
-	}
+	fullPath := expandPath(importPath, configDir)
 
 	if !fileExists(fullPath) {
 		if optional {
@@ -271,9 +264,9 @@ func validateImport(cmdName, importPath string, optional bool, configFile, curre
 func validateEnvFile(cmdName, envPath, configFile string) []ValidationIssue {
 	var issues []ValidationIssue
 
-	// Make path relative to config file
+	// Expand path (handles tilde, absolute, and relative paths)
 	configDir := filepath.Dir(configFile)
-	fullPath := filepath.Join(configDir, envPath)
+	fullPath := expandPath(envPath, configDir)
 
 	if !fileExists(fullPath) {
 		issues = append(issues, ValidationIssue{
