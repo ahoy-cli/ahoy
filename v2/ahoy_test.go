@@ -245,7 +245,7 @@ func TestExpandPath(t *testing.T) {
 
 	// Test relative paths
 	relativePath := "relative/path"
-	baseDir := "/base/directory"
+	baseDir := filepath.Join("base", "directory") // Use filepath.Join for cross-platform
 	expected := filepath.Join(baseDir, relativePath)
 	result = expandPath(relativePath, baseDir)
 	if result != expected {
@@ -254,23 +254,23 @@ func TestExpandPath(t *testing.T) {
 
 	// Test tilde paths with forward slash
 	tildePath := "~/test/path"
-	result = expandPath(tildePath, "/base/dir")
+	result = expandPath(tildePath, filepath.Join("base", "dir"))
 	// Should not be the original path (unless home dir lookup fails)
 	// and should not be joined with base dir
-	if result == tildePath || result == filepath.Join("/base/dir", tildePath) {
+	if result == tildePath || result == filepath.Join(filepath.Join("base", "dir"), tildePath) {
 		// This might be expected if UserHomeDir() fails, so just log it
 		t.Logf("expandPath with tilde path returned: %s (this may be expected if home dir lookup fails)", result)
 	}
 
 	// Test tilde paths with backslash (Windows-style)
 	tildePathWin := "~\\test\\path"
-	result = expandPath(tildePathWin, "/base/dir")
-	if result == tildePathWin || result == filepath.Join("/base/dir", tildePathWin) {
+	result = expandPath(tildePathWin, filepath.Join("base", "dir"))
+	if result == tildePathWin || result == filepath.Join(filepath.Join("base", "dir"), tildePathWin) {
 		t.Logf("expandPath with Windows tilde path returned: %s (this may be expected if home dir lookup fails)", result)
 	}
 
 	// Test tilde only
-	result = expandPath("~", "/base/dir")
+	result = expandPath("~", filepath.Join("base", "dir"))
 	if home, err := os.UserHomeDir(); err == nil {
 		if result != home {
 			t.Errorf("expandPath with tilde only: expected %s, got %s", home, result)
