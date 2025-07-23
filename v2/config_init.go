@@ -3,9 +3,11 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"time"
 
 	"github.com/urfave/cli"
 )
@@ -14,6 +16,41 @@ import (
 type InitArgs struct {
 	Force bool
 	URL   string
+}
+
+// downloadFile downloads a file from the given URL and saves it to the specified path
+func downloadFile(url, filepath string) error {
+	// Create HTTP client with timeout
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	// Create the HTTP request
+	resp, err := client.Get(url)
+	if err != nil {
+		return fmt.Errorf("failed to fetch URL %s: %v", url, err)
+	}
+	defer resp.Body.Close()
+
+	// Check if the response status is OK
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("failed to download file: server returned %s", resp.Status)
+	}
+
+	// Create the destination file
+	out, err := os.Create(filepath)
+	if err != nil {
+		return fmt.Errorf("failed to create file %s: %v", filepath, err)
+	}
+	defer out.Close()
+
+	// Copy the response body to the file
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to write file %s: %v", filepath, err)
+	}
+
+	return nil
 }
 
 // RunConfigInit performs the init command functionality
@@ -45,17 +82,12 @@ func RunConfigInit(args InitArgs) error {
 
 	// Grab the URL or use a default for the initial ahoy file.
 	// Allows users to define their own files to call to init.
-	// TODO: Make file downloading OS-independent.
-	wgetURL := "https://raw.githubusercontent.com/ahoy-cli/ahoy/master/examples/examples.ahoy.yml"
+	downloadURL := "https://raw.githubusercontent.com/ahoy-cli/ahoy/master/examples/examples.ahoy.yml"
 	if args.URL != "" {
-		wgetURL = args.URL
+		downloadURL = args.URL
 	}
 
-	grabYaml := "wget " + wgetURL + " -O .ahoy.yml"
-	cmd := exec.Command("bash", "-c", grabYaml)
-	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
+	if err := downloadFile(downloadURL, ".ahoy.yml"); err != nil {
 		return fmt.Errorf("failed to download config file: %v", err)
 	}
 

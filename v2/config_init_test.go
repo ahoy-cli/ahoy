@@ -93,3 +93,41 @@ func TestFileExists_Helper(t *testing.T) {
 		t.Error("fileExists should return false for directories")
 	}
 }
+
+func TestDownloadFile_InvalidURL(t *testing.T) {
+	// Test downloadFile function with invalid URL
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "test.yml")
+
+	err := downloadFile("http://invalid-url-that-does-not-exist.local", testFile)
+	if err == nil {
+		t.Error("Expected error when downloading from invalid URL")
+	}
+
+	// File should not be created when download fails
+	if fileExists(testFile) {
+		t.Error("File should not be created when download fails")
+	}
+}
+
+func TestDownloadFile_404Response(t *testing.T) {
+	// Test downloadFile function with URL that returns 404
+	tmpDir := t.TempDir()
+	testFile := filepath.Join(tmpDir, "test.yml")
+
+	// Use a URL that should return 404
+	err := downloadFile("https://raw.githubusercontent.com/ahoy-cli/ahoy/master/non-existent-file.yml", testFile)
+	if err == nil {
+		t.Error("Expected error when downloading 404 URL")
+	}
+
+	// Error message should mention server response
+	if err != nil && err.Error() == "" {
+		t.Error("Error should have descriptive message")
+	}
+
+	// File should not be created when download returns 404
+	if fileExists(testFile) {
+		t.Error("File should not be created when download returns 404")
+	}
+}
