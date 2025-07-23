@@ -9,14 +9,14 @@ import (
 func TestRunConfigInit_NewDirectory(t *testing.T) {
 	// Create a temporary directory
 	tmpDir := t.TempDir()
-	
+
 	// Change to temp directory
 	originalDir, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("Failed to get current directory: %v", err)
 	}
 	defer os.Chdir(originalDir)
-	
+
 	if err := os.Chdir(tmpDir); err != nil {
 		t.Fatalf("Failed to change to temp directory: %v", err)
 	}
@@ -28,14 +28,14 @@ func TestRunConfigInit_NewDirectory(t *testing.T) {
 func TestRunConfigInit_ExistingFileForce(t *testing.T) {
 	// Create a temporary directory
 	tmpDir := t.TempDir()
-	
+
 	// Change to temp directory
 	originalDir, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("Failed to get current directory: %v", err)
 	}
 	defer os.Chdir(originalDir)
-	
+
 	if err := os.Chdir(tmpDir); err != nil {
 		t.Fatalf("Failed to change to temp directory: %v", err)
 	}
@@ -71,7 +71,7 @@ func TestFileExists_Helper(t *testing.T) {
 	// Create a temporary file
 	tmpDir := t.TempDir()
 	testFile := filepath.Join(tmpDir, "test.txt")
-	
+
 	// File should not exist initially
 	if fileExists(testFile) {
 		t.Error("fileExists should return false for non-existent file")

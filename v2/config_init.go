@@ -73,7 +73,7 @@ func initCommandAction(c *cli.Context) {
 	args := InitArgs{
 		Force: c.Bool("force"),
 	}
-	
+
 	if len(c.Args()) > 0 {
 		args.URL = c.Args()[0]
 	}

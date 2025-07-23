@@ -410,8 +410,6 @@ func getCommands(config Config) []cli.Command {
 	return exportCmds
 }
 
-
-
 func addDefaultCommands(commands []cli.Command) []cli.Command {
 	// Create config subcommands
 	configInitCmd := cli.Command{
