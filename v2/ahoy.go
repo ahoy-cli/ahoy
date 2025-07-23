@@ -48,6 +48,7 @@ var (
 // The build version can be set using the go linker flag `-ldflags "-X main.version=$VERSION"`
 // Complete command: `go build -ldflags "-X main.version=$VERSION"`
 var version string
+var simulateVersion string
 
 // AhoyConf stores the global config.
 var AhoyConf struct {

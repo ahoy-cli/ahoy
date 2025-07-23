@@ -6,10 +6,6 @@ import (
 	"github.com/urfave/cli"
 )
 
-var (
-	simulateVersion string
-)
-
 var globalFlags = []cli.Flag{
 	cli.BoolFlag{
 		Name:        "verbose, v",

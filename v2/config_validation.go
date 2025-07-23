@@ -47,14 +47,6 @@ func GetAhoyVersion() string {
 	return version
 }
 
-// GetAhoyVersionForTesting allows overriding version for testing
-func GetAhoyVersionForTesting(testVersion string) string {
-	if testVersion != "" {
-		return testVersion
-	}
-	return GetAhoyVersion()
-}
-
 // VersionSupports checks if a given version supports a specific feature
 func VersionSupports(currentVersion, feature string) bool {
 	requiredVersion, exists := FeatureSupport[feature]
