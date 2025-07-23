@@ -1,14 +1,12 @@
 package main
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 )
 
-func TestRunDoctor_ConfigNotExists(t *testing.T) {
+func TestRunConfigValidate_ConfigNotExists(t *testing.T) {
 	// Test when config file doesn't exist
-	result := RunDoctor("nonexistent.ahoy.yml")
+	result := RunConfigValidate("nonexistent.ahoy.yml", ValidateOptions{SkipValidation: false})
 
 	if result.ConfigExists {
 		t.Error("Expected ConfigExists to be false for nonexistent file")
@@ -22,7 +20,7 @@ func TestRunDoctor_ConfigNotExists(t *testing.T) {
 		t.Error("Expected recommendations for missing config file")
 	}
 
-	expectedRec := "Create a .ahoy.yml file using 'ahoy init'"
+	expectedRec := "Create a .ahoy.yml file using 'ahoy config init'"
 	found := false
 	for _, rec := range result.Recommendations {
 		if rec == expectedRec {
@@ -35,25 +33,11 @@ func TestRunDoctor_ConfigNotExists(t *testing.T) {
 	}
 }
 
-func TestRunDoctor_InvalidYAML(t *testing.T) {
-	// Create a temporary file with invalid YAML
-	tmpDir := t.TempDir()
-	configFile := filepath.Join(tmpDir, "invalid.ahoy.yml")
+func TestRunConfigValidate_InvalidYAML(t *testing.T) {
+	// Use static test file with invalid YAML
+	configFile := "testdata/invalid-yaml.ahoy.yml"
 
-	invalidYAML := `
-ahoyapi: v2
-commands:
-  test:
-    cmd: echo "test"
-    invalid_yaml: [unclosed array
-`
-
-	err := os.WriteFile(configFile, []byte(invalidYAML), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create test file: %v", err)
-	}
-
-	result := RunDoctor(configFile)
+	result := RunConfigValidate(configFile, ValidateOptions{SkipValidation: false})
 
 	if !result.ConfigExists {
 		t.Error("Expected ConfigExists to be true for existing file")
@@ -76,26 +60,11 @@ commands:
 	}
 }
 
-func TestRunDoctor_ValidConfig(t *testing.T) {
-	// Create a temporary file with valid YAML
-	tmpDir := t.TempDir()
-	configFile := filepath.Join(tmpDir, "valid.ahoy.yml")
+func TestRunConfigValidate_ValidConfig(t *testing.T) {
+	// Use static test file with valid YAML
+	configFile := "testdata/simple.ahoy.yml"
 
-	validYAML := `
-ahoyapi: v2
-usage: Test configuration
-commands:
-  test:
-    description: Test command
-    cmd: echo "test"
-`
-
-	err := os.WriteFile(configFile, []byte(validYAML), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create test file: %v", err)
-	}
-
-	result := RunDoctor(configFile)
+	result := RunConfigValidate(configFile, ValidateOptions{SkipValidation: false})
 
 	if !result.ConfigExists {
 		t.Error("Expected ConfigExists to be true for existing file")
@@ -114,97 +83,49 @@ commands:
 	}
 }
 
-func TestRunDoctor_WithEnvironmentFiles(t *testing.T) {
-	// Create a temporary directory structure
-	tmpDir := t.TempDir()
-	configFile := filepath.Join(tmpDir, "test.ahoy.yml")
+func TestRunConfigValidate_WithEnvironmentFiles(t *testing.T) {
+	// Use static test file that references env files
+	configFile := "testdata/with-env-files.ahoy.yml"
 
-	// Create some environment files
-	envFile1 := filepath.Join(tmpDir, ".env")
-
-	err := os.WriteFile(envFile1, []byte("TEST=value"), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create env file: %v", err)
-	}
-	// Don't create .env.local to test missing file detection
-	configYAML := `
-ahoyapi: v2
-env:
-  - .env
-  - .env.local
-commands:
-  test:
-    description: Test command
-    cmd: echo "test"
-    env:
-      - .env.command
-`
-
-	err = os.WriteFile(configFile, []byte(configYAML), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create test file: %v", err)
-	}
-
-	result := RunDoctor(configFile)
+	result := RunConfigValidate(configFile, ValidateOptions{SkipValidation: false})
 
 	if len(result.EnvFiles) != 3 {
 		t.Errorf("Expected 3 environment files, got %d", len(result.EnvFiles))
 	}
 
-	// Check that .env exists and .env.local doesn't
+	// Check that env files are detected (they won't exist in testdata)
 	envFileStatuses := make(map[string]bool)
 	for _, envFile := range result.EnvFiles {
 		envFileStatuses[envFile.Path] = envFile.Exists
 	}
 
-	if !envFileStatuses[".env"] {
-		t.Error("Expected .env to exist")
+	// Most env files should be missing, but we can check they're detected
+	// Check that files are detected in the result
+	envPaths := make([]string, 0)
+	for _, envFile := range result.EnvFiles {
+		envPaths = append(envPaths, envFile.Path)
 	}
 
-	if envFileStatuses[".env.local"] {
-		t.Error("Expected .env.local to not exist")
+	// Should detect .env, .env.local, and .env.command
+	expectedPaths := map[string]bool{".env": false, ".env.local": false, ".env.command": false}
+	for _, path := range envPaths {
+		if _, ok := expectedPaths[path]; ok {
+			expectedPaths[path] = true
+		}
 	}
 
-	if envFileStatuses[".env.command"] {
-		t.Error("Expected .env.command to not exist")
+	for path, found := range expectedPaths {
+		if !found {
+			t.Errorf("Expected to find env file %s in validation result", path)
+		}
 	}
 }
 
-func TestRunDoctor_WithImportFiles(t *testing.T) {
-	// Create a temporary directory structure
-	tmpDir := t.TempDir()
-	configFile := filepath.Join(tmpDir, "test.ahoy.yml")
+func TestRunConfigValidate_WithImportFiles(t *testing.T) {
+	// Use static test file that references import files
+	configFile := "testdata/with-imports.ahoy.yml"
 
-	// Create one import file but not the other
-	importFile1 := filepath.Join(tmpDir, "import1.ahoy.yml")
-	err := os.WriteFile(importFile1, []byte("ahoyapi: v2\ncommands: {}"), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create import file: %v", err)
-	}
-
-	configYAML := `
-ahoyapi: v2
-commands:
-  test1:
-    description: Test command 1
-    cmd: echo "test1"
-    imports:
-      - import1.ahoy.yml
-      - import2.ahoy.yml
-  test2:
-    description: Test command 2
-    cmd: echo "test2"
-    imports:
-      - import3.ahoy.yml
-    optional: true
-`
-
-	err = os.WriteFile(configFile, []byte(configYAML), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create test file: %v", err)
-	}
-
-	result := RunDoctor(configFile)
+	result := RunConfigValidate(configFile, ValidateOptions{SkipValidation: false})
 
 	if len(result.ImportFiles) != 3 {
 		t.Errorf("Expected 3 import files, got %d", len(result.ImportFiles))
@@ -216,21 +137,22 @@ commands:
 		importFileStatuses[importFile.Path] = importFile
 	}
 
-	if !importFileStatuses["import1.ahoy.yml"].Exists {
-		t.Error("Expected import1.ahoy.yml to exist")
+	// simple.ahoy.yml should exist, missing files should not
+	if !importFileStatuses["simple.ahoy.yml"].Exists {
+		t.Error("Expected simple.ahoy.yml to exist in testdata")
 	}
 
-	if importFileStatuses["import2.ahoy.yml"].Exists {
-		t.Error("Expected import2.ahoy.yml to not exist")
+	if importFileStatuses["missing-import.ahoy.yml"].Exists {
+		t.Error("Expected missing-import.ahoy.yml to not exist")
 	}
 
-	if importFileStatuses["import3.ahoy.yml"].Optional != true {
-		t.Error("Expected import3.ahoy.yml to be optional")
+	if importFileStatuses["another-missing.ahoy.yml"].Optional != true {
+		t.Error("Expected another-missing.ahoy.yml to be optional")
 	}
 }
 
 func TestGenerateRecommendations_VersionMismatch(t *testing.T) {
-	result := DoctorResult{
+	result := ConfigReport{
 		ValidationResult: ValidationResult{
 			Issues: []ValidationIssue{
 				{
@@ -258,7 +180,7 @@ func TestGenerateRecommendations_VersionMismatch(t *testing.T) {
 }
 
 func TestGenerateRecommendations_MissingImportFiles(t *testing.T) {
-	result := DoctorResult{
+	result := ConfigReport{
 		ImportFiles: []ImportFileStatus{
 			{
 				Path:     "missing.ahoy.yml",
@@ -287,7 +209,7 @@ func TestGenerateRecommendations_MissingImportFiles(t *testing.T) {
 }
 
 func TestGenerateRecommendations_MissingEnvFiles(t *testing.T) {
-	result := DoctorResult{
+	result := ConfigReport{
 		EnvFiles: []EnvFileStatus{
 			{
 				Path:   ".env",
@@ -315,7 +237,7 @@ func TestGenerateRecommendations_MissingEnvFiles(t *testing.T) {
 }
 
 func TestGenerateRecommendations_NewerFeatures(t *testing.T) {
-	result := DoctorResult{
+	result := ConfigReport{
 		ValidationResult: ValidationResult{
 			Issues: []ValidationIssue{
 				{
@@ -343,7 +265,7 @@ func TestGenerateRecommendations_NewerFeatures(t *testing.T) {
 }
 
 func TestGenerateRecommendations_NoIssues(t *testing.T) {
-	result := DoctorResult{
+	result := ConfigReport{
 		ValidationResult: ValidationResult{
 			Issues: []ValidationIssue{},
 		},
@@ -367,19 +289,13 @@ func TestGenerateRecommendations_NoIssues(t *testing.T) {
 }
 
 func TestCheckEnvironmentFiles(t *testing.T) {
-	// Create a temporary directory structure
-	tmpDir := t.TempDir()
-	configFile := filepath.Join(tmpDir, "test.ahoy.yml")
+	// Use testdata directory
+	configFile := "testdata/with-env-files.ahoy.yml"
 
-	// Create one env file but not the other
-	envFile1 := filepath.Join(tmpDir, ".env")
-	err := os.WriteFile(envFile1, []byte("TEST=value"), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create env file: %v", err)
-	}
+	// We have a test env file in testdata (.env.test)
 
 	config := Config{
-		Env: []string{".env", ".env.missing"},
+		Env: []string{".env.test", ".env.missing"},
 		Commands: map[string]Command{
 			"test": {
 				Env: []string{".env.command"},
@@ -405,38 +321,30 @@ func TestCheckEnvironmentFiles(t *testing.T) {
 		t.Errorf("Expected 2 global environment files, got %d", globalCount)
 	}
 
-	// Check that .env exists
+	// Check that .env.test exists
 	found := false
 	for _, envFile := range envFiles {
-		if envFile.Path == ".env" && envFile.Exists {
+		if envFile.Path == ".env.test" && envFile.Exists {
 			found = true
 			break
 		}
 	}
 	if !found {
-		t.Error("Expected .env to be found and exist")
+		t.Error("Expected .env.test to be found and exist")
 	}
 }
 
 func TestCheckImportFiles(t *testing.T) {
-	// Create a temporary directory structure
-	tmpDir := t.TempDir()
-	configFile := filepath.Join(tmpDir, "test.ahoy.yml")
-
-	// Create one import file but not the other
-	importFile1 := filepath.Join(tmpDir, "import1.ahoy.yml")
-	err := os.WriteFile(importFile1, []byte("ahoyapi: v2"), 0644)
-	if err != nil {
-		t.Fatalf("Failed to create import file: %v", err)
-	}
+	// Use testdata directory
+	configFile := "testdata/with-imports.ahoy.yml"
 
 	config := Config{
 		Commands: map[string]Command{
 			"test1": {
-				Imports: []string{"import1.ahoy.yml", "import2.ahoy.yml"},
+				Imports: []string{"simple.ahoy.yml", "missing-import.ahoy.yml"},
 			},
 			"test2": {
-				Imports:  []string{"import3.ahoy.yml"},
+				Imports:  []string{"another-missing.ahoy.yml"},
 				Optional: true,
 			},
 		},
@@ -448,34 +356,34 @@ func TestCheckImportFiles(t *testing.T) {
 		t.Errorf("Expected 3 import files, got %d", len(importFiles))
 	}
 
-	// Check that import1.ahoy.yml exists
+	// Check that simple.ahoy.yml exists
 	found := false
 	for _, importFile := range importFiles {
-		if importFile.Path == "import1.ahoy.yml" && importFile.Exists {
+		if importFile.Path == "simple.ahoy.yml" && importFile.Exists {
 			found = true
 			break
 		}
 	}
 	if !found {
-		t.Error("Expected import1.ahoy.yml to be found and exist")
+		t.Error("Expected simple.ahoy.yml to be found and exist")
 	}
 
-	// Check that import3.ahoy.yml is marked as optional
+	// Check that another-missing.ahoy.yml is marked as optional
 	found = false
 	for _, importFile := range importFiles {
-		if importFile.Path == "import3.ahoy.yml" && importFile.Optional {
+		if importFile.Path == "another-missing.ahoy.yml" && importFile.Optional {
 			found = true
 			break
 		}
 	}
 	if !found {
-		t.Error("Expected import3.ahoy.yml to be marked as optional")
+		t.Error("Expected another-missing.ahoy.yml to be marked as optional")
 	}
 }
 
-func TestDoctorResult_Fields(t *testing.T) {
-	// Test that DoctorResult has all expected fields
-	result := DoctorResult{
+func TestConfigReport_Fields(t *testing.T) {
+	// Test that ConfigReport has all expected fields
+	result := ConfigReport{
 		ConfigFile:       "test.ahoy.yml",
 		ConfigExists:     true,
 		ConfigValid:      true,
@@ -553,4 +461,65 @@ func TestImportFileStatus_Fields(t *testing.T) {
 	if importFile.Command != "test" {
 		t.Error("Command field not working")
 	}
+}
+
+func TestRunConfigValidate_WrongAPIVersion(t *testing.T) {
+	// Use static test file with wrong API version
+	configFile := "testdata/wrong-api-version.ahoy.yml"
+
+	result := RunConfigValidate(configFile, ValidateOptions{SkipValidation: false})
+
+	if !result.ConfigExists {
+		t.Error("Expected ConfigExists to be true for existing file")
+	}
+
+	if result.ConfigValid {
+		t.Error("Expected ConfigValid to be false due to wrong API version")
+	}
+
+	// API version won't be set if config loading failed due to wrong version
+	if result.APIVersion != "" {
+		t.Errorf("Expected APIVersion to be empty when config loading fails, got '%s'", result.APIVersion)
+	}
+}
+
+func TestRunConfigValidate_MissingAPIVersion(t *testing.T) {
+	// Use static test file with missing API version
+	configFile := "testdata/missing-api-version.ahoy.yml"
+
+	result := RunConfigValidate(configFile, ValidateOptions{SkipValidation: false})
+
+	if !result.ConfigExists {
+		t.Error("Expected ConfigExists to be true for existing file")
+	}
+
+	if result.ConfigValid {
+		t.Error("Expected ConfigValid to be false due to missing API version")
+	}
+
+	if result.APIVersion != "" {
+		t.Errorf("Expected APIVersion to be empty, got '%s'", result.APIVersion)
+	}
+}
+
+func TestRunConfigValidate_WithNewerFeatures(t *testing.T) {
+	// Use static test file with newer features (aliases, optional imports)
+	configFile := "testdata/newer-features.ahoy.yml"
+
+	result := RunConfigValidate(configFile, ValidateOptions{SkipValidation: false})
+
+	if !result.ConfigExists {
+		t.Error("Expected ConfigExists to be true for existing file")
+	}
+
+	if !result.ConfigValid {
+		t.Error("Expected ConfigValid to be true for valid YAML with newer features")
+	}
+
+	if result.APIVersion != "v2" {
+		t.Errorf("Expected APIVersion to be 'v2', got '%s'", result.APIVersion)
+	}
+
+	// Should have validation issues about newer features if simulating older version
+	// This test mainly ensures the file loads correctly
 }

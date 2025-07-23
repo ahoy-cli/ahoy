@@ -190,7 +190,7 @@ func TestGetConfig(t *testing.T) {
 
 	testFile.Write([]byte(testYaml))
 
-	config, err := getConfig("test_getConfig.yml")
+	config, err := getConfig("test_getConfig.yml", false)
 	if err != nil {
 		t.Error("Something went wrong trying to load the config file.")
 	}

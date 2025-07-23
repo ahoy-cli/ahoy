@@ -1,0 +1,12 @@
+ahoyapi: v2
+commands:
+  test1:
+    description: Test command 1
+    imports:
+      - simple.ahoy.yml
+      - missing-import.ahoy.yml
+  test2:
+    description: Test command 2
+    imports:
+      - another-missing.ahoy.yml
+    optional: true
