@@ -69,22 +69,75 @@ func compareVersions(v1, v2 string) int {
 	v1 = strings.TrimPrefix(v1, "v")
 	v2 = strings.TrimPrefix(v2, "v")
 
-	parts1 := strings.Split(v1, ".")
-	parts2 := strings.Split(v2, ".")
+	// Split version and pre-release parts
+	v1Parts := strings.SplitN(v1, "-", 2)
+	v2Parts := strings.SplitN(v2, "-", 2)
 
+	v1Core := v1Parts[0]
+	v2Core := v2Parts[0]
+
+	var v1PreRelease, v2PreRelease string
+	if len(v1Parts) > 1 {
+		v1PreRelease = v1Parts[1]
+	}
+	if len(v2Parts) > 1 {
+		v2PreRelease = v2Parts[1]
+	}
+
+	// Compare core version (major.minor.patch)
+	coreParts1 := strings.Split(v1Core, ".")
+	coreParts2 := strings.Split(v2Core, ".")
+
+	// Compare up to 3 parts (major, minor, patch)
 	for i := 0; i < 3; i++ {
 		var p1, p2 int
-		if i < len(parts1) {
-			p1, _ = strconv.Atoi(parts1[i])
+		var err1, err2 error
+
+		if i < len(coreParts1) {
+			p1, err1 = strconv.Atoi(coreParts1[i])
+			if err1 != nil {
+				// If parsing fails, treat as 0 and continue comparison
+				p1 = 0
+			}
 		}
-		if i < len(parts2) {
-			p2, _ = strconv.Atoi(parts2[i])
+		if i < len(coreParts2) {
+			p2, err2 = strconv.Atoi(coreParts2[i])
+			if err2 != nil {
+				// If parsing fails, treat as 0 and continue comparison
+				p2 = 0
+			}
 		}
+
 		if p1 < p2 {
 			return -1
 		} else if p1 > p2 {
 			return 1
 		}
+	}
+
+	// Core versions are equal, now compare pre-release versions
+	// According to semantic versioning:
+	// 1. Pre-release versions have lower precedence than normal versions
+	// 2. Pre-release versions are compared lexically in ASCII sort order
+
+	v1HasPre := len(v1Parts) > 1
+	v2HasPre := len(v2Parts) > 1
+
+	if !v1HasPre && !v2HasPre {
+		return 0 // Both are normal versions and equal
+	}
+	if !v1HasPre && v2HasPre {
+		return 1 // v1 is normal, v2 is pre-release, so v1 > v2
+	}
+	if v1HasPre && !v2HasPre {
+		return -1 // v1 is pre-release, v2 is normal, so v1 < v2
+	}
+
+	// Both are pre-release, compare lexically
+	if v1PreRelease < v2PreRelease {
+		return -1
+	} else if v1PreRelease > v2PreRelease {
+		return 1
 	}
 	return 0
 }
