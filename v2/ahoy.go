@@ -256,6 +256,10 @@ func getCommands(config Config) []cli.Command {
 			newCmd.Usage = cmd.Usage
 		}
 
+		if cmd.Description != "" {
+			newCmd.Description = cmd.Description
+		}
+
 		if cmd.Cmd != "" {
 			newCmd.Action = func(c *cli.Context) {
 				// For some unclear reason, if we don't add an item at the end here,
