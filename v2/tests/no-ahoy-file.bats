@@ -24,13 +24,15 @@ teardown() {
 
 @test "Run ahoy init without an .ahoy.yml file" {
   run ./ahoy init
-  [ "${lines[$((${#lines[@]}-1))]}" == "Example .ahoy.yml downloaded to the current directory. You can customize it to suit your needs!" ]
+  [ "${lines[$((${#lines[@]}-2))]}" == "Example .ahoy.yml downloaded to the current directory. You can customize it to suit your needs!" ]
+  [ "${lines[$((${#lines[@]}-1))]}" == "Note: 'ahoy init' is now available as 'ahoy config init'" ]
 }
 
 @test "Run ahoy init with an existing .ahoy.yml file in the current directory" {
   cp tmp.ahoy.yml .ahoy.yml
   run ./ahoy init --force
   [ "${lines[0]}" == "Warning: '--force' parameter passed, overwriting .ahoy.yml in current directory." ]
-  [ "${lines[$((${#lines[@]}-1))]}" == "Example .ahoy.yml downloaded to the current directory. You can customize it to suit your needs!" ]
+  [ "${lines[$((${#lines[@]}-2))]}" == "Example .ahoy.yml downloaded to the current directory. You can customize it to suit your needs!" ]
+  [ "${lines[$((${#lines[@]}-1))]}" == "Note: 'ahoy init' is now available as 'ahoy config init'" ]
   rm .ahoy.yml
 }

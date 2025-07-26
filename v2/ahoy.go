@@ -83,8 +83,8 @@ func fileExists(filename string) bool {
 // For tilde paths (starting with ~), expands to user home directory.
 // For relative paths, joins with the provided base directory.
 func expandPath(path, baseDir string) string {
-	if filepath.IsAbs(path) || strings.HasPrefix(path, "/") {
-		// Absolute path (either OS-native or Unix-style), return as-is
+	if filepath.IsAbs(path) {
+		// Absolute path, return as-is
 		return path
 	} else if strings.HasPrefix(path, "~") {
 		// Tilde path, expand to home directory
@@ -256,7 +256,7 @@ func getCommands(config Config) []cli.Command {
 	// Get environment variables from the 'global' environment variable file, if it is defined.
 	if len(config.Env) > 0 {
 		for _, envPath := range config.Env {
-			globalEnvFile := filepath.Join(AhoyConf.srcDir, envPath)
+			globalEnvFile := expandPath(envPath, AhoyConf.srcDir)
 			vars := getEnvironmentVars(globalEnvFile)
 			if vars != nil {
 				envVars = append(envVars, vars...)
@@ -333,7 +333,7 @@ func getCommands(config Config) []cli.Command {
 				// defined in the 'global' env file.
 				if len(cmd.Env) > 0 {
 					for _, envPath := range cmd.Env {
-						cmdEnvFile := filepath.Join(AhoyConf.srcDir, envPath)
+						cmdEnvFile := expandPath(envPath, AhoyConf.srcDir)
 						vars := getEnvironmentVars(cmdEnvFile)
 						if vars != nil {
 							envVars = append(envVars, vars...)
@@ -452,8 +452,8 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 			},
 		},
 		Action: func(c *cli.Context) {
-			fmt.Println("Note: 'ahoy init' is now available as 'ahoy config init'")
 			initCommandAction(c)
+			fmt.Println("Note: 'ahoy init' is now available as 'ahoy config init'")
 		},
 	}
 

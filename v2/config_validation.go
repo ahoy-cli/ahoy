@@ -198,7 +198,7 @@ func validateFeatures(config Config, configFile, currentVersion string) []Valida
 				Feature:         "multiple_env_files",
 				RequiredVersion: FeatureSupport["multiple_env_files"],
 				CurrentVersion:  currentVersion,
-				Suggestion:      "This should work but consider upgrading for better support.",
+				Suggestion:      "Multiple env files are partially supported. Upgrade for full compatibility.",
 			})
 		}
 	}
@@ -458,7 +458,7 @@ func checkEnvironmentFiles(config Config, configFile string) []EnvFileStatus {
 
 	// Check global environment files
 	for _, envPath := range config.Env {
-		fullPath := filepath.Join(configDir, envPath)
+		fullPath := expandPath(envPath, configDir)
 		envFiles = append(envFiles, EnvFileStatus{
 			Path:   envPath,
 			Exists: fileExists(fullPath),
@@ -469,7 +469,7 @@ func checkEnvironmentFiles(config Config, configFile string) []EnvFileStatus {
 	// Check command-specific environment files
 	for _, cmd := range config.Commands {
 		for _, envPath := range cmd.Env {
-			fullPath := filepath.Join(configDir, envPath)
+			fullPath := expandPath(envPath, configDir)
 			envFiles = append(envFiles, EnvFileStatus{
 				Path:   envPath,
 				Exists: fileExists(fullPath),
