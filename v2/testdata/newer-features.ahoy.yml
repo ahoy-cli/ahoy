@@ -1,0 +1,13 @@
+ahoyapi: v2
+commands:
+  test-aliases:
+    description: Test command with aliases
+    cmd: echo "test"
+    aliases:
+      - t
+      - test-cmd
+  test-optional:
+    description: Test command with optional imports
+    imports:
+      - optional-import.ahoy.yml
+    optional: true

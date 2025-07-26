@@ -1,0 +1,10 @@
+ahoyapi: v2
+env:
+  - .env
+  - .env.local
+commands:
+  test:
+    description: Test command
+    cmd: echo "test"
+    env:
+      - .env.command
