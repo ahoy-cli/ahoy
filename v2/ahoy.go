@@ -83,8 +83,14 @@ func fileExists(filename string) bool {
 // For tilde paths (starting with ~), expands to user home directory.
 // For relative paths, joins with the provided base directory.
 func expandPath(path, baseDir string) string {
+	// Check for absolute paths
 	if filepath.IsAbs(path) {
-		// Absolute path, return as-is
+		// OS-native absolute path
+		return path
+	}
+	// On Windows, also treat Unix-style paths as absolute for cross-platform compatibility
+	if strings.HasPrefix(path, "/") {
+		// Unix-style absolute path
 		return path
 	} else if strings.HasPrefix(path, "~") {
 		// Tilde path, expand to home directory
