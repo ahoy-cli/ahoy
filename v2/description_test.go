@@ -139,7 +139,7 @@ func TestDescriptionWithExistingCommands(t *testing.T) {
 			hasDesc:  true,
 		},
 		{
-			file:     "testdata/command-aliases.ahoy.yml", 
+			file:     "testdata/command-aliases.ahoy.yml",
 			command:  "hello",
 			hasUsage: true,
 			hasDesc:  true,
