@@ -1,7 +1,7 @@
 ahoyapi: v2
 commands:
-    confirm:
-      cmd: |
+  confirm:
+    cmd: |
         read -r -p "$@ [y/N] " response
         if [ $response = y ]
         then

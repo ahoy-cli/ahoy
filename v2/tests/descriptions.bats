@@ -11,9 +11,9 @@ teardown() {
 @test "Commands with usage appear in command list" {
   run ./ahoy -f testdata/descriptions-test.ahoy.yml
   # Usage should appear in the main command list
-  [[ "$output" =~ "simple             Simple command" ]]
+  [[ "$output" =~ "simple  Simple command" ]]
   [[ "$output" =~ "multiline          Multiline description test" ]]
-  [[ "$output" =~ "no-description     Command without description" ]]
+  [[ "$output" =~ "no-description    Command without description" ]]
 }
 
 @test "Commands without usage still appear in command list" {
@@ -24,15 +24,15 @@ teardown() {
 
 @test "Updated simple.ahoy.yml commands show usage in list" {
   run ./ahoy -f testdata/simple.ahoy.yml
-  [[ "$output" =~ "echo      Display a message" ]]
-  [[ "$output" =~ "list      List directory contents" ]]
+  [[ "$output" =~ "echo  Display a message" ]]
+  [[ "$output" =~ "list  List directory contents" ]]
   [[ "$output" =~ "whalesay  Make a whale say something" ]]
 }
 
 @test "Commands with aliases show usage correctly" {
   run ./ahoy -f testdata/command-aliases.ahoy.yml
   [[ "$output" =~ "hello, hi, greet, ahoy  Say hello" ]]
-  [[ "$output" =~ "ahoy-there, ahoy        Say \"ahoy there!\"" ]]
+  [[ "$output" =~ "ahoy-there, ahoy  Say \"ahoy there!\"" ]]
 }
 
 @test "Newer features commands show updated usage" {
