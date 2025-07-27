@@ -27,7 +27,7 @@ func TestDescriptionParsing(t *testing.T) {
 		{
 			command:     "multiline",
 			expectUsage: "Multiline description test",
-			expectDesc:  "This command demonstrates multiline descriptions.\n\nIt includes:\n- Multiple paragraphs\n- Bullet points  \n- Detailed explanations\n\nUse this to test that YAML multiline strings work correctly.\n",
+			expectDesc:  "This command demonstrates multiline descriptions.\n\nIt includes:\n- Multiple paragraphs\n- Bullet points\n- Detailed explanations\n\nUse this to test that YAML multiline strings work correctly.\n",
 		},
 		{
 			command:     "no-description",
@@ -92,7 +92,7 @@ func TestDescriptionInCLICommands(t *testing.T) {
 		{
 			command:     "multiline",
 			expectUsage: "Multiline description test",
-			expectDesc:  "This command demonstrates multiline descriptions.\n\nIt includes:\n- Multiple paragraphs\n- Bullet points  \n- Detailed explanations\n\nUse this to test that YAML multiline strings work correctly.\n",
+			expectDesc:  "This command demonstrates multiline descriptions.\n\nIt includes:\n- Multiple paragraphs\n- Bullet points\n- Detailed explanations\n\nUse this to test that YAML multiline strings work correctly.\n",
 		},
 		{
 			command:     "no-description",
