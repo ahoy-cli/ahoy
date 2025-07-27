@@ -11,10 +11,10 @@ commands:
     usage: List directory contents
     description: |
       Lists all files and directories in the specified location.
-      
+
       Shows hidden files (starting with .) and supports all standard
       ls options.
-      
+
       If no directory is specified, lists the current directory.
     cmd: ls -a "$@"
 
