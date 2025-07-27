@@ -9,7 +9,7 @@ commands:
       This creates a snapshot build with proper version flags and
       optimization.
       The binary will be created in the dist directory.
-    cmd: cd .. && goreleaser build --snapshot --clean --single-target
+    cmd: goreleaser build --config ../.goreleaser.yml --snapshot --clean --single-target
 
   build-all:
     usage: Build all supported architectures and OSes using Goreleaser.
@@ -19,7 +19,7 @@ commands:
 
       Creates optimized binaries for distribution with proper naming and
       packaging.
-    cmd: cd .. && goreleaser build --snapshot --clean
+    cmd: goreleaser build --config ../.goreleaser.yml --snapshot --clean
 
   install:
     usage: Install ahoy locally using go install.
@@ -65,7 +65,7 @@ commands:
       done
       printf "\n=== RESULT ===\n\n"
       # If any tests failed, then fail.
-      if [ $FAIL == true ]; then
+      if [ "$FAIL" == "true" ]; then
         echo "Some tests failed."
         exit 1
       else
@@ -109,7 +109,7 @@ commands:
       - Creating archives and signing artifacts
 
       Requires proper git tags and GPG setup for signing.
-    cmd: cd .. && goreleaser release --clean
+    cmd: goreleaser release --config ../.goreleaser.yml --clean
 
   cowsay:
     usage: A cow says something (fun demo command).
