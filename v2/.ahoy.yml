@@ -84,13 +84,6 @@ commands:
       go mod vendor
       go mod verify
 
-  godep:
-    usage: Deprecated - use "ahoy gomod" to fetch Go dependencies.
-    description: |
-      This command is deprecated. Use "ahoy gomod" instead to manage
-      Go module dependencies properly.
-    cmd: ahoy gomod
-
   gofmt:
     usage: Format Go code according to standards.
     description: |
