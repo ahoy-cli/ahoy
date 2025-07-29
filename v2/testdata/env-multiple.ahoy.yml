@@ -6,7 +6,7 @@ commands:
   test-global:
     cmd: echo $GLOBAL
   test-command:
-    cmd: echo $COMMAND 
+    cmd: echo $COMMAND
   test-overridden:
     cmd: echo $TO_BE_OVERRIDDEN
   test-cmd-multiple-1:
@@ -15,7 +15,7 @@ commands:
       - .env.local1
       - .env.local2
   test-cmd-multiple-2:
-    cmd: echo $TO_BE_OVERRIDDEN 
+    cmd: echo $TO_BE_OVERRIDDEN
     env:
       - .env.local1
       - .env.local2
