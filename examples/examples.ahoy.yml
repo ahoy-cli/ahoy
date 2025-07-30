@@ -1,50 +1,329 @@
+# Ahoy Configuration Example
+# ==========================
+# This file demonstrates development workflows and Ahoy's powerful features.
+# Includes examples for various development stacks - adapt to your project's needs.
+# Copy this file to your project root as .ahoy.yml and customise it for your workflow.
+
 ahoyapi: v2
+
+# Global environment files (loaded in order, later files override earlier ones)
+env:
+  - .env
+  - .env.local
+
+# Optional - Custom usage description for your project
+usage: "Development workflow commands for your project"
+
 commands:
-  vup:
-    cmd: "vagrant up"
-    usage: Start the vagrant box if one exists.
+  # =============================================================================
+  # DEVELOPMENT ENVIRONMENT
+  # =============================================================================
 
-  vdown:
-    cmd: "vagrant down"
-    usage: Stop the vagrant box if one exists.
+  up:
+    usage: Start the development environment
+    aliases: ["start"]
+    cmd: |
+      echo "Starting development environment..."
+      docker compose up -d
+      echo "Environment ready! Visit http://localhost"
 
-  ps:
-    cmd: docker compose ps "$@"
-    usage: List the running Docker Compose containers.
-
-  start:
-    cmd: docker compose start "$@"
-    usage: Start the Docker Compose containers.
-
-  stop:
-    cmd: docker compose stop "$@"
-    usage: Stop the Docker Compose containers.
+  down:
+    usage: Stop the development environment
+    aliases: ["stop"]
+    cmd: |
+      echo "Stopping development environment..."
+      docker compose down
+      echo "Environment stopped"
 
   restart:
-    cmd: docker compose restart "$@"
-    usage: Restart the Docker Compose containers.
+    usage: Restart the development environment
+    cmd: |
+      echo "Restarting development environment..."
+      ahoy down
+      ahoy up
+
+  status:
+    usage: Show status of all services
+    aliases: ["ps"]
+    cmd: |
+      echo "Service Status:"
+      docker compose ps
+      echo ""
+      echo "Available URLs:"
+      echo "  App: http://localhost:3000"
+      echo "  API: http://localhost:8080"
+      echo "  Database: localhost:3306"
+  # =============================================================================
+  # DEVELOPMENT TOOLS
+  # =============================================================================
+
+  shell:
+    usage: "Open a shell in a container (default: app)"
+    aliases: ["sh", "bash"]
+    cmd: |
+      CONTAINER="${1:-app}"
+      echo "Opening shell in $CONTAINER container..."
+      docker compose exec "$CONTAINER" bash
+
+  logs:
+    usage: "Follow logs for a service (default: all services)"
+    cmd: |
+      if [ -z "$1" ]; then
+        echo "Following logs for all services (Ctrl+C to exit)..."
+        docker compose logs -f
+      else
+        echo "Following logs for $1 service (Ctrl+C to exit)..."
+        docker compose logs -f "$1"
+      fi
+
+  # =============================================================================
+  # PACKAGE MANAGEMENT
+  # =============================================================================
+
+  install:
+    usage: Install project dependencies
+    aliases: ["deps"]
+    cmd: |
+      echo "Installing dependencies..."
+      if [ -f "package.json" ]; then
+        echo "Installing Node.js dependencies..."
+        docker compose exec app npm install
+      fi
+      if [ -f "composer.json" ]; then
+        echo "Installing PHP dependencies..."
+        docker compose exec app composer install
+      fi
+      if [ -f "requirements.txt" ]; then
+        echo "Installing Python dependencies..."
+        docker compose exec app pip install -r requirements.txt
+      fi
+      echo "Dependencies installed"
+
+  # =============================================================================
+  # TESTING & QUALITY
+  # =============================================================================
+
+  test:
+    usage: Run the test suite
+    cmd: |
+      echo "Running tests..."
+      if [ -f "package.json" ]; then
+        docker compose exec app npm test
+      elif [ -f "composer.json" ]; then
+        docker compose exec app ./vendor/bin/phpunit
+      elif [ -f "pytest.ini" ] || [ -f "setup.cfg" ]; then
+        docker compose exec app pytest
+      fi
+
+  lint:
+    usage: Run code linting
+    cmd: |
+      echo "Running linting..."
+      if [ -f "package.json" ]; then
+        docker compose exec app npm run lint
+      elif [ -f "phpcs.xml" ] || [ -f "phpcs.xml.dist" ]; then
+        docker compose exec app ./vendor/bin/phpcs
+      elif [ -f ".flake8" ] || [ -f "setup.cfg" ]; then
+        docker compose exec app flake8
+      fi
+
+  # =============================================================================
+  # DATABASE OPERATIONS
+  # =============================================================================
+
+  db:
+    usage: Connect to the database
+    cmd: |
+      echo "Connecting to database..."
+      # Detect database type and connect appropriately
+      if [ "${DB_TYPE:-mysql}" = "postgres" ]; then
+        docker compose exec db psql -U $DB_USER -d $DB_NAME
+      else
+        docker compose exec db mysql -u$DB_USER -p$DB_PASSWORD $DB_NAME
+      fi
+
+  # =============================================================================
+  # DRUPAL-SPECIFIC EXAMPLES
+  # =============================================================================
 
   drush:
-    cmd: docker compose run cli drush --root=docroot "$@"
-    usage: Run drush commands in the cli service container.
+    usage: Run Drush commands in the CLI container
+    cmd: docker compose exec cli drush --root=/var/www/html/web "$@"
 
-  bash:
-    cmd: docker compose run "$1" bash
-    usage: Start a shell in the container (like ssh without actual ssh).
+  drupal:
+    usage: Run Drupal Console commands in the CLI container
+    cmd: docker compose exec cli drupal --root=/var/www/html/web "$@"
 
-  sqlc:
-    cmd: "docker compose run cli drush --root=docroot sqlc"
-    usage: Connect to the default mysql database. Supports piping of data into the command.
+  composer:
+    usage: Run Composer commands in the CLI container
+    cmd: docker compose exec cli composer "$@"
 
-  behat:
-    cmd: docker compose run cli bash -c "cd docroot/test && composer install --prefer-source --no-interaction && bin/behat -p docker $@"
-    usage: Run the behat tests within the container.
+  cr:
+    usage: Clear Drupal cache
+    aliases: ["cache-rebuild"]
+    cmd: docker compose exec cli drush --root=/var/www/html/web cache:rebuild
 
-  behat-init:
-    cmd: 'docker compose run cli bash -c "cd docroot/test && composer install --prefer-source --no-interaction"'
-    usage: Use composer to install behat dependencies.
+  cex:
+    usage: Export Drupal configuration
+    aliases: ["config-export"]
+    cmd: docker compose exec cli drush --root=/var/www/html/web config:export
 
-  #This command overrides the up command in the docker.ahoy.yml to test the "last in wins" feature of ahoy
-  up:
-    cmd: "docker compose up -d"
-    usage: Start the Docker Compose containers.
+  cim:
+    usage: Import Drupal configuration
+    aliases: ["config-import"]
+    cmd: docker compose exec cli drush --root=/var/www/html/web config:import
+
+  uli:
+    usage: Generate a one-time login link for user 1
+    cmd: |
+      echo "Generating login link..."
+      docker compose exec cli drush --root=/var/www/html/web user:login --uri=http://localhost
+
+  site-install:
+    usage: Install Drupal site from scratch
+    cmd: |
+      echo "Installing Drupal site..."
+      docker compose exec cli drush --root=/var/www/html/web site:install --yes --account-name=admin --account-pass=admin
+      echo "Site installed! Login with admin/admin"
+
+  # =============================================================================
+  # BUILD & DEPLOYMENT
+  # =============================================================================
+
+  build:
+    usage: Build the application
+    cmd: |
+      echo "Building application..."
+      if [ -f "package.json" ]; then
+        docker compose exec app npm run build
+      elif [ -f "Makefile" ]; then
+        docker compose exec app make build
+      elif [ -f "gulpfile.js" ]; then
+        docker compose exec app gulp build
+      fi
+      echo "Build complete!"
+
+  deploy:
+    usage: "Deploy to specified environment (staging|production)"
+    env: .env.deploy
+    cmd: |
+      ENVIRONMENT="${1:-staging}"
+
+      if [ "$ENVIRONMENT" != "staging" ] && [ "$ENVIRONMENT" != "production" ]; then
+        echo "Invalid environment. Use: staging or production"
+        exit 1
+      fi
+
+      if [ "$ENVIRONMENT" = "production" ]; then
+        echo "Deploying to PRODUCTION!"
+        read -p "Are you sure? (y/N) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+          echo "Deployment cancelled"
+          exit 1
+        fi
+      fi
+
+      echo "Deploying to $ENVIRONMENT..."
+      ahoy test
+      ahoy build
+      # Add your deployment commands here (rsync, git push, etc.)
+      echo "Deployed to $ENVIRONMENT!"
+  db:backup:
+    usage: Create a database backup
+    cmd: |
+      TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+      BACKUP_FILE="backup_${TIMESTAMP}.sql"
+      echo "Creating database backup: $BACKUP_FILE"
+      mkdir -p backups
+      if [ "${DB_TYPE:-mysql}" = "postgres" ]; then
+        docker compose exec db pg_dump -U $DB_USER $DB_NAME > "backups/$BACKUP_FILE"
+      else
+        docker compose exec db mysqldump -u$DB_USER -p$DB_PASSWORD $DB_NAME > "backups/$BACKUP_FILE"
+      fi
+      echo "Backup created: backups/$BACKUP_FILE"
+  # =============================================================================
+  # UTILITY COMMANDS
+  # =============================================================================
+
+  clean:
+    usage: Clean up development environment
+    cmd: |
+      echo "Cleaning up development environment..."
+      docker compose down
+      docker system prune -f
+      docker volume prune -f
+      echo "Cleanup complete"
+
+  fresh:
+    usage: Fresh start - rebuild everything from scratch
+    cmd: |
+      echo "Starting fresh rebuild..."
+      ahoy clean
+      docker compose build --no-cache
+      ahoy up
+      ahoy install
+      echo "Fresh environment ready!"
+
+  urls:
+    usage: Show all available URLs and endpoints
+    cmd: |
+      echo "Available URLs:"
+      echo "  Application:      http://localhost:3000"
+      echo "  API:              http://localhost:8080"
+      echo "  Database Admin:   http://localhost:8081"
+      echo ""
+      echo "Useful commands:"
+      echo "  View logs:        ahoy logs"
+      echo "  Run tests:        ahoy test"
+      echo "  Check status:     ahoy status"
+  # =============================================================================
+  # ADVANCED EXAMPLES
+  # =============================================================================
+
+  release:
+    usage: "Create a new release (requires version number)"
+    cmd: |
+      if [ -z "$1" ]; then
+        echo "Please provide a version number: ahoy release 1.2.3"
+        exit 1
+      fi
+
+      VERSION="$1"
+      echo "Creating release v$VERSION..."
+
+      # Run tests
+      echo "Running tests..."
+      ahoy test
+
+      # Build assets
+      echo "Building assets..."
+      ahoy build
+
+      # Create git tag
+      echo "Creating git tag..."
+      git add -A
+      git commit -m "Release v$VERSION"
+      git tag -a "v$VERSION" -m "Release version $VERSION"
+      git push origin main
+      git push origin "v$VERSION"
+
+      echo "Release v$VERSION created successfully!"
+
+  security:
+    usage: Run security audit and vulnerability scan
+    cmd: |
+      echo "Running security audit..."
+      if [ -f "package.json" ]; then
+        echo "Checking npm dependencies..."
+        docker compose exec app npm audit
+      fi
+      if [ -f "composer.json" ]; then
+        echo "Checking Composer dependencies..."
+        docker compose exec app composer audit
+      fi
+      if [ -f "requirements.txt" ]; then
+        echo "Checking Python dependencies..."
+        docker compose exec app pip check
+      fi
+      echo "Security audit complete"
