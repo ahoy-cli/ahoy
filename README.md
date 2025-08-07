@@ -39,8 +39,8 @@ ahoy init
 curl -o .ahoy.yml https://raw.githubusercontent.com/ahoy-cli/ahoy/master/examples/examples.ahoy.yml
 ```
 
-The examples file includes **30+ ready-to-use commands** for:
-- **Development Environment** - `up`, `down`, `restart`, `status`
+The examples file includes **30+ usable example commands** for:
+- **Local Development Environments** - `up`, `down`, `restart`, `status`
 - **Testing & Quality** - `test`, `lint` with multi-language support
 - **Database Operations** - `db`, `db:backup` for MySQL/PostgreSQL
 - **Build & Deployment** - `build`, `deploy` with safety checks
