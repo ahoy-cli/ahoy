@@ -266,7 +266,7 @@ commands:
       ahoy confirm "This will drop and recreate the database, destroying all data. Continue?" || exit 0
       echo "Resetting database..."
       if [ "${DB_TYPE:-mysql}" = "postgres" ]; then
-        docker compose exec db psql -U "$DB_USER" -c "DROP DATABASE IF EXISTS \`$DB_NAME\`; CREATE DATABASE \`$DB_NAME\`;"
+        docker compose exec db psql -U "$DB_USER" -c "DROP DATABASE IF EXISTS \"$DB_NAME\"; CREATE DATABASE \"$DB_NAME\";"
       else
         docker compose exec db mysql -u"$DB_USER" -p"$DB_PASSWORD" -e "DROP DATABASE IF EXISTS \`$DB_NAME\`; CREATE DATABASE \`$DB_NAME\`;"
       fi
