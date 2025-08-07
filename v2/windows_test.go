@@ -14,7 +14,7 @@ func TestWindowsPathHandling(t *testing.T) {
 	}
 
 	// The function should handle both forward and back slashes
-	config, err := getConfig("testdata/simple.ahoy.yml")
+	config, err := getConfig("testdata/simple.ahoy.yml", false)
 	if err != nil {
 		t.Errorf("Failed to load config with forward slashes: %v", err)
 	}

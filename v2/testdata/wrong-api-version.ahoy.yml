@@ -1,0 +1,5 @@
+ahoyapi: v1
+commands:
+  test:
+    description: Test command
+    cmd: echo "test"
