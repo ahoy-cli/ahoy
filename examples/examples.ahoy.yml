@@ -211,6 +211,7 @@ commands:
     usage: "Deploy to specified environment (staging|production)"
     env: .env.deploy
     cmd: |
+      set -euo pipefail
       ENVIRONMENT="${1:-staging}"
 
       if [ "$ENVIRONMENT" != "staging" ] && [ "$ENVIRONMENT" != "production" ]; then
@@ -265,9 +266,9 @@ commands:
       ahoy confirm "This will drop and recreate the database, destroying all data. Continue?" || exit 0
       echo "Resetting database..."
       if [ "${DB_TYPE:-mysql}" = "postgres" ]; then
-        docker compose exec db psql -U "$DB_USER" -c "DROP DATABASE IF EXISTS $DB_NAME; CREATE DATABASE $DB_NAME;"
+        docker compose exec db psql -U "$DB_USER" -c "DROP DATABASE IF EXISTS \`$DB_NAME\`; CREATE DATABASE \`$DB_NAME\`;"
       else
-        docker compose exec db mysql -u"$DB_USER" -p"$DB_PASSWORD" -e "DROP DATABASE IF EXISTS $DB_NAME; CREATE DATABASE $DB_NAME;"
+        docker compose exec db mysql -u"$DB_USER" -p"$DB_PASSWORD" -e "DROP DATABASE IF EXISTS \`$DB_NAME\`; CREATE DATABASE \`$DB_NAME\`;"
       fi
       echo "Database reset complete"
   # =============================================================================
@@ -315,6 +316,7 @@ commands:
   release:
     usage: "Create a new release (requires version number)"
     cmd: |
+      set -euo pipefail
       if [ -z "$1" ]; then
         echo "Please provide a version number: ahoy release 1.2.3"
         exit 1
@@ -386,7 +388,8 @@ commands:
     cmd: |
       if [ -z "${AHOY_CONFIRM_RESPONSE}" ]; then
         read -r -p ">> $1 [y/N] " AHOY_CONFIRM_RESPONSE
-        if [ "${AHOY_CONFIRM_RESPONSE}" != "y" ] && [ "${AHOY_CONFIRM_RESPONSE}" != "true" ]; then
+        RESPONSE_LOWER=$(printf '%s' "${AHOY_CONFIRM_RESPONSE}" | tr '[:upper:]' '[:lower:]')
+        if [ "$RESPONSE_LOWER" != "y" ] && [ "$RESPONSE_LOWER" != "yes" ] && [ "$RESPONSE_LOWER" != "true" ]; then
           echo "The operation was canceled."
           exit 1
         fi
