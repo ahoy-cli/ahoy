@@ -10,10 +10,10 @@
 Ahoy is command line tool that gives each of your projects their own CLI app with zero code and dependencies.
 
 Write your commands in a YAML file and then Ahoy gives you lots of features like:
-* a command listing
-* per-command help text
-* command tab completion
-* run commands from any subdirectory
+- a command listing
+- per-command help text
+- command tab completion
+- run commands from any subdirectory
 
 Ahoy makes it easy to create aliases and templates for commands that are useful. It was created to help with running interactive commands within Docker containers, but it's just as useful for local commands, commands over `ssh`, or really anything that could be run from the command line in a single clean interface.
 
@@ -51,7 +51,7 @@ The examples file includes **30+ ready-to-use commands** for:
 Try it out:
 ```bash
 ahoy status    # Show service status
-ahoy urls      # Show available URLs  
+ahoy urls      # Show available URLs
 ahoy shell     # Open a shell in your container
 ```
 

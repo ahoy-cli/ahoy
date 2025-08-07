@@ -31,6 +31,7 @@ commands:
     usage: Stop the development environment
     aliases: ["stop"]
     cmd: |
+      ahoy confirm "This will stop all containers and may remove volumes. Continue?" || exit 0
       echo "Stopping development environment..."
       docker compose down
       echo "Environment stopped"
@@ -137,9 +138,9 @@ commands:
       echo "Connecting to database..."
       # Detect database type and connect appropriately
       if [ "${DB_TYPE:-mysql}" = "postgres" ]; then
-        docker compose exec db psql -U $DB_USER -d $DB_NAME
+        docker compose exec db psql -U "$DB_USER" -d "$DB_NAME"
       else
-        docker compose exec db mysql -u$DB_USER -p$DB_PASSWORD $DB_NAME
+        docker compose exec db mysql -u"$DB_USER" -p"$DB_PASSWORD" "$DB_NAME"
       fi
 
   # =============================================================================
@@ -171,7 +172,9 @@ commands:
   cim:
     usage: Import Drupal configuration
     aliases: ["config-import"]
-    cmd: docker compose exec cli drush --root=/var/www/html/web config:import
+    cmd: |
+      ahoy confirm "This will import configuration and may overwrite existing settings. Continue?" || exit 0
+      docker compose exec cli drush --root=/var/www/html/web config:import
 
   uli:
     usage: Generate a one-time login link for user 1
@@ -182,6 +185,7 @@ commands:
   site-install:
     usage: Install Drupal site from scratch
     cmd: |
+      ahoy confirm "This will completely reinstall the Drupal site and destroy all existing data. Continue?" || exit 0
       echo "Installing Drupal site..."
       docker compose exec cli drush --root=/var/www/html/web site:install --yes --account-name=admin --account-pass=admin
       echo "Site installed! Login with admin/admin"
@@ -214,14 +218,8 @@ commands:
         exit 1
       fi
 
-      if [ "$ENVIRONMENT" = "production" ]; then
-        echo "Deploying to PRODUCTION!"
-        read -p "Are you sure? (y/N) " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-          echo "Deployment cancelled"
-          exit 1
-        fi
+      if [ "$ENVIRONMENT" = "production" ] && [ -t 0 ] && [ -z "$CI" ]; then
+        ahoy confirm "Deploying to PRODUCTION environment. This cannot be undone. Continue?" || exit 0
       fi
 
       echo "Deploying to $ENVIRONMENT..."
@@ -237,11 +235,41 @@ commands:
       echo "Creating database backup: $BACKUP_FILE"
       mkdir -p backups
       if [ "${DB_TYPE:-mysql}" = "postgres" ]; then
-        docker compose exec db pg_dump -U $DB_USER $DB_NAME > "backups/$BACKUP_FILE"
+        docker compose exec db pg_dump -U "$DB_USER" "$DB_NAME" > "backups/$BACKUP_FILE"
       else
-        docker compose exec db mysqldump -u$DB_USER -p$DB_PASSWORD $DB_NAME > "backups/$BACKUP_FILE"
+        docker compose exec db mysqldump -u"$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" > "backups/$BACKUP_FILE"
       fi
       echo "Backup created: backups/$BACKUP_FILE"
+
+  db:import:
+    usage: "Import database from backup file"
+    cmd: |
+      if [ -z "$1" ]; then
+        echo "Please provide a backup file: ahoy db:import backup_20231201_120000.sql"
+        exit 1
+      fi
+
+      ahoy confirm "This will completely replace the current database with $1. All existing data will be lost. Continue?" || exit 0
+
+      echo "Importing database from $1..."
+      if [ "${DB_TYPE:-mysql}" = "postgres" ]; then
+        docker compose exec -T db psql -U "$DB_USER" -d "$DB_NAME" < "backups/$1"
+      else
+        docker compose exec -T db mysql -u"$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" < "backups/$1"
+      fi
+      echo "Database import complete"
+
+  db:reset:
+    usage: Reset database to clean state
+    cmd: |
+      ahoy confirm "This will drop and recreate the database, destroying all data. Continue?" || exit 0
+      echo "Resetting database..."
+      if [ "${DB_TYPE:-mysql}" = "postgres" ]; then
+        docker compose exec db psql -U "$DB_USER" -c "DROP DATABASE IF EXISTS $DB_NAME; CREATE DATABASE $DB_NAME;"
+      else
+        docker compose exec db mysql -u"$DB_USER" -p"$DB_PASSWORD" -e "DROP DATABASE IF EXISTS $DB_NAME; CREATE DATABASE $DB_NAME;"
+      fi
+      echo "Database reset complete"
   # =============================================================================
   # UTILITY COMMANDS
   # =============================================================================
@@ -249,6 +277,7 @@ commands:
   clean:
     usage: Clean up development environment
     cmd: |
+      ahoy confirm "This will remove all containers, unused images, and volumes. All data will be lost. Continue?" || exit 0
       echo "Cleaning up development environment..."
       docker compose down
       docker system prune -f
@@ -258,7 +287,9 @@ commands:
   fresh:
     usage: Fresh start - rebuild everything from scratch
     cmd: |
+      ahoy confirm "This will completely destroy and rebuild the entire development environment. All data will be lost. Continue?" || exit 0
       echo "Starting fresh rebuild..."
+      export AHOY_CONFIRM_RESPONSE=y && export AHOY_CONFIRM_WAIT_SKIP=1
       ahoy clean
       docker compose build --no-cache
       ahoy up
@@ -303,7 +334,7 @@ commands:
       # Create git tag
       echo "Creating git tag..."
       git add -A
-      git commit -m "Release v$VERSION"
+      git commit --allow-empty -m "Release v$VERSION"
       git tag -a "v$VERSION" -m "Release version $VERSION"
       git push origin main
       git push origin "v$VERSION"
@@ -327,3 +358,43 @@ commands:
         docker compose exec app pip check
       fi
       echo "Security audit complete"
+
+  # =============================================================================
+  # UTILITY COMMANDS
+  # =============================================================================
+
+  # Internal utility command to confirm actions before running them.
+  # This command helps prevent accidental execution of destructive operations.
+  #
+  # Usage: ahoy confirm "Your confirmation message here" || exit 0
+  #
+  # Features:
+  # - Interactive mode: Prompts user for y/N confirmation
+  # - Automated mode: Uses AHOY_CONFIRM_RESPONSE environment variable
+  # - CI-friendly: Set AHOY_CONFIRM_WAIT_SKIP=1 to skip delays
+  # - Chain-friendly: Can be used with other commands using environment variables
+  #
+  # Environment variables:
+  # - AHOY_CONFIRM_RESPONSE: Pre-set response ('y' or 'true' to proceed)
+  # - AHOY_CONFIRM_WAIT_SKIP: Set to '1' to skip the 3-second wait in automated mode
+  #
+  # Examples:
+  # Interactive: ahoy down (will prompt user)
+  # Automated: AHOY_CONFIRM_RESPONSE=y ahoy down (auto-confirms with 3s delay)
+  # CI mode: AHOY_CONFIRM_RESPONSE=y AHOY_CONFIRM_WAIT_SKIP=1 ahoy down (immediate)
+  confirm:
+    cmd: |
+      if [ -z "${AHOY_CONFIRM_RESPONSE}" ]; then
+        read -r -p ">> $1 [y/N] " AHOY_CONFIRM_RESPONSE
+        if [ "${AHOY_CONFIRM_RESPONSE}" != "y" ] && [ "${AHOY_CONFIRM_RESPONSE}" != "true" ]; then
+          echo "The operation was canceled."
+          exit 1
+        fi
+      else
+        if [ "${AHOY_CONFIRM_WAIT_SKIP}" != "1" ]; then
+          echo ">> $1 [y/N] ${AHOY_CONFIRM_RESPONSE}"
+          echo "Waiting for 3 seconds... Press Ctrl+C to cancel."
+          sleep 3
+        fi
+      fi
+    hide: true
