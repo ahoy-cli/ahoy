@@ -10,10 +10,10 @@
 Ahoy is command line tool that gives each of your projects their own CLI app with zero code and dependencies.
 
 Write your commands in a YAML file and then Ahoy gives you lots of features like:
-* a command listing
-* per-command help text
-* command tab completion
-* run commands from any subdirectory
+- a command listing
+- per-command help text
+- command tab completion
+- run commands from any subdirectory
 
 Ahoy makes it easy to create aliases and templates for commands that are useful. It was created to help with running interactive commands within Docker containers, but it's just as useful for local commands, commands over `ssh`, or really anything that could be run from the command line in a single clean interface.
 
@@ -27,7 +27,33 @@ With Ahoy, you can turn this into:
 
 `ahoy mysql-import < some-database.sql`
 
-[More examples](https://ahoy-cli.readthedocs.io/en/latest/Home.html).
+## 🚀 Quick Start
+
+Get started immediately with our comprehensive examples file:
+
+```bash
+# Create a new project with example commands
+ahoy init
+
+# Or download the examples file directly
+curl -o .ahoy.yml https://raw.githubusercontent.com/ahoy-cli/ahoy/master/examples/examples.ahoy.yml
+```
+
+The examples file includes **30+ usable example commands** for:
+- **Local Development Environments** - `up`, `down`, `restart`, `status`
+- **Testing & Quality** - `test`, `lint` with multi-language support
+- **Database Operations** - `db`, `db:backup` for MySQL/PostgreSQL
+- **Build & Deployment** - `build`, `deploy` with safety checks
+- **Drupal Integration** - `drush`, `cr`, `uli`, `cex`, `cim` for Drupal projects
+
+**📋 [View the complete examples file →](examples/examples.ahoy.yml)**
+
+Try it out:
+```bash
+ahoy status    # Show service status
+ahoy urls      # Show available URLs
+ahoy shell     # Open a shell in your container
+```
 
 ## Features
 
