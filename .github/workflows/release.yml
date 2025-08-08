@@ -27,14 +27,14 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Go
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: "1.23"
           cache-dependency-path: v2/go.sum
 
       - name: Import GPG key (optional, for signing)
         id: import_gpg
-        if: secrets.GPG_PRIVATE_KEY != ''
+        if: ${{ secrets.GPG_PRIVATE_KEY != '' }}
         uses: crazy-max/ghaction-import-gpg@v6
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
@@ -113,7 +113,7 @@ jobs:
 
       - name: Upload additional artifacts
         if: always() && hashFiles('dist/**/*') != ''
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.release_mode.outputs.mode == 'dry-run' && 'dry-run-artifacts' || 'release-artifacts' }}
           path: |
