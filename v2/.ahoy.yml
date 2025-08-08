@@ -81,7 +81,7 @@ commands:
       according to Go's standard formatting rules.
 
       This ensures consistent code style across the project.
-    cmd: gofmt -w *.go
+    cmd: gofmt -w .
 
   release:
     usage: Create a release using Goreleaser.

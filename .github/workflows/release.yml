@@ -48,6 +48,11 @@ jobs:
           echo "GPG_FINGERPRINT=${{ steps.import_gpg.outputs.fingerprint }}" >> $GITHUB_ENV
           echo "GPG_PASSWORD=${{ secrets.GPG_PASSPHRASE }}" >> $GITHUB_ENV
 
+      - name: Install Syft for SBOM generation
+        uses: anchore/sbom-action/download-syft@v0
+        with:
+          syft-version: "latest"
+
       - name: Determine release mode
         id: release_mode
         run: |
