@@ -17,8 +17,6 @@ builds:
     dir: v2
     # Binary name format: ahoy-bin-{os}-{arch}[v{arm_version}]
     binary: "{{ .ProjectName }}-bin-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}"
-    env:
-      - CGO_ENABLED=0
     goos:
       - linux
       - windows
@@ -126,10 +124,10 @@ changelog:
       - Merge branch
   groups:
     - title: "New Features"
-      regexp: "^.*feat[(\\w)]*:+.*$"
+      regexp: "^feat(\\([\\w\\-]+\\))?: .+$"
       order: 0
     - title: "Bug Fixes"
-      regexp: "^.*fix[(\\w)]*:+.*$"
+      regexp: "^fix(\\([\\w\\-]+\\))?: .+$"
       order: 1
     - title: "Enhancements"
       regexp: "^.*enhancement[(\\w)]*:+.*$"
@@ -181,7 +179,6 @@ release:
   mode: append
   prerelease: auto
   target_commitish: "{{ .Commit }}"
-  make_latest: true
   # Upload extra files (individual binaries) - maintaining existing naming convention
   extra_files:
     - glob: "dist/ahoy_**/ahoy-bin-*"
