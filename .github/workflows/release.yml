@@ -58,7 +58,7 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
             echo "mode=dry-run" >> $GITHUB_OUTPUT
-            echo "args=release --clean --skip-publish --snapshot" >> $GITHUB_OUTPUT
+            echo "args=release --clean --skip=announce,publish --snapshot" >> $GITHUB_OUTPUT
             echo "Running in DRY RUN mode - no release will be created"
             echo "Generated artifacts will be displayed in the workflow output"
           elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.dry_run }}" = "false" ]; then
