@@ -4,12 +4,15 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
+	"text/tabwriter"
+	"text/template"
 
 	"github.com/urfave/cli"
 	"gopkg.in/yaml.v2"
@@ -305,6 +308,10 @@ func getCommands(config Config) []cli.Command {
 			newCmd.Usage = cmd.Usage
 		}
 
+		if cmd.Description != "" {
+			newCmd.Description = cmd.Description
+		}
+
 		if cmd.Cmd != "" {
 			newCmd.Action = func(c *cli.Context) {
 				// For some unclear reason, if we don't add an item at the end here,
@@ -577,6 +584,30 @@ func setupApp(localArgs []string) *cli.App {
 		}
 	}
 
+	// Set up custom help printer with additional template functions.
+	cli.HelpPrinterCustom = func(out io.Writer, templ string, data any, customFuncs map[string]any) {
+		funcMap := template.FuncMap{
+			"join":    strings.Join,
+			"replace": strings.ReplaceAll,
+		}
+		for key, value := range customFuncs {
+			funcMap[key] = value
+		}
+
+		w := tabwriter.NewWriter(out, 1, 8, 2, ' ', 0)
+		t := template.Must(template.New("help").Funcs(funcMap).Parse(templ))
+		err := t.Execute(w, data)
+		if err != nil {
+			// If the writer is closed, t.Execute will fail, and there's nothing
+			// we can do to recover.
+			if os.Getenv("CLI_TEMPLATE_ERROR_DEBUG") != "" {
+				_, _ = fmt.Fprintf(cli.ErrWriter, "CLI TEMPLATE ERROR: %#v\n", err)
+			}
+			return
+		}
+		_ = w.Flush()
+	}
+
 	cli.AppHelpTemplate = `NAME:
    {{.Name}} - {{.Usage}}
 USAGE:
@@ -586,7 +617,7 @@ AUTHOR(S):
    {{range .Authors}}{{ . }}{{end}}
    {{end}}{{if .Commands}}
 COMMANDS:
-{{range .Commands}}{{if not .HideHelp}}   {{join .Names ", "}}{{ if len .Subcommands }}{{" \u25BC"}}{{end}}{{ "\t" }}{{.Usage}} {{if .Aliases}}[ Aliases: {{join .Aliases ", "}} ]{{end}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .Flags}}
+{{range .Commands}}{{if not .HideHelp}}   {{join .Names ", "}}{{ if len .Subcommands }}{{" \u25BC"}}{{end}}{{ "\t" }}{{.Usage}}{{if .Description}}{{ "\n" }}{{ "\n" }}{{ "\t" }}{{replace .Description "\n" "\n\t"}}{{ "\n" }}{{end}} {{if .Aliases}}[ Aliases: {{join .Aliases ", "}} ]{{end}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .Flags}}
 GLOBAL OPTIONS:
    {{range .Flags}}{{.}}
    {{end}}{{end}}{{if .Copyright }}

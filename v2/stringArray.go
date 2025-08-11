@@ -3,7 +3,7 @@ package main
 // StringArray allows YAML properties to be parsed as either a single string or an array of strings
 type StringArray []string
 
-func (a *StringArray) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (a *StringArray) UnmarshalYAML(unmarshal func(any) error) error {
 	var multi []string
 	err := unmarshal(&multi)
 	if err != nil {

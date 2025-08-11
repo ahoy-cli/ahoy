@@ -1,22 +1,22 @@
 # Goreleaser config for ahoy.
-# Make sure to check the documentation at https://goreleaser.com
 # yaml-language-server: $schema=https://goreleaser.com/static/schema.json
 version: 2
 
 env:
   - GO111MODULE=on
+  - GOPROXY=https://proxy.golang.org,direct
 before:
   hooks:
+    - cd v2 && go mod download
     - cd v2 && go mod tidy
+    - cd v2 && go test ./...
 
 builds:
-  - dir: v2
-    binary: >-
-      {{ .ProjectName }}-bin-
-      {{- .Os }}-
-      {{- .Arch }}
-    env:
-      - CGO_ENABLED=0
+  # Standard build
+  - id: ahoy
+    dir: v2
+    # Binary name format: ahoy-bin-{os}-{arch}[v{arm_version}]
+    binary: "{{ .ProjectName }}-bin-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}"
     goos:
       - linux
       - windows
@@ -25,70 +25,169 @@ builds:
       - amd64
       - arm64
       - arm
+    goarm:
+      - "6"
+      - "7"
     ignore:
       - goos: windows
+        goarch: arm
+      - goos: windows
+        goarm: "6"
+      - goos: windows
+        goarm: "7"
+      - goos: darwin
         goarch: arm
     flags:
       - -trimpath
       - -v
     ldflags:
-      - "-s -w -X main.version={{ .Tag }} -X main.GitCommit={{ .ShortCommit }} -X main.GitBranch={{ .Branch }} -X main.BuildTime={{ .Date }}"
+      - -s -w
+      - -X main.version={{ .Tag }}
+      - -X main.GitCommit={{ .ShortCommit }}
+      - -X main.GitBranch={{ .Branch }}
+      - -X main.BuildTime={{ .Date }}
     mod_timestamp: "{{ .CommitTimestamp }}"
-    no_unique_dist_dir: true
+
+  # Static build for Linux (useful for containers)
+  - id: ahoy-static
+    dir: v2
+    # Binary name format: ahoy-bin-{os}-{arch}[v{arm_version}]-static
+    binary: "{{ .ProjectName }}-bin-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}-static"
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+      - -v
+    ldflags:
+      - -s -w
+      - -X main.version={{ .Tag }}
+      - -X main.GitCommit={{ .ShortCommit }}
+      - -X main.GitBranch={{ .Branch }}
+      - -X main.BuildTime={{ .Date }}
+      - -extldflags=-static
+    mod_timestamp: "{{ .CommitTimestamp }}"
 
 archives:
-  - formats: [ 'tar.gz' ]
-    name_template: >-
-      {{ .ProjectName }}-
-      {{- .Os }}-
-      {{- .Arch }}
-    # use zip for windows archives
+  # Standard archives
+  - id: standard
+    ids:
+      - ahoy
+    formats:
+      - tar.gz
     format_overrides:
       - goos: windows
-        formats: [ 'zip' ]
+        formats:
+          - zip
+    # Archive name format: ahoy_{version}_{os}_{arch}[v{arm_version}]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}"
+    files:
+      - README.md
+      - LICENSE
+      - examples/examples.ahoy.yml
+
+  # Static archives
+  - id: static
+    ids:
+      - ahoy-static
+    formats:
+      - tar.gz
+    # Archive name format: ahoy_{version}_{os}_{arch}_static[v{arm_version}]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}_static{{ with .Arm }}v{{ . }}{{ end }}"
+    files:
+      - README.md
+      - LICENSE
+      - examples/examples.ahoy.yml
 
 checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+  algorithm: sha256
 
 snapshot:
-  version_template: "{{ incpatch .Version }}-next"
+  version_template: "{{ .Version }}-SNAPSHOT-{{ .ShortCommit }}"
 
 changelog:
   sort: asc
+  use: github
   filters:
     exclude:
       - "^docs:"
       - "^test:"
+      - "^ci:"
+      - "^build:"
+      - "^chore:"
+      - Merge pull request
+      - Merge branch
+  groups:
+    - title: "New Features"
+      regexp: "^feat(\\([\\w\\-]+\\))?: .+$"
+      order: 0
+    - title: "Bug Fixes"
+      regexp: "^fix(\\([\\w\\-]+\\))?: .+$"
+      order: 1
+    - title: "Enhancements"
+      regexp: "^.*enhancement[(\\w)]*:+.*$"
+      order: 2
+    - title: "Other Changes"
+      order: 999
 
 sboms:
-  - artifacts: binary
+  # Regular builds SBOM
+  - id: binary-regular
+    artifacts: binary
+    ids:
+      - ahoy
     documents:
-      - "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}.sbom"
+      # SBOM name format: ahoy_{version}_{os}_{arch}[v{arm_version}].sbom
+      - "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}.sbom"
 
-signs:
-  - cmd: gpg
-    args:
-      - "--batch"
-      - "-u"
-      - "{{ .Env.GPG_FINGERPRINT }}"
-      - "--output"
-      - "${signature}"
-      - "--detach-sign"
-      - "${artifact}"
-    artifacts: checksum
-    output: true
+  # Static builds SBOM
+  - id: binary-static
+    artifacts: binary
+    ids:
+      - ahoy-static
+    documents:
+      # SBOM name format: ahoy_{version}_{os}_{arch}[v{arm_version}]_static.sbom
+      - "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}_static.sbom"
 
-# release:
-#   github:
-#     owner: ahoy-cli
-#     name: ahoy
-#   draft: true
-#   replace_existing_draft: true
-#   mode: prepend
-#   prerelease: auto
-#   target_commitish: '{{ .ShortCommit }}'
+# signs:
+#   - cmd: gpg
+#     args:
+#       - "--batch"
+#       - "--yes"
+#       - "-u"
+#       - "{{ .Env.GPG_FINGERPRINT }}"
+#       - "--output"
+#       - "${signature}"
+#       - "--detach-sign"
+#       - "${artifact}"
+#     artifacts: checksum
+#     output: true
+#     stdin: "{{ .Env.GPG_PASSWORD }}"
 
-# The lines beneath this are called `modelines`. See `:help modeline`
-# Feel free to remove those if you don't want/use them.
-# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
-# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+# Upload individual binaries as well as archives
+release:
+  github:
+    owner: ahoy-cli
+    name: ahoy
+  draft: true
+  replace_existing_draft: true
+  mode: append
+  prerelease: auto
+  target_commitish: "{{ .Commit }}"
+  # Upload extra files (individual binaries) - maintaining existing naming convention
+  extra_files:
+    - glob: "dist/ahoy_**/ahoy-bin-*"
+      name_template: "{{ .ArtifactName }}"
+    - glob: "dist/ahoy_**/ahoy-bin-*.exe"
+      name_template: "{{ .ArtifactName }}"
+    - glob: "dist/ahoy-static_**/ahoy-bin-*-static"
+      name_template: "{{ .ArtifactName }}"
+
+# Generate metadata for package managers
+metadata:
+  mod_timestamp: "{{ .CommitTimestamp }}"

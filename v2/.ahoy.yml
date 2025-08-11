@@ -1,72 +1,104 @@
 ahoyapi: v2
 commands:
   build:
-    usage: Build ahoy with a version automatically set.
-    cmd: bash build.sh "$@"
+    usage: Build ahoy with version information using Goreleaser.
+    description: |
+      Compiles the ahoy binary using Goreleaser with version
+      information automatically embedded.
+
+      This creates a snapshot build with proper version flags and
+      optimization.
+      The binary will be created in the dist directory.
+    cmd: goreleaser build --config ../.goreleaser.yml --snapshot --clean --single-target
 
   build-all:
-    usage: Build all of the architecture and OSes that we support.
-    cmd: |
-      os_list=(darwin linux windows)
-      arch=amd64
-      for os in "${os_list[@]}"; do
-        echo "Building ahoy-bin-$os-$arch .."
-        env GOOS="$os" GOARCH="$arch" ahoy build -- -o "builds/ahoy-bin-$os-$arch"
-        if [ $? -ne 0 ]; then
-          "[Error]"
-          exit 1
-        fi
-      done
+    usage: Build all supported architectures and OSes using Goreleaser.
+    description: |
+      Builds ahoy for all supported platforms (linux, darwin, windows) and
+      architectures (amd64, arm64, arm) using Goreleaser configuration.
+
+      Creates optimized binaries for distribution with proper naming and
+      packaging.
+    cmd: goreleaser build --config ../.goreleaser.yml --snapshot --clean
 
   install:
-    usage: Build ahoy using go install.
+    usage: Install ahoy locally using go install.
+    description: |
+      Installs ahoy directly to your GOPATH/bin using go install.
+
+      This is useful for development but doesn't include version information
+      that Goreleaser builds provide.
     cmd: "go install"
 
   bats:
-    usage: "Run the bats bash testing command."
+    usage: "Run the BATS bash testing command."
+    description: |
+      Executes the BATS (Bash Automated Testing System) test suite.
+
+      This runs integration tests that verify ahoy's command-line behavior
+      and functionality across different scenarios.
     cmd: |
       bats tests
 
   test:
     usage: Run automated tests.
+    description: |
+      Executes the complete test suite for ahoy including:
+      - Go vet for code quality checks
+      - Go unit tests with race detection
+      - BATS integration tests for command-line behavior
+
+      Stops on first failure and reports overall results.
     cmd: |
-      FAIL=false
+      set -euo pipefail
       TESTS=(
         'go vet'
-        'go test -v -race '
+        'go test -v -race'
         'bats tests'
       )
-      for i in "${TESTS[@]}"; do
-        printf "\n=== TEST: $i ===\n\n"
-        $i
-        if [ $? -ne 0 ]; then
-          FAIL=true
-        fi
+      for cmd in "${TESTS[@]}"; do
+        printf "\n=== TEST: %s ===\n\n" "$cmd"
+        eval "$cmd"
       done
-      printf "\n=== RESULT ===\n\n"
-      # If any tests failed, then fail.
-      if [ $FAIL == true ]; then
-        echo "Some tests failed."
-        exit 1
-      else
-        echo "All tests passed."
-      fi
+      echo "All tests passed."
 
   gomod:
-    usage: Fetch Go dependencies (go mod).
+    usage: Manage Go module dependencies.
+    description: |
+      Performs complete Go module maintenance:
+      - Tidies the go.mod file by removing unused dependencies
+      - Downloads and vendors all dependencies
+      - Verifies downloaded modules against checksums
     cmd: |
       go mod tidy
       go mod vendor
       go mod verify
 
-  godep:
-    usage: Use "ahoy gomod" now to fetch Go dependencies (go mod).
-    cmd: ahoy gomod
-
   gofmt:
-    usage: Clean up go code per code standards.
-    cmd: gofmt -w *.go
+    usage: Format Go code according to standards.
+    description: |
+      Automatically formats all Go source files in the current directory
+      according to Go's standard formatting rules.
+
+      This ensures consistent code style across the project.
+    cmd: gofmt -w .
+
+  release:
+    usage: Create a release using Goreleaser.
+    description: |
+      Creates a full release using Goreleaser including:
+      - Building for all platforms and architectures
+      - Generating checksums and SBOMs
+      - Creating archives and signing artifacts
+
+      Requires proper git tags and GPG setup for signing.
+    cmd: goreleaser release --config ../.goreleaser.yml --clean
 
   cowsay:
-    usage: A cow says something.
+    usage: A cow says something (fun demo command).
+    description: |
+      Displays a cow saying whatever message you provide.
+
+      This is a demonstration command showing how ahoy can wrap
+      external tools and pass arguments through.
     cmd: cowsay "$@"
