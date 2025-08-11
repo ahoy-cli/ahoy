@@ -42,6 +42,9 @@ cross: build_dir
 clean:
 	rm -vRf ./builds/ahoy-bin-*
 
+fmt:
+	$(foreach file,$(SRCS),gofmt -w $(file);)
+
 fmtcheck:
 	$(foreach file,$(SRCS),gofmt $(file) | diff -u $(file) - || exit;)
 
@@ -56,10 +59,18 @@ gocyclo:
 	@ go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
 	gocyclo -over 25 -avg -ignore "vendor" .
 
+# Apply Go code modernizations (uses latest idioms and patterns)
+modernize:
+	go run golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest -fix -test ./...
+
+# Check what Go modernizations would be applied (without making changes)
+modernize-check:
+	go run golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest -test ./...
+
 test: fmtcheck staticcheck vet
 	go test ./*.go $(TESTARGS)
 
 version:
 	@echo $(VERSION)
 
-.PHONY: clean test fmtcheck staticcheck vet gocyclo version testdeps cross build_dir default install
+.PHONY: clean test fmt fmtcheck staticcheck vet gocyclo modernize modernize-check version testdeps cross build_dir default install

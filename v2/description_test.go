@@ -9,7 +9,7 @@ import (
 
 func TestDescriptionParsing(t *testing.T) {
 	// Test that descriptions are parsed correctly from YAML
-	config, err := getConfig("testdata/descriptions-test.ahoy.yml")
+	config, err := getConfig("testdata/descriptions-test.ahoy.yml", false)
 	if err != nil {
 		t.Fatalf("Failed to load test config: %v", err)
 	}
@@ -66,7 +66,7 @@ func TestDescriptionParsing(t *testing.T) {
 
 func TestDescriptionInCLICommands(t *testing.T) {
 	// Test that descriptions are properly assigned to CLI commands
-	config, err := getConfig("testdata/descriptions-test.ahoy.yml")
+	config, err := getConfig("testdata/descriptions-test.ahoy.yml", false)
 	if err != nil {
 		t.Fatalf("Failed to load test config: %v", err)
 	}
@@ -154,7 +154,7 @@ func TestDescriptionWithExistingCommands(t *testing.T) {
 
 	for _, test := range testFiles {
 		t.Run(test.file+"_"+test.command, func(t *testing.T) {
-			config, err := getConfig(test.file)
+			config, err := getConfig(test.file, false)
 			if err != nil {
 				t.Fatalf("Failed to load %s: %v", test.file, err)
 			}
@@ -199,7 +199,7 @@ func TestDescriptionWithExistingCommands(t *testing.T) {
 
 func TestMultilineDescriptionFormatting(t *testing.T) {
 	// Test that multiline descriptions preserve formatting
-	config, err := getConfig("testdata/descriptions-test.ahoy.yml")
+	config, err := getConfig("testdata/descriptions-test.ahoy.yml", false)
 	if err != nil {
 		t.Fatalf("Failed to load test config: %v", err)
 	}

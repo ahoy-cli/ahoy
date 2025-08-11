@@ -1,0 +1,5 @@
+ahoyapi: v2
+commands:
+  test:
+    cmd: echo "test"
+    invalid_yaml: [unclosed array
