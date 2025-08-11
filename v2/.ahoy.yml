@@ -50,27 +50,17 @@ commands:
 
       Stops on first failure and reports overall results.
     cmd: |
-      FAIL=false
+      set -euo pipefail
       TESTS=(
         'go vet'
-        'go test -v -race '
+        'go test -v -race'
         'bats tests'
       )
-      for i in "${TESTS[@]}"; do
-        printf "\n=== TEST: $i ===\n\n"
-        $i
-        if [ $? -ne 0 ]; then
-          FAIL=true
-        fi
+      for cmd in "${TESTS[@]}"; do
+        printf "\n=== TEST: %s ===\n\n" "$cmd"
+        eval "$cmd"
       done
-      printf "\n=== RESULT ===\n\n"
-      # If any tests failed, then fail.
-      if [ "$FAIL" == "true" ]; then
-        echo "Some tests failed."
-        exit 1
-      else
-        echo "All tests passed."
-      fi
+      echo "All tests passed."
 
   gomod:
     usage: Manage Go module dependencies.
@@ -91,7 +81,7 @@ commands:
       according to Go's standard formatting rules.
 
       This ensures consistent code style across the project.
-    cmd: gofmt -w *.go
+    cmd: gofmt -w .
 
   release:
     usage: Create a release using Goreleaser.
