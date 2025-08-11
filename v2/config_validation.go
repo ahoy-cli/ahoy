@@ -89,7 +89,7 @@ func compareVersions(v1, v2 string) int {
 	coreParts2 := strings.Split(v2Core, ".")
 
 	// Compare up to 3 parts (major, minor, patch)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		var p1, p2 int
 		var err1, err2 error
 

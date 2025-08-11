@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -590,9 +591,7 @@ func setupApp(localArgs []string) *cli.App {
 			"join":    strings.Join,
 			"replace": strings.ReplaceAll,
 		}
-		for key, value := range customFuncs {
-			funcMap[key] = value
-		}
+		maps.Copy(funcMap, customFuncs)
 
 		w := tabwriter.NewWriter(out, 1, 8, 2, ' ', 0)
 		t := template.Must(template.New("help").Funcs(funcMap).Parse(templ))
