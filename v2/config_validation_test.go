@@ -1,6 +1,7 @@
 package main
 
 import (
+	"slices"
 	"testing"
 )
 
@@ -21,13 +22,7 @@ func TestRunConfigValidate_ConfigNotExists(t *testing.T) {
 	}
 
 	expectedRec := "Create a .ahoy.yml file using 'ahoy config init'"
-	found := false
-	for _, rec := range result.Recommendations {
-		if rec == expectedRec {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(result.Recommendations, expectedRec)
 	if !found {
 		t.Errorf("Expected recommendation '%s' not found in: %v", expectedRec, result.Recommendations)
 	}
@@ -48,13 +43,7 @@ func TestRunConfigValidate_InvalidYAML(t *testing.T) {
 	}
 
 	expectedRec := "Fix YAML syntax errors in configuration file"
-	found := false
-	for _, rec := range result.Recommendations {
-		if rec == expectedRec {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(result.Recommendations, expectedRec)
 	if !found {
 		t.Errorf("Expected recommendation '%s' not found in: %v", expectedRec, result.Recommendations)
 	}
@@ -167,13 +156,7 @@ func TestGenerateRecommendations_VersionMismatch(t *testing.T) {
 	recommendations := generateRecommendations(result)
 
 	expectedRec := "Upgrade Ahoy to the latest version for full feature support"
-	found := false
-	for _, rec := range recommendations {
-		if rec == expectedRec {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(recommendations, expectedRec)
 	if !found {
 		t.Errorf("Expected recommendation '%s' not found in: %v", expectedRec, recommendations)
 	}
@@ -196,13 +179,7 @@ func TestGenerateRecommendations_MissingImportFiles(t *testing.T) {
 	recommendations := generateRecommendations(result)
 
 	expectedRec := "Create missing import files or mark them as optional"
-	found := false
-	for _, rec := range recommendations {
-		if rec == expectedRec {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(recommendations, expectedRec)
 	if !found {
 		t.Errorf("Expected recommendation '%s' not found in: %v", expectedRec, recommendations)
 	}
@@ -224,13 +201,7 @@ func TestGenerateRecommendations_MissingEnvFiles(t *testing.T) {
 	recommendations := generateRecommendations(result)
 
 	expectedRec := "Consider creating missing environment files or removing them from configuration"
-	found := false
-	for _, rec := range recommendations {
-		if rec == expectedRec {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(recommendations, expectedRec)
 	if !found {
 		t.Errorf("Expected recommendation '%s' not found in: %v", expectedRec, recommendations)
 	}
@@ -252,13 +223,7 @@ func TestGenerateRecommendations_NewerFeatures(t *testing.T) {
 	recommendations := generateRecommendations(result)
 
 	expectedRec := "Consider upgrading to a newer Ahoy version for better support of advanced features"
-	found := false
-	for _, rec := range recommendations {
-		if rec == expectedRec {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(recommendations, expectedRec)
 	if !found {
 		t.Errorf("Expected recommendation '%s' not found in: %v", expectedRec, recommendations)
 	}
@@ -276,13 +241,7 @@ func TestGenerateRecommendations_NoIssues(t *testing.T) {
 	recommendations := generateRecommendations(result)
 
 	expectedRec := "Configuration looks good! No issues found."
-	found := false
-	for _, rec := range recommendations {
-		if rec == expectedRec {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(recommendations, expectedRec)
 	if !found {
 		t.Errorf("Expected recommendation '%s' not found in: %v", expectedRec, recommendations)
 	}
