@@ -96,7 +96,7 @@ jobs:
             find dist -type f -exec ls -lh {} \; | awk '{print $5 "\t" $9}' | sort -k2
             echo ""
             echo "Archive contents preview:"
-            for file in dist/*.tar.gz dist/*.zip 2>/dev/null; do
+            for file in dist/*.tar.gz dist/*.zip; do
               if [ -f "$file" ]; then
                 echo "Contents of $(basename "$file"):"
                 if [[ "$file" == *.tar.gz ]]; then
@@ -106,7 +106,7 @@ jobs:
                 fi
                 echo "---"
               fi
-            done
+            done 2>/dev/null
           else
             echo "Warning: No dist directory found - check GoReleaser configuration"
           fi
