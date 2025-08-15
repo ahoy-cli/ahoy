@@ -343,7 +343,7 @@ func getCommands(config Config) []cli.Command {
 func addDefaultCommands(commands []cli.Command) []cli.Command {
 	defaultInitCmd := cli.Command{
 		Name:  "init",
-		Usage: "Initialize a new .ahoy.yml config file in the current directory.",
+		Usage: "Initialise a new .ahoy.yml config file in the current directory.",
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "force",
