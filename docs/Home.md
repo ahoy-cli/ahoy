@@ -15,7 +15,7 @@ usage: DKAN cli app for development using ahoy.
 commands:
   echo:
     usage: Simply echo all the arguments
-    # Note that {{args}} will be replaced with the string of all arguments passed 
+    # Note that {{args}} will be replaced with the string of all arguments passed
     cmd: echo "{{args}}"
 ```
 
@@ -41,7 +41,7 @@ VERSION:
 Now if we call `ahoy -v echo "Do I hear an echo?"` ..
 ```
 ahoy -v echo "Do I hear an echo?"
-2016/01/13 14:03:54 ===> AHOY echo from  : echo "Do I hear an echo?"
+2016/01/13 14:03:54 ===> Ahoy echo from  : echo "Do I hear an echo?"
 Do I hear an echo?
 ```
 
@@ -72,7 +72,7 @@ commands:
 $ ahoy meaning-of-life
 Are you sure you want to know? [y/N] y
 The meaning of life is 42
- 
+
 $ ahoy meaning-of-life
 Are you sure you want to know? [y/N] n
 OK, you don't want to know, skipping...
@@ -109,10 +109,10 @@ commands:
 ```
 $ ahoy direct-example
 fcarey #or whatever your user name is
- 
+
 $ ahoy import-example whoami
 fcarey #or whatever your user name is
- 
+
 #Shows help text for imported subcommands
 $ahoy import-example
 NAME:

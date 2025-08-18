@@ -1,13 +1,22 @@
-![AHOY logo](https://avatars.githubusercontent.com/u/19353604?s=250&v=4)
+<div align="center">
 
-# AHOY! - Automate and organize your workflows, no matter what technology you use.
+<picture>
+  <source srcset="img/rect/ahoy-logo-rect-v2.webp" type="image/webp">
+  <img src="img/rect/ahoy-logo-rect-v2.svg" alt="Ahoy logo" width="300">
+</picture>
+
+<h1>Ahoy!</h1>
+
+<h3>Automate and organise your workflows, no matter what technology you use.</h3>
 
 [![Build and test](https://github.com/ahoy-cli/ahoy/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/ahoy-cli/ahoy/actions/workflows/build_and_test.yml) [![Go Report Card](https://goreportcard.com/badge/github.com/ahoy-cli/ahoy)](https://goreportcard.com/report/github.com/ahoy-cli/ahoy)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-14-orange.svg?style=flat)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-14-orange.svg)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
-Ahoy is command line tool that gives each of your projects their own CLI app with zero code and dependencies.
+</div>
+
+Ahoy is a command line tool that gives each of your projects its own CLI app with zero code and dependencies.
 
 Write your commands in a YAML file and then Ahoy gives you lots of features like:
 - a command listing
@@ -27,7 +36,7 @@ With Ahoy, you can turn this into:
 
 `ahoy mysql-import < some-database.sql`
 
-## 🚀 Quick Start
+## Quick Start
 
 Get started immediately with our comprehensive examples file:
 
@@ -46,7 +55,7 @@ The examples file includes **30+ usable example commands** for:
 - **Build & Deployment** - `build`, `deploy` with safety checks
 - **Drupal Integration** - `drush`, `cr`, `uli`, `cex`, `cim` for Drupal projects
 
-**📋 [View the complete examples file →](examples/examples.ahoy.yml)**
+**🔍 [View the complete examples file →](examples/examples.ahoy.yml)**
 
 Try it out:
 ```bash
@@ -249,11 +258,11 @@ commands:
 
 ## Sponsors 💰 👏
 
-* [<img src="https://avatars.githubusercontent.com/u/378794?s=160&v=4" alt="Alex Skrypnyk - DrevOps" width="160px;"><br />Alex Skrypnyk - DrevOps](https://drevops.com)
+- [<img src="https://raw.githubusercontent.com/drevops/website-static/main/img/drevops_logo_horiz_black.png" width="128px;" alt="DrevOps Logo"><br />Alex Skrypnyk - DrevOps](https://drevops.com)
 
 ## Contributors ✨
 
-Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+Thanks to all these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->

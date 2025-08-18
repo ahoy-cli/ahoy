@@ -7,9 +7,9 @@ env:
   - GOPROXY=https://proxy.golang.org,direct
 before:
   hooks:
-    - cd v2 && go mod download
-    - cd v2 && go mod tidy
-    - cd v2 && go test ./...
+    - sh -c "cd v2 && go mod download"
+    - sh -c "cd v2 && go mod tidy"
+    - sh -c "cd v2 && go test ./..."
 
 builds:
   # Standard build
