@@ -1,8 +1,8 @@
 <div align="center">
 
 <picture>
-  <source srcset="img/rect/ahoy-logo-rect-v2.webp" type="image/webp" width="300" height="auto">
-  <img src="img/rect/ahoy-logo-rect-v2.svg" alt="Ahoy logo" width="300" height="auto">
+  <source srcset="img/rect/ahoy-logo-rect-v2.webp" type="image/webp">
+  <img src="img/rect/ahoy-logo-rect-v2.svg" alt="Ahoy logo" width="300">
 </picture>
 
 <h1>Ahoy!</h1>
@@ -258,7 +258,7 @@ commands:
 
 ## Sponsors 💰 👏
 
-- [<img src="https://github.com/drevops/website-static/blob/main/img/drevops_logo_horiz_black.png" width="128px;"><br />Alex Skrypnyk - DrevOps](https://drevops.com)
+- [<img src="https://github.com/drevops/website-static/blob/main/img/drevops_logo_horiz_black.png" width="128px;" alt="DrevOps Logo"><br />Alex Skrypnyk - DrevOps](https://drevops.com)
 
 ## Contributors ✨
 
