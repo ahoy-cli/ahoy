@@ -5,7 +5,9 @@
   <img src="img/rect/ahoy-logo-rect-v2.svg" alt="Ahoy logo" style="width: 300px; height: auto;">
 </picture>
 
-# Ahoy! - Automate and organise your workflows, no matter what technology you use.
+# Ahoy!
+
+## Automate and organise your workflows, no matter what technology you use.
 
 [![Build and test](https://github.com/ahoy-cli/ahoy/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/ahoy-cli/ahoy/actions/workflows/build_and_test.yml) [![Go Report Card](https://goreportcard.com/badge/github.com/ahoy-cli/ahoy)](https://goreportcard.com/report/github.com/ahoy-cli/ahoy)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
