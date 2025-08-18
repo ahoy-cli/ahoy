@@ -7,7 +7,7 @@
 
 <h1>Ahoy!</h1>
 
-<h2>Automate and organise your workflows, no matter what technology you use.</h2>
+<h3>Automate and organise your workflows, no matter what technology you use.</h3>
 
 [![Build and test](https://github.com/ahoy-cli/ahoy/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/ahoy-cli/ahoy/actions/workflows/build_and_test.yml) [![Go Report Card](https://goreportcard.com/badge/github.com/ahoy-cli/ahoy)](https://goreportcard.com/report/github.com/ahoy-cli/ahoy)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
