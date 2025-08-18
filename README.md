@@ -1,11 +1,18 @@
-![AHOY logo](https://avatars.githubusercontent.com/u/19353604?s=250&v=4)
+<div align="center">
+
+<picture style="width: min(300px, 80vw); height: auto;">
+  <source srcset="img/rect/ahoy-logo-rect-v2.webp" type="image/webp">
+  <img src="img/rect/ahoy-logo-rect-v2.svg" alt="Ahoy logo" style="width: 100%; height: auto;">
+</picture>
+
+# Ahoy! - Automate and organise your workflows, no matter what technology you use.
+
+[![Build and test](https://github.com/ahoy-cli/ahoy/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/ahoy-cli/ahoy/actions/workflows/build_and_test.yml) [![Go Report Card](https://goreportcard.com/badge/github.com/ahoy-cli/ahoy)](https://goreportcard.com/report/github.com/ahoy-cli/ahoy)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-13-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-14-orange.svg)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
-# AHOY! - Automate and organize your workflows, no matter what technology you use.
-
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/ahoy-cli/ahoy/tree/master.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/ahoy-cli/ahoy/tree/master) [![Go Report Card](https://goreportcard.com/badge/github.com/ahoy-cli/ahoy)](https://goreportcard.com/report/github.com/ahoy-cli/ahoy)
+</div>
 
 Ahoy is command line tool that gives each of your projects their own CLI app with zero code and dependencies.
 
@@ -253,7 +260,7 @@ commands:
 
 ## Contributors ✨
 
-Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+Thanks to all these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->

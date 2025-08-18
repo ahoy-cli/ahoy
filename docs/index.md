@@ -1,8 +1,8 @@
-![AHOY logo](https://avatars.githubusercontent.com/u/19353604?s=300&v=4)
+![Ahoy logo](https://avatars.githubusercontent.com/u/19353604?s=300&v=4)
 
-# AHOY! - Automate and organize your workflows, no matter what technology you use.
+# Ahoy! - Automate and organize your workflows, no matter what technology you use.
 
-Ahoy is command line tool that gives each of your projects their own CLI app with with zero code and dependencies. 
+Ahoy is command line tool that gives each of your projects their own CLI app with with zero code and dependencies.
 
 Simply write your commands in a yaml file and ahoy gives you lots of features like:
 * a command listing
@@ -125,10 +125,10 @@ GLOBAL OPTIONS:
 
 ## Version 2
 
-All new features are being added to the v2 (master) branch of ahoy which is still in alpha and will have breaking changes with v1 ahoy files, so to use ahoy v2, you'll need to do the following: 
+All new features are being added to the v2 (master) branch of ahoy which is still in alpha and will have breaking changes with v1 ahoy files, so to use ahoy v2, you'll need to do the following:
 - Upgrade to the ahoy v2 binary which currently needs to be compiled from source. If you are using homebrew, you can use that to upgrade to v2 using the following:
 ```
-  brew uninstall ahoy # Required or you'll get errors 
+  brew uninstall ahoy # Required or you'll get errors
   brew upgrade # Updates the tap
   brew install ahoy --HEAD # Installs ahoy by compiling the latest from the master branch
   ahoy # You should see full version that you're using.

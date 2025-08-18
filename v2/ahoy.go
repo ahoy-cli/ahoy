@@ -306,7 +306,7 @@ func getCommands(config Config) []cli.Command {
 				}
 
 				if verbose {
-					log.Println("===> AHOY", name, "from", sourcefile, ":", cmdItems)
+					log.Println("===> Ahoy", name, "from", sourcefile, ":", cmdItems)
 				}
 				command := exec.Command(cmdItems[0], cmdItems[1:]...)
 				command.Dir = AhoyConf.srcDir
