@@ -5,9 +5,9 @@
   <img src="img/rect/ahoy-logo-rect-v2.svg" alt="Ahoy logo" style="width: 300px; height: auto;">
 </picture>
 
-# Ahoy!
+<h1>Ahoy!</h1>
 
-## Automate and organise your workflows, no matter what technology you use.
+<h2>Automate and organise your workflows, no matter what technology you use.</h2>
 
 [![Build and test](https://github.com/ahoy-cli/ahoy/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/ahoy-cli/ahoy/actions/workflows/build_and_test.yml) [![Go Report Card](https://goreportcard.com/badge/github.com/ahoy-cli/ahoy)](https://goreportcard.com/report/github.com/ahoy-cli/ahoy)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
@@ -36,7 +36,7 @@ With Ahoy, you can turn this into:
 
 `ahoy mysql-import < some-database.sql`
 
-## 🚀 Quick Start
+## Quick Start
 
 Get started immediately with our comprehensive examples file:
 
@@ -55,7 +55,7 @@ The examples file includes **30+ usable example commands** for:
 - **Build & Deployment** - `build`, `deploy` with safety checks
 - **Drupal Integration** - `drush`, `cr`, `uli`, `cex`, `cim` for Drupal projects
 
-**📋 [View the complete examples file →](examples/examples.ahoy.yml)**
+**🔍 [View the complete examples file →](examples/examples.ahoy.yml)**
 
 Try it out:
 ```bash
