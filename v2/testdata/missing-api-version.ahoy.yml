@@ -1,0 +1,4 @@
+commands:
+  test:
+    description: Test command
+    cmd: echo "test"

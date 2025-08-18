@@ -18,6 +18,12 @@ var globalFlags = []cli.Flag{
 		Usage:       "Use a specific ahoy file.",
 		Destination: &sourcefile,
 	},
+	cli.StringFlag{
+		Name:        "simulate-version",
+		Usage:       "Simulate an older Ahoy version for testing validation (hidden flag)",
+		Destination: &simulateVersion,
+		Hidden:      true,
+	},
 	cli.BoolFlag{
 		Name:  "help, h",
 		Usage: "show help",

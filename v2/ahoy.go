@@ -1,12 +1,12 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"log"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -52,6 +52,7 @@ var (
 // The build version can be set using the go linker flag `-ldflags "-X main.version=$VERSION"`
 // Complete command: `go build -ldflags "-X main.version=$VERSION"`
 var version string
+var simulateVersion string
 
 // AhoyConf stores the global config.
 var AhoyConf struct {
@@ -81,6 +82,38 @@ func fileExists(filename string) bool {
 	return !info.IsDir()
 }
 
+// expandPath expands a file path, handling tilde expansion and relative paths.
+// For absolute paths (starting with / or C:\ on Windows), returns the path as-is.
+// For tilde paths (starting with ~), expands to user home directory.
+// For relative paths, joins with the provided base directory.
+func expandPath(path, baseDir string) string {
+	// Check for absolute paths
+	if filepath.IsAbs(path) {
+		// OS-native absolute path
+		return path
+	}
+	// On Windows, also treat Unix-style paths as absolute for cross-platform compatibility
+	if strings.HasPrefix(path, "/") {
+		// Unix-style absolute path
+		return path
+	} else if strings.HasPrefix(path, "~") {
+		// Tilde path, expand to home directory
+		if home, err := os.UserHomeDir(); err == nil {
+			// Handle both ~/path and ~\path (Windows)
+			remainder := path[1:]
+			if len(remainder) > 0 && (remainder[0] == '/' || remainder[0] == '\\') {
+				remainder = remainder[1:]
+			}
+			return filepath.Join(home, remainder)
+		}
+		// If we can't get home dir, return original path
+		return path
+	} else {
+		// Relative path, join with base directory
+		return filepath.Join(baseDir, path)
+	}
+}
+
 func getConfigPath(sourcefile string) (string, error) {
 	var err error
 	config := ""
@@ -101,7 +134,7 @@ func getConfigPath(sourcefile string) (string, error) {
 
 	// Keep track of the previous directory to detect when we've reached the root
 	prevDir := ""
-	for dir != prevDir && err == nil {
+	for dir != prevDir {
 		ymlpath := filepath.Join(dir, ".ahoy.yml")
 		// log.Println(ymlpath)
 		if _, err := os.Stat(ymlpath); err == nil {
@@ -116,7 +149,7 @@ func getConfigPath(sourcefile string) (string, error) {
 	return "", err
 }
 
-func getConfig(file string) (Config, error) {
+func getConfig(file string, skipValidation bool) (Config, error) {
 	config := Config{}
 	yamlFile, err := os.ReadFile(file)
 	if err != nil {
@@ -141,6 +174,21 @@ func getConfig(file string) (Config, error) {
 		config.Entrypoint = []string{"bash", "-c", "{{cmd}}", "{{name}}"}
 	}
 
+	// Run validation and show warnings/errors (unless skipped for validate command)
+	if !skipValidation {
+		validationResult := ValidateConfig(config, file)
+		if len(validationResult.Issues) > 0 {
+			// Only show validation issues in verbose mode or if there are errors
+			if verbose || validationResult.HasError {
+				PrintValidationIssues(validationResult)
+			}
+
+			// If there are errors, return error instead of exiting
+			if validationResult.HasError {
+				return config, errors.New("configuration validation failed")
+			}
+		}
+	}
 	return config, err
 }
 
@@ -155,16 +203,18 @@ func getSubCommands(includes []string) []cli.Command {
 			continue
 		}
 		// If the include path is not absolute or a home directory path,
-		// prepend the source directory to make it relative to the config file.
-		if !strings.HasPrefix(include, "/") && !strings.HasPrefix(include, "~") {
-			include = filepath.Join(AhoyConf.srcDir, include)
-		}
+		// Expand path (handles tilde, absolute, and relative paths)
+		include = expandPath(include, AhoyConf.srcDir)
 		if _, err := os.Stat(include); err != nil {
 			// Skipping files that cannot be loaded allows us to separate
 			// subcommands into public and private.
 			continue
 		}
-		config, _ := getConfig(include)
+		config, err := getConfig(include, false)
+		if err != nil {
+			logger("warn", "Failed to load import file '"+include+"': "+err.Error())
+			continue
+		}
 		includeCommands := getCommands(config)
 		for _, command := range includeCommands {
 			commands[command.Name] = command
@@ -216,7 +266,7 @@ func getCommands(config Config) []cli.Command {
 	// Get environment variables from the 'global' environment variable file, if it is defined.
 	if len(config.Env) > 0 {
 		for _, envPath := range config.Env {
-			globalEnvFile := filepath.Join(AhoyConf.srcDir, envPath)
+			globalEnvFile := expandPath(envPath, AhoyConf.srcDir)
 			vars := getEnvironmentVars(globalEnvFile)
 			if vars != nil {
 				envVars = append(envVars, vars...)
@@ -297,7 +347,7 @@ func getCommands(config Config) []cli.Command {
 				// defined in the 'global' env file.
 				if len(cmd.Env) > 0 {
 					for _, envPath := range cmd.Env {
-						cmdEnvFile := filepath.Join(AhoyConf.srcDir, envPath)
+						cmdEnvFile := expandPath(envPath, AhoyConf.srcDir)
 						vars := getEnvironmentVars(cmdEnvFile)
 						if vars != nil {
 							envVars = append(envVars, vars...)
@@ -325,8 +375,43 @@ func getCommands(config Config) []cli.Command {
 			subCommands := getSubCommands(cmd.Imports)
 			if len(subCommands) == 0 {
 				if !cmd.Optional {
-					logger("fatal", "Command ["+name+"] has 'imports' set, but no commands were found. Check your yaml file.")
+					// Enhanced error message with more context
+					currentVersion := GetAhoyVersion()
+					errorMsg := fmt.Sprintf("Command [%s] has 'imports' set, but no commands were found.", name)
+
+					// Check if any import files are missing
+					missingFiles := []string{}
+					for _, importPath := range cmd.Imports {
+						fullPath := expandPath(importPath, AhoyConf.srcDir)
+						if !fileExists(fullPath) {
+							missingFiles = append(missingFiles, importPath)
+						}
+					}
+
+					if len(missingFiles) > 0 {
+						errorMsg += fmt.Sprintf("\n\nMissing import files: %s", strings.Join(missingFiles, ", "))
+						errorMsg += "\n\nSolutions:"
+						errorMsg += "\n1. Create the missing files"
+						errorMsg += "\n2. Mark imports as optional with 'optional: true'"
+						if !VersionSupports(currentVersion, "optional_imports") {
+							errorMsg += fmt.Sprintf("\n3. Upgrade Ahoy to v%s+ for optional import support", FeatureSupport["optional_imports"])
+						}
+						errorMsg += "\n\nFor more help, run: ahoy config validate"
+					}
+
+					logger("fatal", errorMsg)
 				} else {
+					// Check if this version supports optional imports
+					currentVersion := GetAhoyVersion()
+					if !VersionSupports(currentVersion, "optional_imports") {
+						errorMsg := fmt.Sprintf("Command [%s] uses 'optional: true' but this Ahoy version (%s) doesn't support optional imports.", name, currentVersion)
+						errorMsg += fmt.Sprintf("\n\nThis feature requires Ahoy %s or later.", FeatureSupport["optional_imports"])
+						errorMsg += "\n\nSolutions:"
+						errorMsg += "\n1. Upgrade Ahoy to the latest version"
+						errorMsg += "\n2. Remove 'optional: true' and create the missing import files"
+						errorMsg += "\n\nFor more help, run: ahoy config validate"
+						logger("fatal", errorMsg)
+					}
 					continue
 				}
 			}
@@ -341,6 +426,36 @@ func getCommands(config Config) []cli.Command {
 }
 
 func addDefaultCommands(commands []cli.Command) []cli.Command {
+	// Create config subcommands
+	configInitCmd := cli.Command{
+		Name:  "init",
+		Usage: "Initialise a new .ahoy.yml config file in the current directory.",
+		Flags: []cli.Flag{
+			cli.BoolFlag{
+				Name:  "force",
+				Usage: "force overwriting the .ahoy.yml file in the current directory.",
+			},
+		},
+		Action: initCommandAction,
+	}
+
+	configValidateCmd := cli.Command{
+		Name:   "validate",
+		Usage:  "Diagnose configuration issues and provide recommendations.",
+		Action: validateCommandAction,
+	}
+
+	// Main config command with subcommands
+	defaultConfigCmd := cli.Command{
+		Name:  "config",
+		Usage: "Configuration management commands.",
+		Subcommands: []cli.Command{
+			configInitCmd,
+			configValidateCmd,
+		},
+	}
+
+	// Backwards compatible top-level init command
 	defaultInitCmd := cli.Command{
 		Name:  "init",
 		Usage: "Initialise a new .ahoy.yml config file in the current directory.",
@@ -351,55 +466,15 @@ func addDefaultCommands(commands []cli.Command) []cli.Command {
 			},
 		},
 		Action: func(c *cli.Context) {
-			if fileExists(filepath.Join(".", ".ahoy.yml")) {
-				if c.Bool("force") {
-					fmt.Println("Warning: '--force' parameter passed, overwriting .ahoy.yml in current directory.")
-				} else {
-					fmt.Println("Warning: .ahoy.yml found in current directory.")
-					fmt.Fprint(os.Stderr, "Are you sure you wish to overwrite it with an example file, y/N ? ")
-					reader := bufio.NewReader(os.Stdin)
-					char, _, err := reader.ReadRune()
-					if err != nil {
-						fmt.Println(err)
-					}
-					// If "y" or "Y", continue and overwrite.
-					// Anything else, exit.
-					if char != 'y' && char != 'Y' {
-						fmt.Println("Abort: exiting without overwriting.")
-						os.Exit(0)
-					}
-					if len(c.Args()) > 0 {
-						fmt.Println("Ok, overwriting .ahoy.yml in current directory with specified file.")
-					} else {
-						fmt.Println("Ok, overwriting .ahoy.yml in current directory with example file.")
-					}
-				}
-			}
-			// Grab the URL or use a default for the initial ahoy file.
-			// Allows users to define their own files to call to init.
-			// TODO: Make file downloading OS-independent.
-			wgetURL := "https://raw.githubusercontent.com/ahoy-cli/ahoy/master/examples/examples.ahoy.yml"
-			if len(c.Args()) > 0 {
-				wgetURL = c.Args()[0]
-			}
-			grabYaml := "wget " + wgetURL + " -O .ahoy.yml"
-			cmd := exec.Command("bash", "-c", grabYaml)
-			cmd.Stdin = os.Stdin
-			cmd.Stderr = os.Stderr
-			if err := cmd.Run(); err != nil {
-				fmt.Fprintln(os.Stderr)
-				os.Exit(1)
-			} else {
-				if len(c.Args()) > 0 {
-					fmt.Println("Your specified .ahoy.yml has been downloaded to the current directory.")
-				} else {
-					fmt.Println("Example .ahoy.yml downloaded to the current directory. You can customize it to suit your needs!")
-				}
-			}
+			initCommandAction(c)
+			fmt.Println("Note: 'ahoy init' is now available as 'ahoy config init'")
 		},
 	}
 
 	// Don't add default commands if they've already been set.
+	if c := app.Command(defaultConfigCmd.Name); c == nil {
+		commands = append(commands, defaultConfigCmd)
+	}
 	if c := app.Command(defaultInitCmd.Name); c == nil {
 		commands = append(commands, defaultInitCmd)
 	}
@@ -499,7 +574,7 @@ func setupApp(localArgs []string) *cli.App {
 			app.Run(os.Args)
 			os.Exit(0)
 		}
-		config, err := getConfig(AhoyConf.srcFile)
+		config, err := getConfig(AhoyConf.srcFile, false)
 		if err != nil {
 			logger("fatal", err.Error())
 		}
@@ -516,9 +591,7 @@ func setupApp(localArgs []string) *cli.App {
 			"join":    strings.Join,
 			"replace": strings.ReplaceAll,
 		}
-		for key, value := range customFuncs {
-			funcMap[key] = value
-		}
+		maps.Copy(funcMap, customFuncs)
 
 		w := tabwriter.NewWriter(out, 1, 8, 2, ' ', 0)
 		t := template.Must(template.New("help").Funcs(funcMap).Parse(templ))
