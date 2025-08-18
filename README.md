@@ -1,8 +1,8 @@
 <div align="center">
 
-<picture style="width: 300px; height: auto;">
-  <source srcset="img/rect/ahoy-logo-rect-v2.webp" type="image/webp" style="width: 300px; height: auto;">
-  <img src="img/rect/ahoy-logo-rect-v2.svg" alt="Ahoy logo" style="width: 300px; height: auto;">
+<picture>
+  <source srcset="img/rect/ahoy-logo-rect-v2.webp" type="image/webp" width="300" height="auto">
+  <img src="img/rect/ahoy-logo-rect-v2.svg" alt="Ahoy logo" width="300" height="auto">
 </picture>
 
 <h1>Ahoy!</h1>
@@ -16,7 +16,7 @@
 
 </div>
 
-Ahoy is command line tool that gives each of your projects their own CLI app with zero code and dependencies.
+Ahoy is a command line tool that gives each of your projects its own CLI app with zero code and dependencies.
 
 Write your commands in a YAML file and then Ahoy gives you lots of features like:
 - a command listing
