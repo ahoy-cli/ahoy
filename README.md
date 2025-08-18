@@ -1,7 +1,7 @@
 <div align="center">
 
 <picture style="width: min(300px, 80vw); height: auto;">
-  <source srcset="img/rect/ahoy-logo-rect-v2.webp" type="image/webp">
+  <source srcset="img/rect/ahoy-logo-rect-v2.webp" type="image/webp" style="max-width: 620px; max-height: 400px;">
   <img src="img/rect/ahoy-logo-rect-v2.svg" alt="Ahoy logo" style="width: 100%; height: auto;">
 </picture>
 
