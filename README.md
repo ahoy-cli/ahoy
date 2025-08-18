@@ -1,13 +1,22 @@
-![AHOY logo](https://avatars.githubusercontent.com/u/19353604?s=250&v=4)
+<div align="center">
+
+<picture>
+  <source srcset="img/rect/ahoy-logo-rect-v2.webp" type="image/webp">
+  <img src="img/rect/ahoy-logo-rect-v2.svg" alt="Ahoy logo" width="300">
+</picture>
+
+<h1>Ahoy!</h1>
+
+<h3>Automate and organise your workflows, no matter what technology you use.</h3>
+
+[![Build and test](https://github.com/ahoy-cli/ahoy/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/ahoy-cli/ahoy/actions/workflows/build_and_test.yml) [![Go Report Card](https://goreportcard.com/badge/github.com/ahoy-cli/ahoy)](https://goreportcard.com/report/github.com/ahoy-cli/ahoy)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-13-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-14-orange.svg)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
-# AHOY! - Automate and organize your workflows, no matter what technology you use.
+</div>
 
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/ahoy-cli/ahoy/tree/master.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/ahoy-cli/ahoy/tree/master) [![Go Report Card](https://goreportcard.com/badge/github.com/ahoy-cli/ahoy)](https://goreportcard.com/report/github.com/ahoy-cli/ahoy)
-
-Ahoy is command line tool that gives each of your projects their own CLI app with zero code and dependencies.
+Ahoy is a command line tool that gives each of your projects its own CLI app with zero code and dependencies.
 
 Write your commands in a YAML file and then Ahoy gives you lots of features like:
 - a command listing
@@ -27,7 +36,7 @@ With Ahoy, you can turn this into:
 
 `ahoy mysql-import < some-database.sql`
 
-## 🚀 Quick Start
+## Quick Start
 
 Get started immediately with our comprehensive examples file:
 
@@ -46,7 +55,7 @@ The examples file includes **30+ usable example commands** for:
 - **Build & Deployment** - `build`, `deploy` with safety checks
 - **Drupal Integration** - `drush`, `cr`, `uli`, `cex`, `cim` for Drupal projects
 
-**📋 [View the complete examples file →](examples/examples.ahoy.yml)**
+**🔍 [View the complete examples file →](examples/examples.ahoy.yml)**
 
 Try it out:
 ```bash
@@ -249,11 +258,11 @@ commands:
 
 ## Sponsors 💰 👏
 
-- [<img src="https://www.drevops.com/img/drevops_logo_horiz_black.png" width="128px;"><br />Alex Skrypnyk - DrevOps](https://drevops.com)
+- [<img src="https://raw.githubusercontent.com/drevops/website-static/main/img/drevops_logo_horiz_black.png" width="128px;" alt="DrevOps Logo"><br />Alex Skrypnyk - DrevOps](https://drevops.com)
 
 ## Contributors ✨
 
-Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+Thanks to all these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
@@ -273,6 +282,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://www.elijahlynn.net/"><img src="https://avatars.githubusercontent.com/u/1504756?v=4?s=64" width="64px;" alt="Elijah Lynn"/><br /><sub><b>Elijah Lynn</b></sub></a><br /><a href="https://github.com/ahoy-cli/Ahoy/commits?author=ElijahLynn" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://botsandbrains.com/"><img src="https://avatars.githubusercontent.com/u/377330?v=4?s=64" width="64px;" alt="Frank Carey"/><br /><sub><b>Frank Carey</b></sub></a><br /><a href="https://github.com/ahoy-cli/Ahoy/commits?author=frankcarey" title="Code">💻</a> <a href="https://github.com/ahoy-cli/Ahoy/issues?q=author%3Afrankcarey" title="Bug reports">🐛</a> <a href="#content-frankcarey" title="Content">🖋</a> <a href="https://github.com/ahoy-cli/Ahoy/commits?author=frankcarey" title="Documentation">📖</a> <a href="#ideas-frankcarey" title="Ideas, Planning, & Feedback">🤔</a> <a href="#infra-frankcarey" title="Infrastructure (Hosting, Build-Tools, etc)">🚇</a> <a href="#maintenance-frankcarey" title="Maintenance">🚧</a> <a href="#platform-frankcarey" title="Packaging/porting to new platform">📦</a> <a href="#question-frankcarey" title="Answering Questions">💬</a> <a href="https://github.com/ahoy-cli/Ahoy/pulls?q=is%3Apr+reviewed-by%3Afrankcarey" title="Reviewed Pull Requests">👀</a> <a href="#security-frankcarey" title="Security">🛡️</a> <a href="https://github.com/ahoy-cli/Ahoy/commits?author=frankcarey" title="Tests">⚠️</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/jackwrfuller"><img src="https://avatars.githubusercontent.com/u/78133717?v=4?s=64" width="64px;" alt="Jack Fuller"/><br /><sub><b>Jack Fuller</b></sub></a><br /><a href="https://github.com/ahoy-cli/Ahoy/issues?q=author%3Ajackwrfuller" title="Bug reports">🐛</a> <a href="https://github.com/ahoy-cli/Ahoy/commits?author=jackwrfuller" title="Code">💻</a> <a href="https://github.com/ahoy-cli/Ahoy/commits?author=jackwrfuller" title="Documentation">📖</a> <a href="https://github.com/ahoy-cli/Ahoy/commits?author=jackwrfuller" title="Tests">⚠️</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/jnsalsa"><img src="https://avatars.githubusercontent.com/u/194740356?v=4?s=64" width="64px;" alt="Jonathan Nagy"/><br /><sub><b>Jonathan Nagy</b></sub></a><br /><a href="https://github.com/ahoy-cli/Ahoy/issues?q=author%3Ajnsalsa" title="Bug reports">🐛</a> <a href="https://github.com/ahoy-cli/Ahoy/commits?author=jnsalsa" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://msound.net/"><img src="https://avatars.githubusercontent.com/u/432912?v=4?s=64" width="64px;" alt="Mani Soundararajan"/><br /><sub><b>Mani Soundararajan</b></sub></a><br /><a href="https://github.com/ahoy-cli/Ahoy/commits?author=msound" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://morpht.com/"><img src="https://avatars.githubusercontent.com/u/1254919?v=4?s=64" width="64px;" alt="Marji Cermak"/><br /><sub><b>Marji Cermak</b></sub></a><br /><a href="https://github.com/ahoy-cli/Ahoy/commits?author=marji" title="Documentation">📖</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/dkinzer"><img src="https://avatars.githubusercontent.com/u/444215?v=4?s=64" width="64px;" alt="david kinzer (he/him)"/><br /><sub><b>david kinzer (he/him)</b></sub></a><br /><a href="https://github.com/ahoy-cli/Ahoy/commits?author=dkinzer" title="Code">💻</a></td>

@@ -158,6 +158,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "jnsalsa",
+      "name": "Jonathan Nagy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/194740356?v=4",
+      "profile": "https://github.com/jnsalsa",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
