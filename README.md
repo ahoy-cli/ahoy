@@ -1,8 +1,8 @@
 <div align="center">
 
-<picture style="width: min(300px, 80vw); height: auto; max-width: 620px;">
-  <source srcset="img/rect/ahoy-logo-rect-v2.webp" type="image/webp" style="max-width: 620px; max-height: 400px;">
-  <img src="img/rect/ahoy-logo-rect-v2.svg" alt="Ahoy logo" style="width: 100%; height: auto; max-width: 620px;">
+<picture style="width: 300px; height: auto;">
+  <source srcset="img/rect/ahoy-logo-rect-v2.webp" type="image/webp" style="width: 300px; height: auto;">
+  <img src="img/rect/ahoy-logo-rect-v2.svg" alt="Ahoy logo" style="width: 300px; height: auto;">
 </picture>
 
 # Ahoy! - Automate and organise your workflows, no matter what technology you use.
@@ -256,7 +256,7 @@ commands:
 
 ## Sponsors 💰 👏
 
-- [<img src="https://www.drevops.com/img/drevops_logo_horiz_black.png" width="128px;"><br />Alex Skrypnyk - DrevOps](https://drevops.com)
+- [<img src="https://github.com/drevops/website-static/blob/main/img/drevops_logo_horiz_black.png" width="128px;"><br />Alex Skrypnyk - DrevOps](https://drevops.com)
 
 ## Contributors ✨
 
