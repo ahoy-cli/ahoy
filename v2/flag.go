@@ -20,14 +20,15 @@ var globalFlags = []cli.Flag{
 	},
 	cli.BoolFlag{
 		Name:  "help, h",
-		Usage: "show help",
+		Usage: "Show help",
 	},
 	cli.BoolFlag{
 		Name:  "version",
-		Usage: "print the version",
+		Usage: "Print the Ahoy version",
 	},
 	cli.BoolFlag{
-		Name: "generate-bash-completion",
+		Name:  "generate-bash-completion",
+		Usage: "Generate bash completion script.",
 	},
 }
 
