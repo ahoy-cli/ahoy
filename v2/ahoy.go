@@ -265,6 +265,20 @@ func getCommands(config Config) []cli.Command {
 
 		if cmd.Cmd != "" {
 			newCmd.Action = func(c *cli.Context) {
+				// Check if help was requested - intercept before passing to command
+				// But respect the -- separator - don't intercept help after --
+				foundDoubleDash := false
+				for _, arg := range c.Args() {
+					if arg == "--" {
+						foundDoubleDash = true
+						continue
+					}
+					if !foundDoubleDash && (arg == "--help" || arg == "-h") {
+						cli.ShowCommandHelp(c, c.Command.Name)
+						return
+					}
+				}
+
 				// For some unclear reason, if we don't add an item at the end here,
 				// the first argument is skipped... actually it's not!
 				// 'bash -c' says that arguments will be passed starting with $0, which also means that
@@ -513,8 +527,9 @@ func setupApp(localArgs []string) *cli.App {
 	// Set up custom help printer with additional template functions.
 	cli.HelpPrinterCustom = func(out io.Writer, templ string, data any, customFuncs map[string]any) {
 		funcMap := template.FuncMap{
-			"join":    strings.Join,
-			"replace": strings.ReplaceAll,
+			"join":      strings.Join,
+			"replace":   strings.ReplaceAll,
+			"trimSpace": strings.TrimSpace,
 		}
 		for key, value := range customFuncs {
 			funcMap[key] = value
@@ -536,26 +551,42 @@ func setupApp(localArgs []string) *cli.App {
 
 	cli.AppHelpTemplate = `NAME:
    {{.Name}} - {{.Usage}}
+
 USAGE:
    {{.HelpName}} {{if .Flags}}[global options]{{end}}{{if .Commands}} command [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}
-   {{if len .Authors}}
+{{if len .Authors}}
 AUTHOR(S):
    {{range .Authors}}{{ . }}{{end}}
-   {{end}}{{if .Commands}}
+{{end}}{{if .Commands}}
 COMMANDS:
-{{range .Commands}}{{if not .HideHelp}}   {{join .Names ", "}}{{ if len .Subcommands }}{{" \u25BC"}}{{end}}{{ "\t" }}{{.Usage}}{{if .Description}}{{ "\n" }}{{ "\n" }}{{ "\t" }}{{replace .Description "\n" "\n\t"}}{{ "\n" }}{{end}} {{if .Aliases}}[ Aliases: {{join .Aliases ", "}} ]{{end}}{{ "\n" }}{{end}}{{end}}{{end}}{{if .Flags}}
+{{range .Commands}}{{if not .HideHelp}}   {{join .Names ", "}}{{ if len .Subcommands }}{{" \u25BC"}}{{end}}{{ "\t" }}{{.Usage}}{{if .Aliases}} [ Aliases: {{join .Aliases ", "}} ]{{end}}
+{{end}}{{end}}
+Use '{{.HelpName}} <command> --help' for detailed information about a command.
+{{end}}{{if .Flags}}
 GLOBAL OPTIONS:
    {{range .Flags}}{{.}}
    {{end}}{{end}}{{if .Copyright }}
 COPYRIGHT:
    {{.Copyright}}
-   {{end}}{{if .Version}}
+{{end}}{{if .Version}}
 VERSION:
    {{.Version}}
-   {{end}}
-ALIASES:
-    Commands can have aliases for easier invocation. Aliases are displayed next to each command that has them.
-    You can use any of a command's aliases interchangeably with its primary name.
+{{end}}
+`
+
+	cli.CommandHelpTemplate = `NAME:
+   {{.HelpName}} - {{.Usage}}{{if .Description}}
+
+DESCRIPTION:
+
+{{trimSpace .Description}}
+{{end}}
+USAGE:
+   {{.HelpName}}{{if .Flags}} [command options]{{end}} {{if .ArgsUsage}}{{.ArgsUsage}}{{else}}[arguments...]{{end}}
+{{if .Flags}}
+OPTIONS:
+   {{range .Flags}}{{.}}
+   {{end}}{{end}}
 `
 
 	return app
