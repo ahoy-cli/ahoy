@@ -439,7 +439,7 @@ func addDefaultCommands(commands []*cobra.Command) []*cobra.Command {
 		Use:   "init [url]",
 		Short: "Initialise a new .ahoy.yml config file in the current directory.",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Note: 'ahoy init' is deprecated. Please use 'ahoy config init' instead.")
+			fmt.Fprintln(os.Stderr, "Note: 'ahoy init' is deprecated. Please use 'ahoy config init' instead.")
 			initCommandAction(cmd, args)
 		},
 	}
