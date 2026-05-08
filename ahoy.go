@@ -609,17 +609,11 @@ func setupApp(localArgs []string) *cobra.Command {
 	// Set up custom help template
 	rootCmd.SetHelpFunc(customHelpFunc)
 
-	// Disable cobra's default unknown command behavior and use custom error handling
+	// Suppress cobra's built-in error/usage prints. main() inspects the
+	// error returned by Execute() and prints ahoy's own friendlier
+	// equivalents (e.g. "Command not found for ...").
 	rootCmd.SilenceErrors = true
 	rootCmd.SilenceUsage = true
-
-	// Set custom function for handling unknown commands
-	rootCmd.SetFlagErrorFunc(func(cmd *cobra.Command, err error) error {
-		if strings.Contains(err.Error(), "unknown command") || strings.Contains(err.Error(), "unknown flag") {
-			return err // Let main() handle it
-		}
-		return err
-	})
 
 	return rootCmd
 }
