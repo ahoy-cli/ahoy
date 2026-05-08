@@ -250,7 +250,7 @@ func validateImport(cmdName, importPath string, optional bool, configFile, curre
 			})
 		}
 	} else {
-		// Missing required imports are reported as warnings — getSubCommands handles them gracefully.
+		// Missing required imports are reported as warnings - getSubCommands handles them gracefully.
 		issues = append(issues, ValidationIssue{
 			Type:       "missing_file",
 			Severity:   "warning",
