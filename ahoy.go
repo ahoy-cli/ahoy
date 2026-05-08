@@ -58,14 +58,15 @@ var AhoyConf struct {
 }
 
 func logger(errType string, text string) {
-	errText := ""
 	// Disable the flags which add date and time for instance.
 	log.SetFlags(0)
-	if errType != "debug" {
-		errText = "[" + errType + "] " + text
-		log.Println(errText)
+	if errType == "debug" {
+		if verbose {
+			log.Println("[debug] " + text)
+		}
+		return
 	}
-
+	log.Println("[" + errType + "] " + text)
 	if errType == "fatal" {
 		os.Exit(1)
 	}
