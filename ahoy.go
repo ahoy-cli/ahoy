@@ -541,8 +541,11 @@ func setupApp(localArgs []string) *cobra.Command {
 
 	initFlags(localArgs)
 
-	// Save the parsed values before creating flags
-	// This is necessary because pflag will reset the variables to their default values
+	// initFlags() pre-parsed sourcefile and verbose from the legacy
+	// single-dash forms (-f, -verbose, etc.) - see flag.go for the full
+	// rationale. The cobra flag definitions below would re-bind those
+	// same variables and reset them to their zero values, so we capture
+	// the parsed values now and pass them as the cobra flag defaults.
 	parsedSourcefile := sourcefile
 	parsedVerbose := verbose
 
@@ -735,32 +738,40 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Temporarily suppress stderr to capture cobra's error output.
-	// If pipe creation fails, fall back to executing without stderr capture.
+	// Route stderr through a pipe drained by a goroutine so subprocesses
+	// writing more than the pipe buffer (~64 KB) to stderr don't deadlock.
+	// Output is teed to the real stderr in real time, preserving live
+	// pass-through for child processes (the primary use case for ahoy).
+	// If pipe creation fails, fall back to running with stderr untouched.
 	oldStderr := os.Stderr
 	r, w, pipeErr := os.Pipe()
 
 	var err error
-	var stderrOutput []byte
 
 	if pipeErr != nil {
 		err = rootCmd.Execute()
 	} else {
 		os.Stderr = w
+
+		drained := make(chan struct{})
+		go func() {
+			defer close(drained)
+			io.Copy(oldStderr, r)
+		}()
+
 		err = rootCmd.Execute()
 
-		// Restore stderr.
+		// Closing the writer signals EOF to the drain goroutine. Wait for
+		// it to finish so any in-flight stderr is flushed before we exit.
 		w.Close()
+		<-drained
 		os.Stderr = oldStderr
-
-		// Read what was written to stderr.
-		stderrOutput, _ = io.ReadAll(r)
 	}
 
 	if err != nil {
-		// Check if it's an unknown command error
+		// Cobra has SilenceErrors=true so the error has not been printed.
+		// Translate "unknown command" into ahoy's friendly equivalent.
 		if strings.Contains(err.Error(), "unknown command") {
-			// Extract the command name from the error message
 			// Format: "unknown command \"something\" for \"ahoy\""
 			parts := strings.Split(err.Error(), "\"")
 			if len(parts) >= 2 {
@@ -769,15 +780,6 @@ func main() {
 				logger("fatal", msg)
 			}
 		}
-		// If it's another error, print what was captured and exit
-		if len(stderrOutput) > 0 {
-			fmt.Fprint(oldStderr, string(stderrOutput))
-		}
 		os.Exit(1)
-	}
-
-	// If there was output to stderr but no error, print it
-	if len(stderrOutput) > 0 {
-		fmt.Fprint(oldStderr, string(stderrOutput))
 	}
 }
