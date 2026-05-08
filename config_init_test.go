@@ -9,12 +9,12 @@ import (
 )
 
 func TestRunConfigInit_NewDirectory(t *testing.T) {
-	// Network-dependent — tested in BATS integration tests.
+	// Network-dependent - tested in BATS integration tests.
 	t.Skip("Network-dependent test - tested in BATS integration tests")
 }
 
 func TestRunConfigInit_ExistingFileForce(t *testing.T) {
-	// Network-dependent — tested in BATS integration tests.
+	// Network-dependent - tested in BATS integration tests.
 	t.Skip("Network-dependent test - tested in BATS integration tests")
 }
 

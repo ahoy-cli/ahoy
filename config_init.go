@@ -58,7 +58,7 @@ func downloadFile(rawURL, destPath string) error {
 	}
 
 	// Close explicitly (not via defer) so buffered write errors reported at
-	// close time — common on NFS/SMB/Docker bind mounts — are not swallowed.
+	// close time - common on NFS/SMB/Docker bind mounts - are not swallowed.
 	if err = out.Close(); err != nil {
 		return fmt.Errorf("failed to finalise file %s: %v", destPath, err)
 	}
