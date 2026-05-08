@@ -176,7 +176,7 @@ func getSubCommands(includes []string) []*cobra.Command {
 		include = expandPath(include, AhoyConf.srcDir)
 		if _, err := os.Stat(include); err != nil {
 			if !os.IsNotExist(err) {
-				// File exists but is unreadable (e.g. EACCES) — log so the
+				// File exists but is unreadable (e.g. EACCES) - log so the
 				// user knows why commands are missing.
 				logger("error", "Cannot access import file '"+include+"': "+err.Error())
 			}
@@ -218,7 +218,7 @@ func getEnvironmentVars(envFile string) []string {
 	env, err := os.ReadFile(envFile)
 	if err != nil {
 		// The file was confirmed to exist above, so this is a real read
-		// failure (e.g. EACCES, EIO) — not a routine missing-file case.
+		// failure (e.g. EACCES, EIO) - not a routine missing-file case.
 		logger("error", "Failed to read environment file '"+envFile+"': "+err.Error())
 		return nil
 	}
