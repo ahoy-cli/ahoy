@@ -48,13 +48,13 @@ jobs:
           # Create proper directory structure that BATS expects
           New-Item -ItemType Directory -Force -Path "C:\bats\bin"
           New-Item -ItemType Directory -Force -Path "C:\bats\libexec\bats-core"
-          
+
           # Copy the main bats script
           Copy-Item "bin\bats" "C:\bats\bin\bats"
-          
+
           # Copy the core BATS files that are expected
           Copy-Item "libexec\bats-core\*" "C:\bats\libexec\bats-core\" -Recurse -Force
-          
+
           # Add to PATH
           echo "C:\bats\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           cd ..
@@ -77,9 +77,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y php
 
-      - name: Install PHP (macOS)
+      - name: Install PHP and coreutils (macOS)
         if: runner.os == 'macOS'
-        run: brew install php
+        run: brew install php coreutils
 
       - name: Install PHP (Windows)
         if: runner.os == 'Windows'
@@ -124,7 +124,7 @@ jobs:
           # Test that the binary works (issue #147 fix validation)
           .\ahoy.exe --version
           .\ahoy.exe --help
-          
+
           # Test with a simple config file
           .\ahoy.exe -f testdata\simple.ahoy.yml echo "Windows functional test passed"
         shell: pwsh
