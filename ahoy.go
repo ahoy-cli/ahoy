@@ -88,6 +88,12 @@ func expandPath(path, baseDir string) string {
 	if filepath.IsAbs(path) {
 		return path
 	}
+	// On Windows, filepath.IsAbs returns false for Unix-style paths like "/foo"
+	// (which require a drive letter to be considered absolute). Treat them as
+	// absolute here so cross-platform config files behave consistently.
+	if strings.HasPrefix(path, "/") {
+		return path
+	}
 	if strings.HasPrefix(path, "~") {
 		if home, err := os.UserHomeDir(); err == nil {
 			remainder := path[1:]
