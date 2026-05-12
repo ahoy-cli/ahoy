@@ -26,6 +26,23 @@ Write your commands in a YAML file and then Ahoy gives you lots of features like
 
 Ahoy makes it easy to create aliases and templates for commands that are useful. It was created to help with running interactive commands within Docker containers, but it's just as useful for local commands, commands over `ssh`, or really anything that could be run from the command line in a single clean interface.
 
+## What's New in v3
+
+Ahoy v3 is a major internal rewrite that brings improved CLI handling whilst maintaining full backwards compatibility with existing `.ahoy.yml` configuration files.
+
+### Key Changes
+
+- **New CLI framework** - Migrated from `urfave/cli` to [Cobra](https://github.com/spf13/cobra) and [Viper](https://github.com/spf13/viper), providing a more robust and maintainable foundation.
+- **Command descriptions** - Commands now support a separate `description` field for longer, multiline help text, in addition to the existing `usage` field for short summaries.
+- **Optional imports** - Import commands can now be marked with `optional: true` so that missing import files are gracefully skipped instead of causing errors.
+- **Improved help output** - Custom help template displays command aliases inline for better discoverability.
+- **Environment variable configuration** - Ahoy's own settings can be configured via environment variables (e.g. `AHOY_VERBOSE`) through Viper integration.
+- **Full backwards compatibility** - Existing `.ahoy.yml` files continue to work without modification. The YAML API version remains `v2`.
+
+### Upgrading from v2
+
+No changes to your `.ahoy.yml` files are required. Simply replace the `ahoy` binary with the v3 version. All existing commands, aliases, imports, entrypoints, and environment file configurations will continue to work as before.
+
 ## Examples
 
 Say you want to import a MySQL database running in `docker-compose` using another container called `cli`. The command could look like this:
@@ -55,7 +72,7 @@ The examples file includes **30+ usable example commands** for:
 - **Build & Deployment** - `build`, `deploy` with safety checks
 - **Drupal Integration** - `drush`, `cr`, `uli`, `cex`, `cim` for Drupal projects
 
-**🔍 [View the complete examples file →](examples/examples.ahoy.yml)**
+**[View the complete examples file](examples/examples.ahoy.yml)**
 
 Try it out:
 ```bash
@@ -75,12 +92,14 @@ ahoy shell     # Open a shell in your container
 - Import multiple config files using the "imports" field.
 - Uses the "last in wins" rule to deal with duplicate commands amongst the config files.
 - [Command aliases](#command-aliases) - oft-used or long commands can have aliases.
+- [Command descriptions](#command-descriptions) - commands can have both short usage text and longer multiline descriptions.
+- [Optional imports](#optional-imports) - import commands can gracefully handle missing files.
 - Use a different entrypoint (the thing that runs your commands) if you wish, instead of `bash`. E.g. using PHP, Node.js, Python, etc. is possible.
 - Plugins are possible by overriding the entrypoint.
-- Self-documenting - Commands and help declared in `.ahoy.yml` show up as ahoy command help and [shell completion](#shell-autocompletions) of commands (see [bash/zsh completion](https://ahoy-cli.readthedocs.io/en/latest/#bash-zsh-completion)) is also available. We now have a dedicated Zsh plugin for completions at [ahoy-cli/zsh-ahoy](https://github.com/ahoy-cli/zsh-ahoy).
-- Support for [environment variables](#environment-variables) at both file and command level using the `env` field
-- Environment variables from a global file are loaded first, then command-specific variables override them
-- Environment files use standard shell format with one variable per line, comments supported
+- Self-documenting - Commands and help declared in `.ahoy.yml` show up as ahoy command help and [shell completion](#shell-autocompletions) of commands is also available. We have a dedicated Zsh plugin for completions at [ahoy-cli/zsh-ahoy](https://github.com/ahoy-cli/zsh-ahoy).
+- Support for [environment variables](#environment-variables) at both file and command level using the `env` field.
+- Environment variables from a global file are loaded first, then command-specific variables override them.
+- Environment files use standard shell format with one variable per line, comments supported.
 
 ## Installation
 
@@ -94,7 +113,7 @@ brew install ahoy
 
 ### Linux
 
-Download the [latest release from GitHub](https://github.com/ahoy-cli/ahoy/releases), move the appropriate binary for your plaform into someplace in your $PATH and rename it `ahoy`.
+Download the [latest release from GitHub](https://github.com/ahoy-cli/ahoy/releases), move the appropriate binary for your platform into someplace in your $PATH and rename it `ahoy`.
 
 Example:
 ```
@@ -104,6 +123,30 @@ os=$(uname -s | tr '[:upper:]' '[:lower:]') && architecture=$(case $(uname -m) i
 ### Windows
 
 For WSL2, use the Linux binary above for your architecture.
+
+## Command Descriptions
+
+Commands support both a short `usage` field and a longer `description` field. The `usage` appears in the command listing, whilst the `description` provides detailed help text when viewing a specific command.
+
+```yaml
+ahoyapi: v2
+commands:
+  deploy:
+    usage: Deploy the application
+    description: |
+      Deploys the application to the configured environment.
+
+      This command will:
+      - Build the production assets
+      - Run database migrations
+      - Clear all caches
+      - Notify the deployment channel
+
+      Use with caution in production environments.
+    cmd: ./scripts/deploy.sh
+```
+
+The `usage` field is displayed in the main command listing, and the `description` field provides extended help text.
 
 ## Environment Variables
 
@@ -125,7 +168,7 @@ commands:
     cmd: mysql -u$DB_USER -p$DB_PASSWORD $DB_NAME < $1
 ```
 
-#### Multiple Environment Files (new feature):
+#### Multiple Environment Files:
 
 ```yaml
 ahoyapi: v2
@@ -159,15 +202,15 @@ DB_NAME=mydb
 ```
 
 **Key Features:**
-- Files are loaded in order, with later files overriding earlier ones
-- Command-level env files override global env files
-- Non-existent files are gracefully ignored
-- Supports comments and empty lines in env files
-- Maintains full backwards compatibility with single file syntax
+- Files are loaded in order, with later files overriding earlier ones.
+- Command-level env files override global env files.
+- Non-existent files are gracefully ignored.
+- Supports comments and empty lines in env files.
+- Maintains full backwards compatibility with single file syntax.
 
 ## Command Aliases
 
-Ahoy now supports command aliases. This feature allows you to define alternative names for your commands, making them more convenient to use and remember.
+Ahoy supports command aliases. This feature allows you to define alternative names for your commands, making them more convenient to use and remember.
 
 ### Usage
 
@@ -194,11 +237,33 @@ In this example, the `hello` command can also be invoked using `hi` or `greet`.
 
 ### Notes
 
-- Aliases are displayed in the help output for each command.
+- Aliases are displayed in the help output next to each command.
 - Bash completion works with aliases as well as primary command names.
 - **If multiple commands share the same alias, the "last in wins" rule is used and the last matching command will be executed.**
 
-## Shell autocompletions
+## Optional Imports
+
+Import commands can be marked as optional, allowing missing import files to be gracefully skipped rather than causing a fatal error. This is useful for separating commands into public and private sets, or for supporting optional tooling.
+
+```yaml
+ahoyapi: v2
+commands:
+  local-tools:
+    usage: Local development tools
+    optional: true
+    imports:
+      - ./local-tools.ahoy.yml
+      - ./team-tools.ahoy.yml
+
+  core-tools:
+    usage: Core project tools
+    imports:
+      - ./core.ahoy.yml
+```
+
+If `optional: true` is set and none of the imported files can be found, the command is silently omitted from the command listing. Without `optional`, missing imports will produce a fatal error.
+
+## Shell Autocompletions
 
 ### Zsh
 
@@ -206,16 +271,16 @@ For Zsh completions, we have a standalone plugin available at [ahoy-cli/zsh-ahoy
 
 ### Bash
 
-For Bash, you'll need to make sure you have bash-completion installed and setup. See [bash/zsh completion](https://ahoy-cli.readthedocs.io/en/latest/#bash-zsh-completion) for further instructions.
+For Bash, you'll need to make sure you have bash-completion installed and set up. See [bash/zsh completion](https://ahoy-cli.readthedocs.io/en/latest/#bash-zsh-completion) for further instructions.
 
-## Example of the YAML file setup
+## Example of the YAML File Setup
 
 ```YAML
-# All files must have v2 set or you'll get an error
+# All files must have v2 set or you'll get an error.
 ahoyapi: v2
 
-# You can now override the entrypoint. This is the default if you don't override it.
-# {{cmd}} is replaced with your command and {{name}} is the name of the command that was run (available as $0)
+# You can override the entrypoint. This is the default if you don't override it.
+# {{cmd}} is replaced with your command and {{name}} is the name of the command that was run (available as $0).
 entrypoint:
   - bash
   - "-c"
@@ -228,6 +293,9 @@ commands:
 
   complex-command:
       usage: Show more advanced features.
+      description: |
+        Demonstrates multi-line commands, parameter passing,
+        and calling other ahoy commands from within a command.
       cmd: | # We support multi-line commands with pipes.
           echo "multi-line bash script";
           # You can call other ahoy commands.
@@ -256,11 +324,11 @@ commands:
 - Pipe tab completion to another command (allows you to get tab completion).
 - Support for configuration.
 
-## Sponsors 💰 👏
+## Sponsors
 
-- [<img src="https://raw.githubusercontent.com/drevops/website-static/main/img/drevops_logo_horiz_black.png" width="128px;" alt="DrevOps Logo"><br />Alex Skrypnyk - DrevOps](https://drevops.com)
+- [<img src="https://raw.githubusercontent.com/drevops/website/refs/heads/develop/web/themes/custom/drevops/assets/logos/logo_primary_light_desktop.svg?sanitize=true" width="160px;" alt="DrevOps Logo"><br />Alex Skrypnyk - DrevOps](https://drevops.com)
 
-## Contributors ✨
+## Contributors
 
 Thanks to all these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
 

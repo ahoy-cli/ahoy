@@ -1,0 +1,9 @@
+ahoyapi: v2
+commands:
+  docker:
+    # cmd: "ahoy help home"
+    usage: Example docker commands from examples/docker.ahoy.yml
+    imports:
+      - docker.ahoy.yml
+      - docker-overrides.ahoy.yml
+      - private-docker3.ahoy.yml

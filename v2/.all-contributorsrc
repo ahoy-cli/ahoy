@@ -1,0 +1,175 @@
+{
+  "projectName": "Ahoy",
+  "projectOwner": "ahoy-cli",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 64,
+  "commit": true,
+  "commitConvention": "angular",
+  "contributors": [
+    {
+      "login": "jackwrfuller",
+      "name": "Jack Fuller",
+      "avatar_url": "https://avatars.githubusercontent.com/u/78133717?v=4",
+      "profile": "https://github.com/jackwrfuller",
+      "contributions": [
+        "bug",
+        "code",
+        "doc",
+        "test"
+      ]
+    },
+    {
+      "login": "AlexSkrypnyk",
+      "name": "Alex Skrypnyk",
+      "avatar_url": "https://avatars.githubusercontent.com/u/378794?v=4",
+      "profile": "https://www.drevops.com/",
+      "contributions": [
+        "bug",
+        "review",
+        "question",
+        "promotion",
+        "ideas",
+        "financial",
+        "security"
+      ]
+    },
+    {
+      "login": "hanoii",
+      "name": "Ariel Barreiro",
+      "avatar_url": "https://avatars.githubusercontent.com/u/677879?v=4",
+      "profile": "https://github.com/hanoii",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ocean",
+      "name": "Drew Robinson",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4443?v=4",
+      "profile": "https://github.com/ocean",
+      "contributions": [
+        "code",
+        "bug",
+        "content",
+        "doc",
+        "ideas",
+        "infra",
+        "maintenance",
+        "platform",
+        "question",
+        "review",
+        "security",
+        "test"
+      ]
+    },
+    {
+      "login": "frankcarey",
+      "name": "Frank Carey",
+      "avatar_url": "https://avatars.githubusercontent.com/u/377330?v=4",
+      "profile": "https://botsandbrains.com/",
+      "contributions": [
+        "code",
+        "bug",
+        "content",
+        "doc",
+        "ideas",
+        "infra",
+        "maintenance",
+        "platform",
+        "question",
+        "review",
+        "security",
+        "test"
+      ]
+    },
+    {
+      "login": "acouch",
+      "name": "Aaron Couch",
+      "avatar_url": "https://avatars.githubusercontent.com/u/512243?v=4",
+      "profile": "https://github.com/acouch",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "dkinzer",
+      "name": "david kinzer (he/him)",
+      "avatar_url": "https://avatars.githubusercontent.com/u/444215?v=4",
+      "profile": "https://github.com/dkinzer",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "msound",
+      "name": "Mani Soundararajan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/432912?v=4",
+      "profile": "https://msound.net/",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "mlncn",
+      "name": "Benjamin Melançon",
+      "avatar_url": "https://avatars.githubusercontent.com/u/27131?v=4",
+      "profile": "https://agaric.coop/",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "marji",
+      "name": "Marji Cermak",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1254919?v=4",
+      "profile": "https://morpht.com/",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "aashil",
+      "name": "Aashil Patel",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6216576?v=4",
+      "profile": "https://github.com/aashil",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "arafalov",
+      "name": "Alexandre Rafalovitch",
+      "avatar_url": "https://avatars.githubusercontent.com/u/64153?v=4",
+      "profile": "http://www.linkedin.com/in/alexandrerafalovitch",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "ElijahLynn",
+      "name": "Elijah Lynn",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1504756?v=4",
+      "profile": "https://www.elijahlynn.net/",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "jnsalsa",
+      "name": "Jonathan Nagy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/194740356?v=4",
+      "profile": "https://github.com/jnsalsa",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "contributorsSortAlphabetically": true
+}

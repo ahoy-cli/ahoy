@@ -1,0 +1,151 @@
+name: "Release"
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Perform a dry run (no release created)"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    env:
+      GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22.x"
+          cache-dependency-path: v2/go.sum
+
+      - name: Import GPG key (optional, for signing)
+        id: import_gpg
+        if: env.GPG_PRIVATE_KEY != ''
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Set GPG environment variables
+        if: steps.import_gpg.conclusion == 'success'
+        run: |
+          echo "GPG_FINGERPRINT=${{ steps.import_gpg.outputs.fingerprint }}" >> $GITHUB_ENV
+          echo "GPG_PASSWORD=${{ secrets.GPG_PASSPHRASE }}" >> $GITHUB_ENV
+
+      - name: Install Syft for SBOM generation
+        uses: anchore/sbom-action/download-syft@v0.20.4
+        with:
+          syft-version: "latest"
+
+      - name: Determine release mode
+        id: release_mode
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            echo "mode=dry-run" >> $GITHUB_OUTPUT
+            echo "args=release --clean --skip=announce,publish --snapshot" >> $GITHUB_OUTPUT
+            echo "Running in DRY RUN mode - no release will be created"
+            echo "Generated artifacts will be displayed in the workflow output"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.dry_run }}" = "false" ]; then
+            echo "mode=manual-release" >> $GITHUB_OUTPUT
+            echo "args=release --clean" >> $GITHUB_OUTPUT
+            echo "Running MANUAL RELEASE mode - real (draft) release will be created"
+          else
+            echo "mode=tag-release" >> $GITHUB_OUTPUT
+            echo "args=release --clean" >> $GITHUB_OUTPUT
+            echo "Running TAG RELEASE mode - triggered by tag push"
+          fi
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: ${{ steps.release_mode.outputs.args }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GPG_FINGERPRINT: ${{ env.GPG_FINGERPRINT }}
+          GPG_PASSWORD: ${{ env.GPG_PASSWORD }}
+
+      - name: Display dry run artifacts
+        if: steps.release_mode.outputs.mode == 'dry-run'
+        run: |
+          echo "DRY RUN COMPLETED - Artifacts that would have been created:"
+          echo "============================================================"
+
+          if [ -d "dist" ]; then
+            echo "Directory structure:"
+            find dist -type f | sort
+            echo ""
+            echo "File sizes:"
+            find dist -type f -exec ls -lh {} \; | awk '{print $5 "\t" $9}' | sort -k2
+            echo ""
+            echo "Archive contents preview:"
+            for file in dist/*.tar.gz dist/*.zip; do
+              if [ -f "$file" ]; then
+                echo "Contents of $(basename "$file"):"
+                if [[ "$file" == *.tar.gz ]]; then
+                  tar -tzf "$file" | head -10
+                elif [[ "$file" == *.zip ]]; then
+                  unzip -l "$file" | head -15
+                fi
+                echo "---"
+              fi
+            done 2>/dev/null
+          else
+            echo "Warning: No dist directory found - check GoReleaser configuration"
+          fi
+
+      - name: Upload additional artifacts
+        if: always() && hashFiles('dist/**/*') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.release_mode.outputs.mode == 'dry-run' && 'dry-run-artifacts' || 'release-artifacts' }}
+          path: |
+            dist/
+          retention-days: ${{ steps.release_mode.outputs.mode == 'dry-run' && '7' || '30' }}
+
+  post-release:
+    name: Post-Release Tasks
+    runs-on: ubuntu-latest
+    needs: release
+    # Only run for real releases (tag-triggered or manual with dry_run=false)
+    if: needs.release.result == 'success' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'false'))
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update documentation
+        run: |
+          echo "Release ${{ github.ref_name }} completed successfully!"
+          echo "Binaries and archives are available in the GitHub release."
+          echo "Individual binaries are uploaded as separate assets."
+
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "Release ${{ github.ref_name }} completed successfully!"
+          echo "Archives and individual binaries are available in the release."
+          echo "Checksums and signatures (if configured) are included."
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "Error: Release ${{ github.ref_name }} failed!"
+          echo "Please check the workflow logs for details."
+          exit 1

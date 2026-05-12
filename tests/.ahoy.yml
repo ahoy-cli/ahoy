@@ -1,0 +1,403 @@
+# Ahoy Configuration Example
+# ==========================
+# This file demonstrates development workflows and Ahoy's powerful features.
+# Includes examples for various development stacks - adapt to your project's needs.
+# Copy this file to your project root as .ahoy.yml and customise it for your workflow.
+
+ahoyapi: v2
+
+# Global environment files (loaded in order, later files override earlier ones)
+env:
+  - .env
+  - .env.local
+
+# Optional - Custom usage description for your project
+usage: "Development workflow commands for your project"
+
+commands:
+  # =============================================================================
+  # DEVELOPMENT ENVIRONMENT
+  # =============================================================================
+
+  up:
+    usage: Start the development environment
+    aliases: ["start"]
+    cmd: |
+      echo "Starting development environment..."
+      docker compose up -d
+      echo "Environment ready! Visit http://localhost"
+
+  down:
+    usage: Stop the development environment
+    aliases: ["stop"]
+    cmd: |
+      ahoy confirm "This will stop all containers and may remove volumes. Continue?" || exit 0
+      echo "Stopping development environment..."
+      docker compose down
+      echo "Environment stopped"
+
+  restart:
+    usage: Restart the development environment
+    cmd: |
+      echo "Restarting development environment..."
+      ahoy down
+      ahoy up
+
+  status:
+    usage: Show status of all services
+    aliases: ["ps"]
+    cmd: |
+      echo "Service Status:"
+      docker compose ps
+      echo ""
+      echo "Available URLs:"
+      echo "  App: http://localhost:3000"
+      echo "  API: http://localhost:8080"
+      echo "  Database: localhost:3306"
+  # =============================================================================
+  # DEVELOPMENT TOOLS
+  # =============================================================================
+
+  shell:
+    usage: "Open a shell in a container (default: app)"
+    aliases: ["sh", "bash"]
+    cmd: |
+      CONTAINER="${1:-app}"
+      echo "Opening shell in $CONTAINER container..."
+      docker compose exec "$CONTAINER" bash
+
+  logs:
+    usage: "Follow logs for a service (default: all services)"
+    cmd: |
+      if [ -z "$1" ]; then
+        echo "Following logs for all services (Ctrl+C to exit)..."
+        docker compose logs -f
+      else
+        echo "Following logs for $1 service (Ctrl+C to exit)..."
+        docker compose logs -f "$1"
+      fi
+
+  # =============================================================================
+  # PACKAGE MANAGEMENT
+  # =============================================================================
+
+  install:
+    usage: Install project dependencies
+    aliases: ["deps"]
+    cmd: |
+      echo "Installing dependencies..."
+      if [ -f "package.json" ]; then
+        echo "Installing Node.js dependencies..."
+        docker compose exec app npm install
+      fi
+      if [ -f "composer.json" ]; then
+        echo "Installing PHP dependencies..."
+        docker compose exec app composer install
+      fi
+      if [ -f "requirements.txt" ]; then
+        echo "Installing Python dependencies..."
+        docker compose exec app pip install -r requirements.txt
+      fi
+      echo "Dependencies installed"
+
+  # =============================================================================
+  # TESTING & QUALITY
+  # =============================================================================
+
+  test:
+    usage: Run the test suite
+    cmd: |
+      echo "Running tests..."
+      if [ -f "package.json" ]; then
+        docker compose exec app npm test
+      elif [ -f "composer.json" ]; then
+        docker compose exec app ./vendor/bin/phpunit
+      elif [ -f "pytest.ini" ] || [ -f "setup.cfg" ]; then
+        docker compose exec app pytest
+      fi
+
+  lint:
+    usage: Run code linting
+    cmd: |
+      echo "Running linting..."
+      if [ -f "package.json" ]; then
+        docker compose exec app npm run lint
+      elif [ -f "phpcs.xml" ] || [ -f "phpcs.xml.dist" ]; then
+        docker compose exec app ./vendor/bin/phpcs
+      elif [ -f ".flake8" ] || [ -f "setup.cfg" ]; then
+        docker compose exec app flake8
+      fi
+
+  # =============================================================================
+  # DATABASE OPERATIONS
+  # =============================================================================
+
+  db:
+    usage: Connect to the database
+    cmd: |
+      echo "Connecting to database..."
+      # Detect database type and connect appropriately
+      if [ "${DB_TYPE:-mysql}" = "postgres" ]; then
+        docker compose exec db psql -U "$DB_USER" -d "$DB_NAME"
+      else
+        docker compose exec db mysql -u"$DB_USER" -p"$DB_PASSWORD" "$DB_NAME"
+      fi
+
+  # =============================================================================
+  # DRUPAL-SPECIFIC EXAMPLES
+  # =============================================================================
+
+  drush:
+    usage: Run Drush commands in the CLI container
+    cmd: docker compose exec cli drush --root=/var/www/html/web "$@"
+
+  drupal:
+    usage: Run Drupal Console commands in the CLI container
+    cmd: docker compose exec cli drupal --root=/var/www/html/web "$@"
+
+  composer:
+    usage: Run Composer commands in the CLI container
+    cmd: docker compose exec cli composer "$@"
+
+  cr:
+    usage: Clear Drupal cache
+    aliases: ["cache-rebuild"]
+    cmd: docker compose exec cli drush --root=/var/www/html/web cache:rebuild
+
+  cex:
+    usage: Export Drupal configuration
+    aliases: ["config-export"]
+    cmd: docker compose exec cli drush --root=/var/www/html/web config:export
+
+  cim:
+    usage: Import Drupal configuration
+    aliases: ["config-import"]
+    cmd: |
+      ahoy confirm "This will import configuration and may overwrite existing settings. Continue?" || exit 0
+      docker compose exec cli drush --root=/var/www/html/web config:import
+
+  uli:
+    usage: Generate a one-time login link for user 1
+    cmd: |
+      echo "Generating login link..."
+      docker compose exec cli drush --root=/var/www/html/web user:login --uri=http://localhost
+
+  site-install:
+    usage: Install Drupal site from scratch
+    cmd: |
+      ahoy confirm "This will completely reinstall the Drupal site and destroy all existing data. Continue?" || exit 0
+      echo "Installing Drupal site..."
+      docker compose exec cli drush --root=/var/www/html/web site:install --yes --account-name=admin --account-pass=admin
+      echo "Site installed! Login with admin/admin"
+
+  # =============================================================================
+  # BUILD & DEPLOYMENT
+  # =============================================================================
+
+  build:
+    usage: Build the application
+    cmd: |
+      echo "Building application..."
+      if [ -f "package.json" ]; then
+        docker compose exec app npm run build
+      elif [ -f "Makefile" ]; then
+        docker compose exec app make build
+      elif [ -f "gulpfile.js" ]; then
+        docker compose exec app gulp build
+      fi
+      echo "Build complete!"
+
+  deploy:
+    usage: "Deploy to specified environment (staging|production)"
+    env: .env.deploy
+    cmd: |
+      set -euo pipefail
+      ENVIRONMENT="${1:-staging}"
+
+      if [ "$ENVIRONMENT" != "staging" ] && [ "$ENVIRONMENT" != "production" ]; then
+        echo "Invalid environment. Use: staging or production"
+        exit 1
+      fi
+
+      if [ "$ENVIRONMENT" = "production" ] && [ -t 0 ] && [ -z "$CI" ]; then
+        ahoy confirm "Deploying to PRODUCTION environment. This cannot be undone. Continue?" || exit 0
+      fi
+
+      echo "Deploying to $ENVIRONMENT..."
+      ahoy test
+      ahoy build
+      # Add your deployment commands here (rsync, git push, etc.)
+      echo "Deployed to $ENVIRONMENT!"
+  db:backup:
+    usage: Create a database backup
+    cmd: |
+      TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+      BACKUP_FILE="backup_${TIMESTAMP}.sql"
+      echo "Creating database backup: $BACKUP_FILE"
+      mkdir -p backups
+      if [ "${DB_TYPE:-mysql}" = "postgres" ]; then
+        docker compose exec db pg_dump -U "$DB_USER" "$DB_NAME" > "backups/$BACKUP_FILE"
+      else
+        docker compose exec db mysqldump -u"$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" > "backups/$BACKUP_FILE"
+      fi
+      echo "Backup created: backups/$BACKUP_FILE"
+
+  db:import:
+    usage: "Import database from backup file"
+    cmd: |
+      if [ -z "$1" ]; then
+        echo "Please provide a backup file: ahoy db:import backup_20231201_120000.sql"
+        exit 1
+      fi
+
+      ahoy confirm "This will completely replace the current database with $1. All existing data will be lost. Continue?" || exit 0
+
+      echo "Importing database from $1..."
+      if [ "${DB_TYPE:-mysql}" = "postgres" ]; then
+        docker compose exec -T db psql -U "$DB_USER" -d "$DB_NAME" < "backups/$1"
+      else
+        docker compose exec -T db mysql -u"$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" < "backups/$1"
+      fi
+      echo "Database import complete"
+
+  db:reset:
+    usage: Reset database to clean state
+    cmd: |
+      ahoy confirm "This will drop and recreate the database, destroying all data. Continue?" || exit 0
+      echo "Resetting database..."
+      if [ "${DB_TYPE:-mysql}" = "postgres" ]; then
+        docker compose exec db psql -U "$DB_USER" -c "DROP DATABASE IF EXISTS \"$DB_NAME\"; CREATE DATABASE \"$DB_NAME\";"
+      else
+        docker compose exec db mysql -u"$DB_USER" -p"$DB_PASSWORD" -e "DROP DATABASE IF EXISTS \`$DB_NAME\`; CREATE DATABASE \`$DB_NAME\`;"
+      fi
+      echo "Database reset complete"
+  # =============================================================================
+  # UTILITY COMMANDS
+  # =============================================================================
+
+  clean:
+    usage: Clean up development environment
+    cmd: |
+      ahoy confirm "This will remove all containers, unused images, and volumes. All data will be lost. Continue?" || exit 0
+      echo "Cleaning up development environment..."
+      docker compose down
+      docker system prune -f
+      docker volume prune -f
+      echo "Cleanup complete"
+
+  fresh:
+    usage: Fresh start - rebuild everything from scratch
+    cmd: |
+      ahoy confirm "This will completely destroy and rebuild the entire development environment. All data will be lost. Continue?" || exit 0
+      echo "Starting fresh rebuild..."
+      export AHOY_CONFIRM_RESPONSE=y && export AHOY_CONFIRM_WAIT_SKIP=1
+      ahoy clean
+      docker compose build --no-cache
+      ahoy up
+      ahoy install
+      echo "Fresh environment ready!"
+
+  urls:
+    usage: Show all available URLs and endpoints
+    cmd: |
+      echo "Available URLs:"
+      echo "  Application:      http://localhost:3000"
+      echo "  API:              http://localhost:8080"
+      echo "  Database Admin:   http://localhost:8081"
+      echo ""
+      echo "Useful commands:"
+      echo "  View logs:        ahoy logs"
+      echo "  Run tests:        ahoy test"
+      echo "  Check status:     ahoy status"
+  # =============================================================================
+  # ADVANCED EXAMPLES
+  # =============================================================================
+
+  release:
+    usage: "Create a new release (requires version number)"
+    cmd: |
+      set -euo pipefail
+      if [ -z "$1" ]; then
+        echo "Please provide a version number: ahoy release 1.2.3"
+        exit 1
+      fi
+
+      VERSION="$1"
+      echo "Creating release v$VERSION..."
+
+      # Run tests
+      echo "Running tests..."
+      ahoy test
+
+      # Build assets
+      echo "Building assets..."
+      ahoy build
+
+      # Create git tag
+      echo "Creating git tag..."
+      git add -A
+      git commit --allow-empty -m "Release v$VERSION"
+      git tag -a "v$VERSION" -m "Release version $VERSION"
+      git push origin main
+      git push origin "v$VERSION"
+
+      echo "Release v$VERSION created successfully!"
+
+  security:
+    usage: Run security audit and vulnerability scan
+    cmd: |
+      echo "Running security audit..."
+      if [ -f "package.json" ]; then
+        echo "Checking npm dependencies..."
+        docker compose exec app npm audit
+      fi
+      if [ -f "composer.json" ]; then
+        echo "Checking Composer dependencies..."
+        docker compose exec app composer audit
+      fi
+      if [ -f "requirements.txt" ]; then
+        echo "Checking Python dependencies..."
+        docker compose exec app pip check
+      fi
+      echo "Security audit complete"
+
+  # =============================================================================
+  # UTILITY COMMANDS
+  # =============================================================================
+
+  # Internal utility command to confirm actions before running them.
+  # This command helps prevent accidental execution of destructive operations.
+  #
+  # Usage: ahoy confirm "Your confirmation message here" || exit 0
+  #
+  # Features:
+  # - Interactive mode: Prompts user for y/N confirmation
+  # - Automated mode: Uses AHOY_CONFIRM_RESPONSE environment variable
+  # - CI-friendly: Set AHOY_CONFIRM_WAIT_SKIP=1 to skip delays
+  # - Chain-friendly: Can be used with other commands using environment variables
+  #
+  # Environment variables:
+  # - AHOY_CONFIRM_RESPONSE: Pre-set response ('y' or 'true' to proceed)
+  # - AHOY_CONFIRM_WAIT_SKIP: Set to '1' to skip the 3-second wait in automated mode
+  #
+  # Examples:
+  # Interactive: ahoy down (will prompt user)
+  # Automated: AHOY_CONFIRM_RESPONSE=y ahoy down (auto-confirms with 3s delay)
+  # CI mode: AHOY_CONFIRM_RESPONSE=y AHOY_CONFIRM_WAIT_SKIP=1 ahoy down (immediate)
+  confirm:
+    cmd: |
+      if [ -z "${AHOY_CONFIRM_RESPONSE}" ]; then
+        read -r -p ">> $1 [y/N] " AHOY_CONFIRM_RESPONSE
+        RESPONSE_LOWER=$(printf '%s' "${AHOY_CONFIRM_RESPONSE}" | tr '[:upper:]' '[:lower:]')
+        if [ "$RESPONSE_LOWER" != "y" ] && [ "$RESPONSE_LOWER" != "yes" ] && [ "$RESPONSE_LOWER" != "true" ]; then
+          echo "The operation was canceled."
+          exit 1
+        fi
+      else
+        if [ "${AHOY_CONFIRM_WAIT_SKIP}" != "1" ]; then
+          echo ">> $1 [y/N] ${AHOY_CONFIRM_RESPONSE}"
+          echo "Waiting for 3 seconds... Press Ctrl+C to cancel."
+          sleep 3
+        fi
+      fi
+    hide: true

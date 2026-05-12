@@ -1,0 +1,26 @@
+ahoyapi: v2
+commands:
+  echo:
+    usage: Display a message
+    description: |
+      This is a simple command that echoes any arguments passed to it.
+      Useful for testing and basic output.
+    cmd: echo "$@"
+
+  list:
+    usage: List directory contents
+    description: |
+      Lists all files and directories in the specified location.
+
+      Shows hidden files (starting with .) and supports all standard
+      ls options.
+
+      If no directory is specified, lists the current directory.
+    cmd: ls -a "$@"
+
+  whalesay:
+    usage: Make a whale say something
+    description: |
+      Uses Docker to run the whalesay container with a dragon figure to
+      display your message in ASCII art.
+    cmd: docker run --rm docker/whalesay cowsay -f dragon "$@"

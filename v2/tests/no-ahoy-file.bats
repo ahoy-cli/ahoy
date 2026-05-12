@@ -1,12 +1,29 @@
 #!/usr/bin/env bats
 
 setup() {
-  mv .ahoy.yml tmp.ahoy.yml
+  # Create a temporary directory for isolation to prevent finding parent .ahoy.yml files
+  TEST_DIR=$(mktemp -d)
+  
+  # Copy the ahoy binary to the temporary directory
+  # We expect the binary to be in the current directory (where bats is invoked)
+  if [ -f "./ahoy" ]; then
+    cp ./ahoy "$TEST_DIR/"
+  elif [ -f "../ahoy" ]; then
+    # Handle case where bats might be run from tests dir
+    cp "../ahoy" "$TEST_DIR/"
+  else
+    echo "Error: ahoy binary not found" >&2
+    exit 1
+  fi
+  
+  # Save original directory and switch to temp dir
+  export ORIG_DIR=$(pwd)
+  cd "$TEST_DIR"
 }
 
 teardown() {
-  mv tmp.ahoy.yml .ahoy.yml
-  rm -rf wget-lo*
+  cd "$ORIG_DIR"
+  rm -rf "$TEST_DIR"
 }
 
 @test "Run ahoy without a command and without an .ahoy.yml file" {
@@ -28,7 +45,7 @@ teardown() {
 }
 
 @test "Run ahoy init with an existing .ahoy.yml file in the current directory" {
-  cp tmp.ahoy.yml .ahoy.yml
+  echo "ahoyapi: v2" > .ahoy.yml
   run ./ahoy init --force
   [ "${lines[0]}" == "Warning: '--force' parameter passed, overwriting .ahoy.yml in current directory." ]
   [ "${lines[$((${#lines[@]}-1))]}" == "Example .ahoy.yml downloaded to the current directory. You can customize it to suit your needs!" ]
