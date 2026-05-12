@@ -72,3 +72,41 @@
     run ./ahoy -f testdata/env-multiple-global.ahoy.yml test-cmd-multiple-override
     [[ "$output" = "999" ]]
 }
+
+@test "AHOY_CMD is set to the path of the running ahoy binary" {
+    run ./ahoy -f testdata/ahoy-self-env.ahoy.yml show-ahoy-cmd
+    [ $status -eq 0 ]
+    [[ "$output" != "" ]]
+}
+
+@test "AHOY_CMD points to an executable file" {
+    run ./ahoy -f testdata/ahoy-self-env.ahoy.yml ahoy-cmd-is-executable
+    [ $status -eq 0 ]
+}
+
+@test "AHOY_CMD is not set to a literal 'ahoy' string but resolves to the binary path" {
+    run ./ahoy -f testdata/ahoy-self-env.ahoy.yml show-ahoy-cmd
+    [ $status -eq 0 ]
+    [[ "$output" != "ahoy" ]]
+}
+
+@test "AHOY_COMMAND_NAME is set to the name of the running command" {
+    run ./ahoy -f testdata/ahoy-self-env.ahoy.yml show-ahoy-command-name
+    [ $status -eq 0 ]
+    [[ "$output" = "show-ahoy-command-name" ]]
+}
+
+@test "AHOY_COMMAND_NAME reflects the correct command name for each command" {
+    run ./ahoy -f testdata/ahoy-self-env.ahoy.yml show-both
+    [ $status -eq 0 ]
+    [[ "$output" == *"show-both" ]]
+}
+
+@test "AHOY_CMD and AHOY_COMMAND_NAME are both set in the same subprocess" {
+    run ./ahoy -f testdata/ahoy-self-env.ahoy.yml show-both
+    [ $status -eq 0 ]
+    [[ "$output" != "" ]]
+    # Output should contain two space-separated values.
+    word_count=$(echo "$output" | wc -w | tr -d ' ')
+    [[ "$word_count" -eq 2 ]]
+}

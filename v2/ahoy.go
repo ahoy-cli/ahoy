@@ -47,6 +47,7 @@ var (
 	sourcefile     string
 	verbose        bool
 	bashCompletion bool
+	ahoyExecutable string
 )
 
 // The build version can be set using the go linker flag `-ldflags "-X main.version=$VERSION"`
@@ -313,7 +314,11 @@ func getCommands(config Config) []cli.Command {
 				command.Stdout = os.Stdout
 				command.Stdin = os.Stdin
 				command.Stderr = os.Stderr
-				command.Env = append(command.Environ(), envVars...)
+				ahoyEnvVars := []string{"AHOY_COMMAND_NAME=" + c.Command.Name}
+				if ahoyExecutable != "" {
+					ahoyEnvVars = append(ahoyEnvVars, "AHOY_CMD="+ahoyExecutable)
+				}
+				command.Env = append(command.Environ(), append(ahoyEnvVars, envVars...)...)
 				if err := command.Run(); err != nil {
 					fmt.Fprintln(os.Stderr)
 					os.Exit(1)
@@ -563,6 +568,9 @@ ALIASES:
 
 func main() {
 	logger("debug", "main()")
+	if exe, err := os.Executable(); err == nil {
+		ahoyExecutable = exe
+	}
 	app = setupApp(os.Args[1:])
 	app.Run(os.Args)
 }
