@@ -45,6 +45,7 @@ var (
 	sourcefile      string
 	verbose         bool
 	simulateVersion string
+	ahoyExecutable  string
 )
 
 // The build version can be set using the go linker flag `-ldflags "-X main.version=$VERSION"`
@@ -346,6 +347,14 @@ func getCommands(config Config) []*cobra.Command {
 						}
 					}
 				}
+
+				// Inject ahoy-specific environment variables so subprocesses can
+				// identify the running binary and the invoked command name.
+				ahoyEnvVars := []string{"AHOY_COMMAND_NAME=" + cmdName}
+				if ahoyExecutable != "" {
+					ahoyEnvVars = append(ahoyEnvVars, "AHOY_CMD="+ahoyExecutable)
+				}
+				cmdEnvVars = append(cmdEnvVars, ahoyEnvVars...)
 
 				if verbose {
 					log.Println("===> Ahoy", cmdName, "from", sourcefile, ":", cmdItems)
@@ -704,6 +713,9 @@ VERSION:
 
 func main() {
 	logger("debug", "main()")
+	if exe, err := os.Executable(); err == nil {
+		ahoyExecutable = exe
+	}
 	rootCmd = setupApp(os.Args[1:])
 
 	// Check for invalid flag error from initFlags - show help and exit 1.
