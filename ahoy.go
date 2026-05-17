@@ -354,7 +354,7 @@ func getCommands(config Config) []*cobra.Command {
 				if ahoyExecutable != "" {
 					ahoyEnvVars = append(ahoyEnvVars, "AHOY_CMD="+ahoyExecutable)
 				}
-				cmdEnvVars = append(ahoyEnvVars, cmdEnvVars...)
+				cmdEnvVars = append(cmdEnvVars, ahoyEnvVars...)
 
 				if verbose {
 					log.Println("===> Ahoy", cmdName, "from", sourcefile, ":", cmdItems)
