@@ -1,0 +1,21 @@
+ahoyapi: v2
+env:
+  - .env
+  - .env.cmd
+commands:
+  test-global:
+    cmd: echo $GLOBAL
+  test-command:
+    cmd: echo $COMMAND
+  test-overridden:
+    cmd: echo $TO_BE_OVERRIDDEN
+  test-cmd-multiple-1:
+    cmd: echo $UNIQUE
+    env:
+      - .env.local1
+      - .env.local2
+  test-cmd-multiple-2:
+    cmd: echo $TO_BE_OVERRIDDEN
+    env:
+      - .env.local1
+      - .env.local2

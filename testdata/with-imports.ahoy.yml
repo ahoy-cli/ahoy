@@ -1,0 +1,12 @@
+ahoyapi: v2
+commands:
+  test1:
+    usage: Import existing and missing files
+    imports:
+      - simple.ahoy.yml
+      - missing-import.ahoy.yml
+  test2:
+    usage: Optional import of missing file
+    optional: true
+    imports:
+      - another-missing.ahoy.yml

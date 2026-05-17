@@ -1,0 +1,4 @@
+ahoyapi: v2
+commands:
+  override-example:
+    cmd: echo "Overrode you."

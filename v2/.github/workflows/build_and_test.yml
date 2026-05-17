@@ -1,0 +1,155 @@
+name: "Build and test"
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: ./v2
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+          cache: true
+
+      - name: Install BATS (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          git clone https://github.com/bats-core/bats-core.git
+          cd bats-core
+          sudo ./install.sh /usr/local
+          bats --version
+          cd ..
+
+      - name: Install BATS (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          git clone https://github.com/bats-core/bats-core.git
+          cd bats-core
+          # Create proper directory structure that BATS expects
+          New-Item -ItemType Directory -Force -Path "C:\bats\bin"
+          New-Item -ItemType Directory -Force -Path "C:\bats\libexec\bats-core"
+          
+          # Copy the main bats script
+          Copy-Item "bin\bats" "C:\bats\bin\bats"
+          
+          # Copy the core BATS files that are expected
+          Copy-Item "libexec\bats-core\*" "C:\bats\libexec\bats-core\" -Recurse -Force
+          
+          # Add to PATH
+          echo "C:\bats\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          cd ..
+        shell: pwsh
+
+      - name: Install BATS extras
+        run: |
+          cd tests
+          git clone https://github.com/bats-core/bats-support.git ./test_helpers/bats-support
+          git clone https://github.com/bats-core/bats-assert.git ./test_helpers/bats-assert
+          cd ..
+
+      - name: Install Go linter (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.46.2
+
+      - name: Install PHP (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y php
+
+      - name: Install PHP (macOS)
+        if: runner.os == 'macOS'
+        run: brew install php
+
+      - name: Install PHP (Windows)
+        if: runner.os == 'Windows'
+        run: choco install php
+
+      - name: Get dependencies
+        run: |
+          go mod tidy
+          go mod vendor
+          go mod verify
+
+      - name: Build
+        run: |
+          make
+          make version
+
+      - name: Lint
+        if: runner.os != 'Windows'
+        run: golangci-lint run || true
+
+      - name: Run unit tests (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: make test
+
+      - name: Run unit tests (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          go fmt ./...
+          go vet ./...
+          go test ./...
+
+      - name: Run functional tests (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: ./ahoy test
+
+      - name: Run functional tests (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          # List files to see what was built
+          dir ahoy*
+
+          # Test that the binary works (issue #147 fix validation)
+          .\ahoy.exe --version
+          .\ahoy.exe --help
+          
+          # Test with a simple config file
+          .\ahoy.exe -f testdata\simple.ahoy.yml echo "Windows functional test passed"
+        shell: pwsh
+
+      - name: Run tests with coverage (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          go install gotest.tools/gotestsum@latest
+          mkdir -p /tmp/test-reports
+          gotestsum --junitfile /tmp/test-reports/unit-tests.xml
+
+      - name: Run tests with coverage (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          go install gotest.tools/gotestsum@latest
+          New-Item -ItemType Directory -Force -Path "C:\tmp\test-reports"
+          gotestsum --junitfile C:\tmp\test-reports\unit-tests.xml
+        shell: pwsh
+
+      - name: Upload test results (Linux/macOS)
+        uses: actions/upload-artifact@v4
+        if: always() && runner.os != 'Windows'
+        with:
+          name: test-results-${{ matrix.os }}
+          path: /tmp/test-reports/
+          retention-days: 30
+
+      - name: Upload test results (Windows)
+        uses: actions/upload-artifact@v4
+        if: always() && runner.os == 'Windows'
+        with:
+          name: test-results-${{ matrix.os }}
+          path: C:\tmp\test-reports\
+          retention-days: 30

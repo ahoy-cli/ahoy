@@ -1,0 +1,193 @@
+# Goreleaser config for ahoy.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+
+env:
+  - GO111MODULE=on
+  - GOPROXY=https://proxy.golang.org,direct
+before:
+  hooks:
+    - sh -c "cd v2 && go mod download"
+    - sh -c "cd v2 && go mod tidy"
+    - sh -c "cd v2 && go test ./..."
+
+builds:
+  # Standard build
+  - id: ahoy
+    dir: v2
+    # Binary name format: ahoy-bin-{os}-{arch}[v{arm_version}]
+    binary: "{{ .ProjectName }}-bin-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}"
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+      - arm
+    goarm:
+      - "6"
+      - "7"
+    ignore:
+      - goos: windows
+        goarch: arm
+      - goos: windows
+        goarm: "6"
+      - goos: windows
+        goarm: "7"
+      - goos: darwin
+        goarch: arm
+    flags:
+      - -trimpath
+      - -v
+    ldflags:
+      - -s -w
+      - -X main.version={{ .Tag }}
+      - -X main.GitCommit={{ .ShortCommit }}
+      - -X main.GitBranch={{ .Branch }}
+      - -X main.BuildTime={{ .Date }}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+  # Static build for Linux (useful for containers)
+  - id: ahoy-static
+    dir: v2
+    # Binary name format: ahoy-bin-{os}-{arch}[v{arm_version}]-static
+    binary: "{{ .ProjectName }}-bin-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}-static"
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+      - -v
+    ldflags:
+      - -s -w
+      - -X main.version={{ .Tag }}
+      - -X main.GitCommit={{ .ShortCommit }}
+      - -X main.GitBranch={{ .Branch }}
+      - -X main.BuildTime={{ .Date }}
+      - -extldflags=-static
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  # Standard archives
+  - id: standard
+    ids:
+      - ahoy
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    # Archive name format: ahoy_{version}_{os}_{arch}[v{arm_version}]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}"
+    files:
+      - README.md
+      - LICENSE
+      - examples/examples.ahoy.yml
+
+  # Static archives
+  - id: static
+    ids:
+      - ahoy-static
+    formats:
+      - tar.gz
+    # Archive name format: ahoy_{version}_{os}_{arch}_static[v{arm_version}]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}_static{{ with .Arm }}v{{ . }}{{ end }}"
+    files:
+      - README.md
+      - LICENSE
+      - examples/examples.ahoy.yml
+
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+  algorithm: sha256
+
+snapshot:
+  version_template: "{{ .Version }}-SNAPSHOT-{{ .ShortCommit }}"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^build:"
+      - "^chore:"
+      - Merge pull request
+      - Merge branch
+  groups:
+    - title: "New Features"
+      regexp: "^feat(\\([\\w\\-]+\\))?: .+$"
+      order: 0
+    - title: "Bug Fixes"
+      regexp: "^fix(\\([\\w\\-]+\\))?: .+$"
+      order: 1
+    - title: "Enhancements"
+      regexp: "^.*enhancement[(\\w)]*:+.*$"
+      order: 2
+    - title: "Other Changes"
+      order: 999
+
+sboms:
+  # Regular builds SBOM
+  - id: binary-regular
+    artifacts: binary
+    ids:
+      - ahoy
+    documents:
+      # SBOM name format: ahoy_{version}_{os}_{arch}[v{arm_version}].sbom
+      - "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}.sbom"
+
+  # Static builds SBOM
+  - id: binary-static
+    artifacts: binary
+    ids:
+      - ahoy-static
+    documents:
+      # SBOM name format: ahoy_{version}_{os}_{arch}[v{arm_version}]_static.sbom
+      - "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}_static.sbom"
+
+# signs:
+#   - cmd: gpg
+#     args:
+#       - "--batch"
+#       - "--yes"
+#       - "-u"
+#       - "{{ .Env.GPG_FINGERPRINT }}"
+#       - "--output"
+#       - "${signature}"
+#       - "--detach-sign"
+#       - "${artifact}"
+#     artifacts: checksum
+#     output: true
+#     stdin: "{{ .Env.GPG_PASSWORD }}"
+
+# Upload individual binaries as well as archives
+release:
+  github:
+    owner: ahoy-cli
+    name: ahoy
+  draft: true
+  replace_existing_draft: true
+  mode: append
+  prerelease: auto
+  target_commitish: "{{ .Commit }}"
+  # Upload extra files (individual binaries) - maintaining existing naming convention
+  extra_files:
+    - glob: "dist/ahoy_**/ahoy-bin-*"
+      name_template: "{{ .ArtifactName }}"
+    - glob: "dist/ahoy_**/ahoy-bin-*.exe"
+      name_template: "{{ .ArtifactName }}"
+    - glob: "dist/ahoy-static_**/ahoy-bin-*-static"
+      name_template: "{{ .ArtifactName }}"
+
+# Generate metadata for package managers
+metadata:
+  mod_timestamp: "{{ .CommitTimestamp }}"
