@@ -20,24 +20,24 @@ import (
 // Config handles the overall configuration in an ahoy.yml file
 // with one Config per file.
 type Config struct {
-	Usage      string
-	AhoyAPI    string
-	Commands   map[string]Command
-	Entrypoint []string
-	Env        StringArray
+	Usage      string             `yaml:"usage"`
+	AhoyAPI    string             `yaml:"ahoyapi"`
+	Commands   map[string]Command `yaml:"commands"`
+	Entrypoint []string           `yaml:"entrypoint"`
+	Env        StringArray        `yaml:"env"`
 }
 
 // Command is an ahoy command detailed in ahoy.yml files. Multiple
 // commands can be defined per ahoy.yml file.
 type Command struct {
-	Description string
-	Usage       string
-	Cmd         string
-	Env         StringArray
-	Hide        bool
-	Optional    bool
-	Imports     []string
-	Aliases     []string
+	Description string      `yaml:"description"`
+	Usage       string      `yaml:"usage"`
+	Cmd         string      `yaml:"cmd"`
+	Env         StringArray `yaml:"env"`
+	Hide        bool        `yaml:"hide"`
+	Optional    bool        `yaml:"optional"`
+	Imports     []string    `yaml:"imports"`
+	Aliases     []string    `yaml:"aliases"`
 }
 
 var (
@@ -45,6 +45,8 @@ var (
 	sourcefile      string
 	verbose         bool
 	simulateVersion string
+	ahoyExecutable  string
+	importVisited   map[string]bool
 )
 
 // The build version can be set using the go linker flag `-ldflags "-X main.version=$VERSION"`
@@ -105,6 +107,18 @@ func expandPath(path, baseDir string) string {
 		return path
 	}
 	return filepath.Join(baseDir, path)
+}
+
+// normalizePath normalizes a file path to its absolute and clean form.
+func normalizePath(path string) string {
+	if path == "" {
+		return ""
+	}
+	cleaned := filepath.Clean(path)
+	if abs, err := filepath.Abs(cleaned); err == nil {
+		return abs
+	}
+	return cleaned
 }
 
 func getConfigPath(sourcefile string) (string, error) {
@@ -169,6 +183,45 @@ func getConfig(file string) (Config, error) {
 	return config, err
 }
 
+func processImport(include string, commands map[string]*cobra.Command) {
+	include = expandPath(include, AhoyConf.srcDir)
+	normalizedInclude := normalizePath(include)
+
+	// Guard against circular imports. Lazily initialise so direct callers
+	// in tests don't need to prime the map themselves.
+	if importVisited == nil {
+		importVisited = map[string]bool{}
+	}
+	if importVisited[normalizedInclude] {
+		logger("warn", "Circular import detected for '"+include+"', skipping.")
+		return
+	}
+	importVisited[normalizedInclude] = true
+	defer func() {
+		delete(importVisited, normalizedInclude)
+	}()
+
+	if _, err := os.Stat(include); err != nil {
+		if !os.IsNotExist(err) {
+			// File exists but is unreadable (e.g. EACCES) - log so the
+			// user knows why commands are missing.
+			logger("error", "Cannot access import file '"+include+"': "+err.Error())
+		}
+		// Skipping missing or unreadable files allows subcommands to be
+		// separated into public and private sets.
+		return
+	}
+	config, err := getConfig(include)
+	if err != nil {
+		logger("error", "Could not load imported config '"+include+"': "+err.Error())
+		return
+	}
+	includeCommands := getCommands(config)
+	for _, command := range includeCommands {
+		commands[command.Name()] = command
+	}
+}
+
 func getSubCommands(includes []string) []*cobra.Command {
 	subCommands := []*cobra.Command{}
 	if len(includes) == 0 {
@@ -179,26 +232,7 @@ func getSubCommands(includes []string) []*cobra.Command {
 		if len(include) == 0 {
 			continue
 		}
-		include = expandPath(include, AhoyConf.srcDir)
-		if _, err := os.Stat(include); err != nil {
-			if !os.IsNotExist(err) {
-				// File exists but is unreadable (e.g. EACCES) - log so the
-				// user knows why commands are missing.
-				logger("error", "Cannot access import file '"+include+"': "+err.Error())
-			}
-			// Skipping missing or unreadable files allows subcommands to be
-			// separated into public and private sets.
-			continue
-		}
-		config, err := getConfig(include)
-		if err != nil {
-			logger("error", "Could not load imported config '"+include+"': "+err.Error())
-			continue
-		}
-		includeCommands := getCommands(config)
-		for _, command := range includeCommands {
-			commands[command.Name()] = command
-		}
+		processImport(include, commands)
 	}
 
 	var names []string
@@ -263,22 +297,26 @@ func getCommands(config Config) []*cobra.Command {
 	}
 	sort.Strings(keys)
 
+	var configErrors []string
 	for _, name := range keys {
 		cmd := config.Commands[name]
 
 		// Check that a command has 'cmd' OR 'imports' set.
 		if cmd.Cmd == "" && cmd.Imports == nil {
-			logger("fatal", "Command ["+name+"] has neither 'cmd' or 'imports' set. Check your yaml file.")
+			configErrors = append(configErrors, "Command ["+name+"] has neither 'cmd' or 'imports' set. Check your yaml file.")
+			continue
 		}
 
 		// Check if a command has 'cmd' AND 'imports' set.
 		if cmd.Cmd != "" && cmd.Imports != nil {
-			logger("fatal", "Command ["+name+"] has both 'cmd' and 'imports' set, but only one is allowed. Check your yaml file.")
+			configErrors = append(configErrors, "Command ["+name+"] has both 'cmd' and 'imports' set, but only one is allowed. Check your yaml file.")
+			continue
 		}
 
 		// Check that a command with 'imports' set has at least one entry.
 		if cmd.Imports != nil && len(cmd.Imports) == 0 {
-			logger("fatal", "Command ["+name+"] has 'imports' set, but it is empty. Check your yaml file.")
+			configErrors = append(configErrors, "Command ["+name+"] has 'imports' set, but it is empty. Check your yaml file.")
+			continue
 		}
 
 		newCmd := &cobra.Command{
@@ -306,7 +344,7 @@ func getCommands(config Config) []*cobra.Command {
 			cmdEnv := cmd.Env
 			cmdName := name
 
-			newCmd.Run = func(cobraCmd *cobra.Command, args []string) {
+			newCmd.RunE = func(cobraCmd *cobra.Command, args []string) error {
 				// 'bash -c' passes arguments starting with $0, so $@ skips the first item.
 				// See http://stackoverflow.com/questions/41043163/xargs-sh-c-skipping-the-first-argument
 				var cmdItems []string
@@ -347,6 +385,14 @@ func getCommands(config Config) []*cobra.Command {
 					}
 				}
 
+				// Inject ahoy-specific environment variables so subprocesses can
+				// identify the running binary and the invoked command name.
+				ahoyEnvVars := []string{"AHOY_COMMAND_NAME=" + cmdName}
+				if ahoyExecutable != "" {
+					ahoyEnvVars = append(ahoyEnvVars, "AHOY_CMD="+ahoyExecutable)
+				}
+				cmdEnvVars = append(cmdEnvVars, ahoyEnvVars...)
+
 				if verbose {
 					log.Println("===> Ahoy", cmdName, "from", sourcefile, ":", cmdItems)
 				}
@@ -358,8 +404,9 @@ func getCommands(config Config) []*cobra.Command {
 				command.Env = append(command.Environ(), cmdEnvVars...)
 				if err := command.Run(); err != nil {
 					fmt.Fprintln(os.Stderr)
-					os.Exit(1)
+					return err
 				}
+				return nil
 			}
 		}
 
@@ -410,6 +457,13 @@ func getCommands(config Config) []*cobra.Command {
 		newCmd.SetHelpFunc(commandHelpFunc)
 
 		exportCmds = append(exportCmds, newCmd)
+	}
+
+	for _, e := range configErrors {
+		logger("error", e)
+	}
+	if len(configErrors) > 0 {
+		logger("fatal", "Fix the above configuration errors and try again.")
 	}
 
 	return exportCmds
@@ -472,11 +526,6 @@ func addDefaultCommands(commands []*cobra.Command) []*cobra.Command {
 // BashComplete prints the list of subcommands as the default app completion method
 func BashComplete(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	logger("debug", "BashComplete()")
-
-	if sourcefile != "" {
-		log.Println(sourcefile)
-		os.Exit(0)
-	}
 
 	completions := []string{}
 	for _, command := range cmd.Root().Commands() {
@@ -587,11 +636,16 @@ func setupApp(localArgs []string) *cobra.Command {
 	// Disable default help command
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 
+	importVisited = map[string]bool{}
+
 	AhoyConf.srcFile, err = getConfigPath(sourcefile)
 	if err != nil {
 		logger("fatal", err.Error())
 	} else {
 		AhoyConf.srcDir = filepath.Dir(AhoyConf.srcFile)
+		if AhoyConf.srcFile != "" {
+			importVisited[normalizePath(AhoyConf.srcFile)] = true
+		}
 		// If we don't have a sourcefile, then just supply the default commands.
 		if AhoyConf.srcFile == "" {
 			commands := addDefaultCommands([]*cobra.Command{})
@@ -704,6 +758,9 @@ VERSION:
 
 func main() {
 	logger("debug", "main()")
+	if exe, err := os.Executable(); err == nil {
+		ahoyExecutable = exe
+	}
 	rootCmd = setupApp(os.Args[1:])
 
 	// Check for invalid flag error from initFlags - show help and exit 1.

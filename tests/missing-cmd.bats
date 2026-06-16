@@ -5,7 +5,7 @@
   [ $status -ne 0 ]
   echo "${lines[@]}"
   [ "${lines[0]}" != "panic: runtime error: invalid memory address or nil pointer dereference" ]
-  [ "${lines[0]}" == "[fatal] Command [missing-completely] has neither 'cmd' or 'imports' set. Check your yaml file." ]
+  [[ "$output" =~ "Command [missing-completely] has neither 'cmd' or 'imports' set. Check your yaml file." ]]
 }
 
 @test "An empty imports throws err, but doesn't cause a panic." {
@@ -13,7 +13,33 @@
   [ $status -ne 0 ]
   echo "${lines[@]}"
   [ "${lines[0]}" != "panic: runtime error: invalid memory address or nil pointer dereference" ]
-  [ "${lines[0]}" == "[fatal] Command [empty-imports] has 'imports' set, but it is empty. Check your yaml file." ]
+  [[ "$output" =~ "Command [empty-imports] has 'imports' set, but it is empty. Check your yaml file." ]]
+}
+
+@test "Circular imports are detected and skipped without a stack overflow." {
+  local tmpdir
+  tmpdir=$(mktemp -d)
+  cat > "$tmpdir/a.ahoy.yml" <<'EOF'
+ahoyapi: v2
+commands:
+  from-a:
+    imports:
+      - b.ahoy.yml
+EOF
+  cat > "$tmpdir/b.ahoy.yml" <<'EOF'
+ahoyapi: v2
+commands:
+  from-b:
+    imports:
+      - a.ahoy.yml
+EOF
+  run ./ahoy -f "$tmpdir/a.ahoy.yml" list
+  rm -rf "$tmpdir"
+  # Circular imports result in a broken config (empty non-optional import group),
+  # so exit status is non-zero — but the process must not crash or stack overflow.
+  [ $status -ne 0 ]
+  [ "${lines[0]}" != "panic: runtime error: invalid memory address or nil pointer dereference" ]
+  [[ "$output" =~ "Circular import detected" ]]
 }
 
 @test "An missing import throws err, but doesn't cause a panic." {

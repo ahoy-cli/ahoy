@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"gopkg.in/yaml.v2"
@@ -42,9 +45,19 @@ func TestGetCommands(t *testing.T) {
 }
 
 func TestGetSubCommand(t *testing.T) {
-	// Since we're not running the app directly, sourcedir doesn't get reset, so
-	// we need to reset it ourselves. TODO: Remove these globals somehow.
+	// Save and restore the global state this test mutates, so it stays isolated
+	// from other tests regardless of execution order.
+	origSrcDir := AhoyConf.srcDir
+	origImportVisited := importVisited
+	t.Cleanup(func() {
+		AhoyConf.srcDir = origSrcDir
+		importVisited = origImportVisited
+	})
+
+	// Since we're not running the app directly, globals don't get reset, so
+	// we need to reset them ourselves. TODO: Remove these globals somehow.
 	AhoyConf.srcDir = ""
+	importVisited = nil
 
 	// When empty return empty list of commands.
 
@@ -143,6 +156,7 @@ commands:
 		t.Error("Error writing to file3.")
 	}
 
+	importVisited = nil
 	actual = getSubCommands([]string{
 		"./testing/a.ahoy.yml",
 		"./testing/b.ahoy.yml",
@@ -238,10 +252,26 @@ func TestGetConfigPathErrorOnBogusPath(t *testing.T) {
 func appRun(args []string) (string, error) {
 	stdout := os.Stdout
 	stderr := os.Stderr
-	r, w, _ := os.Pipe()
-	rErr, wErr, _ := os.Pipe()
+
+	r, w, pipeErr := os.Pipe()
+	if pipeErr != nil {
+		return "", fmt.Errorf("failed to create stdout pipe: %w", pipeErr)
+	}
+	defer r.Close()
+
+	rErr, wErr, pipeErr := os.Pipe()
+	if pipeErr != nil {
+		w.Close()
+		return "", fmt.Errorf("failed to create stderr pipe: %w", pipeErr)
+	}
+	defer rErr.Close()
+
 	os.Stdout = w
 	os.Stderr = wErr
+	defer func() {
+		os.Stdout = stdout
+		os.Stderr = stderr
+	}()
 
 	cmd := setupApp(args[1:])
 	// Don't call SetArgs again - setupApp already parsed the flags
@@ -274,8 +304,6 @@ func appRun(args []string) (string, error) {
 	wErr.Close()
 	out, _ := io.ReadAll(r)
 	errOut, _ := io.ReadAll(rErr)
-	os.Stdout = stdout
-	os.Stderr = stderr
 
 	// If there was an error output, include it
 	if len(errOut) > 0 {
@@ -307,5 +335,164 @@ func TestExpandPath(t *testing.T) {
 		if result != tt.expected {
 			t.Errorf("expandPath(%q, %q) = %q, want %q", tt.path, tt.baseDir, result, tt.expected)
 		}
+	}
+}
+
+func TestMultiBranchAndCircularImports(t *testing.T) {
+	err := os.MkdirAll("test_imports", 0755)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll("test_imports")
+
+	// Create a shared command file
+	sharedYml := `
+ahoyapi: v2
+commands:
+  shared-cmd:
+    cmd: echo "shared"
+`
+	if err := os.WriteFile("test_imports/shared.yml", []byte(sharedYml), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create branch A which imports shared
+	branchAYml := `
+ahoyapi: v2
+commands:
+  import-a:
+    imports:
+      - shared.yml
+`
+	if err := os.WriteFile("test_imports/branchA.yml", []byte(branchAYml), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create branch B which imports shared
+	branchBYml := `
+ahoyapi: v2
+commands:
+  import-b:
+    imports:
+      - shared.yml
+`
+	if err := os.WriteFile("test_imports/branchB.yml", []byte(branchBYml), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create circular A which imports circular B
+	circularAYml := `
+ahoyapi: v2
+commands:
+  import-circ-a:
+    optional: true
+    imports:
+      - circularB.yml
+  circ-a:
+    cmd: echo "circ-a"
+`
+	if err := os.WriteFile("test_imports/circularA.yml", []byte(circularAYml), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create circular B which imports circular A
+	circularBYml := `
+ahoyapi: v2
+commands:
+  import-circ-b:
+    optional: true
+    imports:
+      - circularA.yml
+  circ-b:
+    cmd: echo "circ-b"
+`
+	if err := os.WriteFile("test_imports/circularB.yml", []byte(circularBYml), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	// Save and restore the global state this test mutates, so it stays isolated
+	// from other tests regardless of execution order.
+	origSrcDir := AhoyConf.srcDir
+	origImportVisited := importVisited
+	origLogOutput := log.Writer()
+	t.Cleanup(func() {
+		AhoyConf.srcDir = origSrcDir
+		importVisited = origImportVisited
+		log.SetOutput(origLogOutput)
+	})
+
+	// Test multi-branch imports. Both branchA and branchB should successfully resolve shared.yml.
+	// We reset global state as in other tests.
+	AhoyConf.srcDir = "test_imports"
+	importVisited = nil
+
+	// We seed the visited map with a root yml
+	importVisited = map[string]bool{}
+	importVisited[normalizePath("test_imports/root.yml")] = true
+
+	commands := getSubCommands([]string{
+		"branchA.yml",
+		"branchB.yml",
+	})
+
+	foundSharedCmdInA := false
+	foundSharedCmdInB := false
+	for _, cmd := range commands {
+		if cmd.Name() == "import-a" {
+			for _, sub := range cmd.Commands() {
+				if sub.Name() == "shared-cmd" {
+					foundSharedCmdInA = true
+				}
+			}
+		}
+		if cmd.Name() == "import-b" {
+			for _, sub := range cmd.Commands() {
+				if sub.Name() == "shared-cmd" {
+					foundSharedCmdInB = true
+				}
+			}
+		}
+	}
+	if !foundSharedCmdInA || !foundSharedCmdInB {
+		t.Errorf("Expected to find 'shared-cmd' in both import-a (found: %v) and import-b (found: %v)", foundSharedCmdInA, foundSharedCmdInB)
+	}
+
+	// Test circular imports to make sure they are caught and do not stack overflow.
+	importVisited = map[string]bool{}
+	importVisited[normalizePath("test_imports/root.yml")] = true
+
+	// Capturing log/stdout to verify circular import warning is printed.
+	// The original log output is restored by the t.Cleanup above.
+	var logBuf bytes.Buffer
+	log.SetOutput(&logBuf)
+
+	circularCmds := getSubCommands([]string{
+		"circularA.yml",
+	})
+
+	// Since circularA imports circularB, and circularB imports circularA:
+	// Path: circularA -> circularB -> circularA (detected circular, skipped)
+	// We should still get the commands from circularA and circularB once.
+	hasCircA := false
+	hasCircB := false
+	for _, cmd := range circularCmds {
+		if cmd.Name() == "circ-a" {
+			hasCircA = true
+		}
+		if cmd.Name() == "import-circ-a" {
+			for _, sub := range cmd.Commands() {
+				if sub.Name() == "circ-b" {
+					hasCircB = true
+				}
+			}
+		}
+	}
+	if !hasCircA || !hasCircB {
+		t.Errorf("Expected to load circ-a (found: %v) and circ-b (found: %v)", hasCircA, hasCircB)
+	}
+
+	logStr := logBuf.String()
+	if !strings.Contains(logStr, "Circular import detected") {
+		t.Errorf("Expected log to contain 'Circular import detected', got: %q", logStr)
 	}
 }
