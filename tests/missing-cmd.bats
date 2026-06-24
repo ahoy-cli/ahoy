@@ -36,7 +36,7 @@ EOF
   run ./ahoy -f "$tmpdir/a.ahoy.yml" list
   rm -rf "$tmpdir"
   # Circular imports result in a broken config (empty non-optional import group),
-  # so exit status is non-zero — but the process must not crash or stack overflow.
+  # so exit status is non-zero, but the process must not crash or stack overflow.
   [ $status -ne 0 ]
   [ "${lines[0]}" != "panic: runtime error: invalid memory address or nil pointer dereference" ]
   [[ "$output" =~ "Circular import detected" ]]

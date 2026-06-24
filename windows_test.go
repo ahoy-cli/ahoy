@@ -58,10 +58,14 @@ commands:
 	if err != nil {
 		t.Fatalf("Failed to change directory: %v", err)
 	}
-	defer os.Chdir(originalDir)
+	defer func() {
+		if err := os.Chdir(originalDir); err != nil {
+			t.Errorf("failed to restore working directory: %v", err)
+		}
+	}()
 
 	// Test that getConfigPath finds the .ahoy.yml file
-	foundPath, err := getConfigPath("")
+	foundPath, err := (&appState{}).getConfigPath()
 	if err != nil {
 		t.Errorf("getConfigPath failed: %v", err)
 	}
@@ -89,7 +93,7 @@ ANOTHER_VAR=another_value`
 	}
 	defer os.Remove(testEnvFile)
 
-	envVars := getEnvironmentVars(testEnvFile)
+	envVars := (&appState{}).getEnvironmentVars(testEnvFile)
 
 	expectedVars := []string{"WINDOWS_TEST_VAR=test_value", "ANOTHER_VAR=another_value"}
 	if len(envVars) != len(expectedVars) {
@@ -159,7 +163,7 @@ func TestWindowsCommandExecution(t *testing.T) {
 		Entrypoint: []string{"cmd", "/c", "{{cmd}}"},
 	}
 
-	commands := getCommands(config)
+	commands := (&appState{}).getCommands(config)
 	if len(commands) == 0 {
 		t.Error("No commands generated from config")
 	}

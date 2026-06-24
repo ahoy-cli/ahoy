@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -18,7 +19,7 @@ func TestOverrideExample(t *testing.T) {
 	expected := "Overrode you.\n"
 	actual, _ := appRun([]string{"ahoy", "-f", "testdata/override-base.ahoy.yml", "docker", "override-example"})
 	if expected != actual {
-		t.Errorf("ahoy docker override-example: expected - %s; actual - %s", string(expected), string(actual))
+		t.Errorf("ahoy docker override-example: expected - %s; actual - %s", expected, actual)
 	}
 }
 
@@ -37,7 +38,7 @@ func TestGetCommands(t *testing.T) {
 		},
 	}
 
-	commands := getCommands(config)
+	commands := (&appState{}).getCommands(config)
 
 	if len(commands) != 1 {
 		t.Error("Expect that getCommands can get one command if passed config with one command.")
@@ -45,34 +46,20 @@ func TestGetCommands(t *testing.T) {
 }
 
 func TestGetSubCommand(t *testing.T) {
-	// Save and restore the global state this test mutates, so it stays isolated
-	// from other tests regardless of execution order.
-	origSrcDir := AhoyConf.srcDir
-	origImportVisited := importVisited
-	t.Cleanup(func() {
-		AhoyConf.srcDir = origSrcDir
-		importVisited = origImportVisited
-	})
-
-	// Since we're not running the app directly, globals don't get reset, so
-	// we need to reset them ourselves. TODO: Remove these globals somehow.
-	AhoyConf.srcDir = ""
-	importVisited = nil
+	// Each scenario uses its own appState, no global save/restore needed.
+	state := &appState{}
 
 	// When empty return empty list of commands.
-
-	actual := getSubCommands([]string{})
-
+	actual := state.getSubCommands([]string{})
 	if len(actual) != 0 {
 		t.Error("Expect that getSubCommands([]string) returns []Command{}")
 	}
 
 	// List of bogus or empty strings returns empty list of commands.
-	actual = getSubCommands([]string{
+	actual = state.getSubCommands([]string{
 		"./testing/bogus1.ahoy.yml",
 		"./testing/private.ahoy.yml",
 	})
-
 	if len(actual) != 0 {
 		t.Error("Expect that getSubCommands([]string) returns []Command{}")
 	}
@@ -121,13 +108,13 @@ commands:
 		t.Error("Error writing to file2.")
 	}
 
-	actual = getSubCommands([]string{
+	actual = state.getSubCommands([]string{
 		"./testing/a.ahoy.yml",
 		"./testing/b.ahoy.yml",
 	})
 
 	if len(actual) != 1 {
-		t.Error("Sourcedir:", AhoyConf.srcDir)
+		t.Error("Sourcedir:", state.srcDir)
 		t.Error("Failed: expect that two commands with the same name get merged into one.", actual)
 	}
 
@@ -141,7 +128,6 @@ commands:
 		t.Error("Something went wrong with the file creation - file3.")
 	}
 
-	// logger("fatal", "test")
 	yamlConfigC := `
 ahoyapi: v2
 commands:
@@ -156,8 +142,9 @@ commands:
 		t.Error("Error writing to file3.")
 	}
 
-	importVisited = nil
-	actual = getSubCommands([]string{
+	// Fresh state so importVisited doesn't carry over.
+	state2 := &appState{}
+	actual = state2.getSubCommands([]string{
 		"./testing/a.ahoy.yml",
 		"./testing/b.ahoy.yml",
 		"./testing/c.ahoy.yml",
@@ -202,7 +189,9 @@ func TestGetConfig(t *testing.T) {
 		t.Error("Something went wrong marshalling the test object.")
 	}
 
-	testFile.Write([]byte(testYaml))
+	if _, err = testFile.Write(testYaml); err != nil {
+		t.Fatal("Something went wrong writing the test yaml file.")
+	}
 
 	config, err := getConfig("test_getConfig.yml")
 	if err != nil {
@@ -222,20 +211,20 @@ func TestGetConfig(t *testing.T) {
 }
 
 func TestGetConfigPath(t *testing.T) {
-	// Passing an empty string.
+	// Passing an empty string (no sourcefile set) finds .ahoy.yml in cwd.
 	pwd, _ := os.Getwd()
 	expected := filepath.Join(pwd, ".ahoy.yml")
-	actual, _ := getConfigPath("")
+	actual, _ := (&appState{}).getConfigPath()
 	if expected != actual {
-		t.Errorf("ahoy docker override-example: expected - %s; actual - %s", string(expected), string(actual))
+		t.Errorf("ahoy docker override-example: expected - %s; actual - %s", expected, actual)
 	}
 
-	// Passing known path works as expected
+	// Passing known path works as expected.
 	expected = filepath.Join(pwd, ".ahoy.yml")
-	actual, _ = getConfigPath(expected)
+	actual, _ = (&appState{sourcefile: expected}).getConfigPath()
 
 	if expected != actual {
-		t.Errorf("ahoy docker override-example: expected - %s; actual - %s", string(expected), string(actual))
+		t.Errorf("ahoy docker override-example: expected - %s; actual - %s", expected, actual)
 	}
 
 	// TODO: Passing directory should return default
@@ -243,9 +232,32 @@ func TestGetConfigPath(t *testing.T) {
 
 func TestGetConfigPathErrorOnBogusPath(t *testing.T) {
 	// Test getting a bogus config path.
-	_, err := getConfigPath("~/bogus/path")
+	_, err := (&appState{sourcefile: "~/bogus/path"}).getConfigPath()
 	if err == nil {
 		t.Error("getConfigPath did not fail when passed a bogus path.")
+	}
+}
+
+func TestGetConfigPathReturnsErrNoConfigWhenNotFound(t *testing.T) {
+	// Change to a temp directory outside the repo tree so the walk-up never
+	// finds a .ahoy.yml and getConfigPath must return errNoConfig.
+	orig, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	tmp := t.TempDir()
+	if err := os.Chdir(tmp); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := os.Chdir(orig); err != nil {
+			t.Errorf("failed to restore working directory: %v", err)
+		}
+	})
+
+	_, gotErr := (&appState{}).getConfigPath()
+	if !errors.Is(gotErr, errNoConfig) {
+		t.Errorf("expected errNoConfig, got %v", gotErr)
 	}
 }
 
@@ -273,7 +285,7 @@ func appRun(args []string) (string, error) {
 		os.Stderr = stderr
 	}()
 
-	cmd := setupApp(args[1:])
+	cmd := newAppState().setupApp(args[1:])
 	// Don't call SetArgs again - setupApp already parsed the flags
 	// Just set the args to the command args (after flags)
 
@@ -289,6 +301,9 @@ func appRun(args []string) (string, error) {
 			skipNext = true
 			continue
 		}
+		if strings.HasPrefix(arg, "--file=") || strings.HasPrefix(arg, "-f=") {
+			continue
+		}
 		if arg == "-v" || arg == "--verbose" {
 			continue
 		}
@@ -298,14 +313,21 @@ func appRun(args []string) (string, error) {
 	}
 
 	cmd.SetArgs(cmdArgs)
-	cmd.Execute()
+	execErr := cmd.Execute()
 
 	w.Close()
 	wErr.Close()
 	out, _ := io.ReadAll(r)
 	errOut, _ := io.ReadAll(rErr)
 
-	// If there was an error output, include it
+	// Report a failure if either the command itself returned an error or
+	// anything was written to stderr.
+	if execErr != nil && len(errOut) > 0 {
+		return string(out), fmt.Errorf("%w: %s", execErr, errOut)
+	}
+	if execErr != nil {
+		return string(out), execErr
+	}
 	if len(errOut) > 0 {
 		return string(out), fmt.Errorf("%s", errOut)
 	}
@@ -410,27 +432,18 @@ commands:
 		t.Fatal(err)
 	}
 
-	// Save and restore the global state this test mutates, so it stays isolated
-	// from other tests regardless of execution order.
-	origSrcDir := AhoyConf.srcDir
-	origImportVisited := importVisited
 	origLogOutput := log.Writer()
 	t.Cleanup(func() {
-		AhoyConf.srcDir = origSrcDir
-		importVisited = origImportVisited
 		log.SetOutput(origLogOutput)
 	})
 
 	// Test multi-branch imports. Both branchA and branchB should successfully resolve shared.yml.
-	// We reset global state as in other tests.
-	AhoyConf.srcDir = "test_imports"
-	importVisited = nil
+	state := &appState{
+		srcDir:        "test_imports",
+		importVisited: map[string]bool{normalizePath("test_imports/root.yml"): true},
+	}
 
-	// We seed the visited map with a root yml
-	importVisited = map[string]bool{}
-	importVisited[normalizePath("test_imports/root.yml")] = true
-
-	commands := getSubCommands([]string{
+	commands := state.getSubCommands([]string{
 		"branchA.yml",
 		"branchB.yml",
 	})
@@ -458,15 +471,17 @@ commands:
 	}
 
 	// Test circular imports to make sure they are caught and do not stack overflow.
-	importVisited = map[string]bool{}
-	importVisited[normalizePath("test_imports/root.yml")] = true
+	circState := &appState{
+		srcDir:        "test_imports",
+		importVisited: map[string]bool{normalizePath("test_imports/root.yml"): true},
+	}
 
 	// Capturing log/stdout to verify circular import warning is printed.
 	// The original log output is restored by the t.Cleanup above.
 	var logBuf bytes.Buffer
 	log.SetOutput(&logBuf)
 
-	circularCmds := getSubCommands([]string{
+	circularCmds := circState.getSubCommands([]string{
 		"circularA.yml",
 	})
 

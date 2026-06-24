@@ -16,12 +16,12 @@ package main
 // incoming arguments here, before cobra ever sees them, using the stdlib
 // `flag` package - which natively understands single-dash long names.
 //
-// The results are written to package-level globals consumed by main()
+// The results are written to appState fields consumed by main()
 // and setupApp():
 //
 //   sourcefile             value of -f / -file / --file
 //   verbose                value of -v / -verbose / --verbose
-//   simulateVersion        value of --simulate-version (test-only flag)
+//   simulateVersion        value of --simulate-version (test-only flag, package-level)
 //   versionFlagSet         true if -version / --version was seen
 //   helpFlagSet            true if -h / -help / --help was seen
 //   bashCompletionFlagSet  true if --generate-bash-completion was seen
@@ -47,47 +47,40 @@ import (
 	"strings"
 )
 
-var (
-	versionFlagSet        bool
-	helpFlagSet           bool
-	bashCompletionFlagSet bool
-	invalidFlagError      string
-)
-
 // initFlags pre-parses the incoming arguments to honour legacy single-dash
 // long flags before cobra runs. See the file-level doc comment above for
 // the full rationale.
-func initFlags(incomingFlags []string) {
-	resetFlagState()
+func (s *appState) initFlags(incomingFlags []string) {
+	s.resetFlagState()
 
 	normalisedFlags := normaliseLongFlagPrefixes(incomingFlags)
 
 	// Local sinks for flags we only need as on/off signals; copied into
-	// package globals after parsing so the FlagSet's pointer bindings
+	// appState fields after parsing so the FlagSet's pointer bindings
 	// remain valid for the duration of Parse().
 	var versionFlag, helpFlag, bashCompletionFlag bool
 
-	fs, errBuf := newLegacyFlagSet(&versionFlag, &helpFlag, &bashCompletionFlag)
+	fs, errBuf := s.newLegacyFlagSet(&versionFlag, &helpFlag, &bashCompletionFlag)
 
 	if err := fs.Parse(normalisedFlags); err != nil {
-		invalidFlagError = errBuf.String()
+		s.invalidFlagError = errBuf.String()
 	}
 
-	versionFlagSet = versionFlag
-	helpFlagSet = helpFlag
-	bashCompletionFlagSet = bashCompletionFlag
+	s.versionFlagSet = versionFlag
+	s.helpFlagSet = helpFlag
+	s.bashCompletionFlagSet = bashCompletionFlag
 
-	applyEnvFallbacks()
+	s.applyEnvFallbacks()
 }
 
-// resetFlagState clears all pre-parser globals. Required because tests
-// reuse the package-level state between runs.
-func resetFlagState() {
-	AhoyConf.srcDir = ""
-	versionFlagSet = false
-	helpFlagSet = false
-	bashCompletionFlagSet = false
-	invalidFlagError = ""
+// resetFlagState clears all pre-parser state fields. Required because tests
+// create fresh appState instances between runs.
+func (s *appState) resetFlagState() {
+	s.srcDir = ""
+	s.versionFlagSet = false
+	s.helpFlagSet = false
+	s.bashCompletionFlagSet = false
+	s.invalidFlagError = ""
 }
 
 // normaliseLongFlagPrefixes rewrites `--foo` to `-foo` so the stdlib flag
@@ -98,7 +91,9 @@ func resetFlagState() {
 func normaliseLongFlagPrefixes(args []string) []string {
 	out := make([]string, len(args))
 	for i, arg := range args {
-		if strings.HasPrefix(arg, "--") {
+		if arg == "--" {
+			out[i] = arg
+		} else if strings.HasPrefix(arg, "--") {
 			out[i] = "-" + strings.TrimPrefix(arg, "--")
 		} else {
 			out[i] = arg
@@ -111,16 +106,16 @@ func normaliseLongFlagPrefixes(args []string) []string {
 // caller passes pointers for the on/off flags so that the FlagSet's
 // internal pointer bindings remain valid for the duration of Parse().
 // The returned errBuf captures any parse-error text for later replay.
-func newLegacyFlagSet(versionFlag, helpFlag, bashCompletionFlag *bool) (*flag.FlagSet, *bytes.Buffer) {
+func (s *appState) newLegacyFlagSet(versionFlag, helpFlag, bashCompletionFlag *bool) (*flag.FlagSet, *bytes.Buffer) {
 	fs := flag.NewFlagSet("ahoyLegacyFlags", flag.ContinueOnError)
 	errBuf := &bytes.Buffer{}
 	fs.SetOutput(errBuf)
 
-	// Flags whose values flow into package globals.
-	fs.StringVar(&sourcefile, "f", "", "specify the sourcefile")
-	fs.StringVar(&sourcefile, "file", "", "specify the sourcefile")
-	fs.BoolVar(&verbose, "v", false, "verbose output")
-	fs.BoolVar(&verbose, "verbose", false, "verbose output")
+	// Flags whose values flow into appState fields.
+	fs.StringVar(&s.sourcefile, "f", "", "specify the sourcefile")
+	fs.StringVar(&s.sourcefile, "file", "", "specify the sourcefile")
+	fs.BoolVar(&s.verbose, "v", false, "verbose output")
+	fs.BoolVar(&s.verbose, "verbose", false, "verbose output")
 	fs.StringVar(&simulateVersion, "simulate-version", "", "")
 
 	// Flags we only need to detect; cobra also defines them but we exit
@@ -136,13 +131,13 @@ func newLegacyFlagSet(versionFlag, helpFlag, bashCompletionFlag *bool) (*flag.Fl
 // applyEnvFallbacks fills in sourcefile / verbose from AHOY_FILE /
 // AHOY_VERBOSE when the equivalent flag was not given. Explicit flags
 // always take precedence.
-func applyEnvFallbacks() {
-	if sourcefile == "" {
+func (s *appState) applyEnvFallbacks() {
+	if s.sourcefile == "" {
 		if v := os.Getenv("AHOY_FILE"); v != "" {
-			sourcefile = v
+			s.sourcefile = v
 		}
 	}
-	if !verbose && os.Getenv("AHOY_VERBOSE") == "true" {
-		verbose = true
+	if !s.verbose && os.Getenv("AHOY_VERBOSE") == "true" {
+		s.verbose = true
 	}
 }

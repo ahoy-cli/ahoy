@@ -23,7 +23,7 @@ default:
 	go build -ldflags $(LDFLAGS) -v -o ./$(BINARY_NAME)
 
 install:
-	cp ahoy /usr/local/bin/ahoy
+	cp $(BINARY_NAME) /usr/local/bin/ahoy
 	chmod +x /usr/local/bin/ahoy
 
 build_dir:

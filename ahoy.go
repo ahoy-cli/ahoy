@@ -17,6 +17,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// errNoConfig is returned by getConfigPath when no .ahoy.yml file can be
+// located in the current directory tree and no -f flag was given.
+var errNoConfig = errors.New("no .ahoy.yml config file found")
+
 // Config handles the overall configuration in an ahoy.yml file
 // with one Config per file.
 type Config struct {
@@ -40,30 +44,44 @@ type Command struct {
 	Aliases     []string    `yaml:"aliases"`
 }
 
+// Build metadata variables injected at link time via -ldflags "-X main.version=...".
 var (
-	rootCmd         *cobra.Command
-	sourcefile      string
-	verbose         bool
-	simulateVersion string
-	ahoyExecutable  string
-	importVisited   map[string]bool
+	version   string
+	GitCommit string
+	GitBranch string
+	BuildTime string
 )
 
-// The build version can be set using the go linker flag `-ldflags "-X main.version=$VERSION"`
-// Complete command: `go build -ldflags "-X main.version=$VERSION"`
-var version string
+// simulateVersion is a test-only package-level var set by the hidden
+// --simulate-version flag. It overrides the reported Ahoy version for
+// exercising the validation system without rebuilding the binary.
+// Never set in production use.
+var simulateVersion string
 
-// AhoyConf stores the global config.
-var AhoyConf struct {
-	srcDir  string
-	srcFile string
+// appState holds all mutable runtime state for an ahoy invocation,
+// replacing the package-level globals that made concurrent testing unsafe.
+type appState struct {
+	sourcefile     string
+	verbose        bool
+	ahoyExecutable string
+	importVisited  map[string]bool
+	srcDir         string
+	srcFile        string
+	// flag pre-parse results written by initFlags, read by setupApp/main.
+	invalidFlagError      string
+	versionFlagSet        bool
+	helpFlagSet           bool
+	bashCompletionFlagSet bool
 }
 
-func logger(errType string, text string) {
-	// Disable the flags which add date and time for instance.
+func newAppState() *appState {
+	return &appState{}
+}
+
+func (s *appState) logger(errType string, text string) {
 	log.SetFlags(0)
 	if errType == "debug" {
-		if verbose {
+		if s.verbose {
 			log.Println("[debug] " + text)
 		}
 		return
@@ -121,38 +139,31 @@ func normalizePath(path string) string {
 	return cleaned
 }
 
-func getConfigPath(sourcefile string) (string, error) {
-	var err error
-	config := ""
-
-	// If a specific source file was set, then try to load it directly.
-	if sourcefile != "" {
-		if _, statErr := os.Stat(sourcefile); statErr == nil {
-			return sourcefile, nil
+func (s *appState) getConfigPath() (string, error) {
+	if s.sourcefile != "" {
+		if _, statErr := os.Stat(s.sourcefile); statErr == nil {
+			return s.sourcefile, nil
 		}
-		err = errors.New("An ahoy config file was specified using -f to be at " + sourcefile + " but couldn't be found. Check your path.")
-		return config, err
+		return "", errors.New("An ahoy config file was specified using -f to be at " + s.sourcefile + " but couldn't be found. Check your path.")
 	}
 
 	dir, err := os.Getwd()
 	if err != nil {
-		return config, err
+		return "", err
 	}
 
-	// Keep track of the previous directory to detect when we've reached the root
 	prevDir := ""
 	for dir != prevDir {
 		ymlpath := filepath.Join(dir, ".ahoy.yml")
 		if _, err := os.Stat(ymlpath); err == nil {
-			logger("debug", "Found .ahoy.yml at "+ymlpath)
-			return ymlpath, err
+			s.logger("debug", "Found .ahoy.yml at "+ymlpath)
+			return ymlpath, nil
 		}
-		// Chop off the last part of the path.
 		prevDir = dir
 		dir = filepath.Dir(dir)
 	}
-	logger("debug", "Can't find an .ahoy.yml file.")
-	return "", err
+	s.logger("debug", "Can't find an .ahoy.yml file.")
+	return "", errNoConfig
 }
 
 func getConfig(file string) (Config, error) {
@@ -163,16 +174,13 @@ func getConfig(file string) (Config, error) {
 		return config, err
 	}
 
-	// Extract the yaml file into the config variable.
 	err = yaml.Unmarshal(yamlFile, &config)
 	if err != nil {
 		return config, err
 	}
 
-	// All ahoy files (and imports) must specify the ahoy version.
-	// This is so we can support backwards compatibility in the future.
 	if config.AhoyAPI != "v2" {
-		err = errors.New("Ahoy only supports API version 'v2', but '" + config.AhoyAPI + "' given in " + sourcefile)
+		err = errors.New("Ahoy only supports API version 'v2', but '" + config.AhoyAPI + "' given in " + file)
 		return config, err
 	}
 
@@ -183,29 +191,29 @@ func getConfig(file string) (Config, error) {
 	return config, err
 }
 
-func processImport(include string, commands map[string]*cobra.Command) {
-	include = expandPath(include, AhoyConf.srcDir)
+func (s *appState) processImport(include string, commands map[string]*cobra.Command) {
+	include = expandPath(include, s.srcDir)
 	normalizedInclude := normalizePath(include)
 
 	// Guard against circular imports. Lazily initialise so direct callers
 	// in tests don't need to prime the map themselves.
-	if importVisited == nil {
-		importVisited = map[string]bool{}
+	if s.importVisited == nil {
+		s.importVisited = map[string]bool{}
 	}
-	if importVisited[normalizedInclude] {
-		logger("warn", "Circular import detected for '"+include+"', skipping.")
+	if s.importVisited[normalizedInclude] {
+		s.logger("warn", "Circular import detected for '"+include+"', skipping.")
 		return
 	}
-	importVisited[normalizedInclude] = true
+	s.importVisited[normalizedInclude] = true
 	defer func() {
-		delete(importVisited, normalizedInclude)
+		delete(s.importVisited, normalizedInclude)
 	}()
 
 	if _, err := os.Stat(include); err != nil {
 		if !os.IsNotExist(err) {
 			// File exists but is unreadable (e.g. EACCES) - log so the
 			// user knows why commands are missing.
-			logger("error", "Cannot access import file '"+include+"': "+err.Error())
+			s.logger("error", "Cannot access import file '"+include+"': "+err.Error())
 		}
 		// Skipping missing or unreadable files allows subcommands to be
 		// separated into public and private sets.
@@ -213,16 +221,16 @@ func processImport(include string, commands map[string]*cobra.Command) {
 	}
 	config, err := getConfig(include)
 	if err != nil {
-		logger("error", "Could not load imported config '"+include+"': "+err.Error())
+		s.logger("error", "Could not load imported config '"+include+"': "+err.Error())
 		return
 	}
-	includeCommands := getCommands(config)
+	includeCommands := s.getCommands(config)
 	for _, command := range includeCommands {
 		commands[command.Name()] = command
 	}
 }
 
-func getSubCommands(includes []string) []*cobra.Command {
+func (s *appState) getSubCommands(includes []string) []*cobra.Command {
 	subCommands := []*cobra.Command{}
 	if len(includes) == 0 {
 		return subCommands
@@ -232,7 +240,7 @@ func getSubCommands(includes []string) []*cobra.Command {
 		if len(include) == 0 {
 			continue
 		}
-		processImport(include, commands)
+		s.processImport(include, commands)
 	}
 
 	var names []string
@@ -246,8 +254,8 @@ func getSubCommands(includes []string) []*cobra.Command {
 	return subCommands
 }
 
-// Given a filepath, return a string array of environment variables.
-func getEnvironmentVars(envFile string) []string {
+// getEnvironmentVars returns a string array of environment variables from a filepath.
+func (s *appState) getEnvironmentVars(envFile string) []string {
 	var envVars []string
 
 	// We allow non-existent "env" files, so skip if file doesn't exist.
@@ -259,7 +267,7 @@ func getEnvironmentVars(envFile string) []string {
 	if err != nil {
 		// The file was confirmed to exist above, so this is a real read
 		// failure (e.g. EACCES, EIO) - not a routine missing-file case.
-		logger("error", "Failed to read environment file '"+envFile+"': "+err.Error())
+		s.logger("error", "Failed to read environment file '"+envFile+"': "+err.Error())
 		return nil
 	}
 
@@ -271,20 +279,26 @@ func getEnvironmentVars(envFile string) []string {
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
+		// Warn on lines that don't contain '=' - common culprit is shell
+		// `export KEY=VALUE` syntax, which is not supported here.
+		if !strings.Contains(line, "=") {
+			s.logger("warning", "ignoring malformed line in env file '"+envFile+"' (expected KEY=VALUE, got: "+line+")")
+			continue
+		}
 		envVars = append(envVars, line)
 	}
 	return envVars
 }
 
-func getCommands(config Config) []*cobra.Command {
+func (s *appState) getCommands(config Config) []*cobra.Command {
 	exportCmds := []*cobra.Command{}
 	envVars := []string{}
 
 	// Get environment variables from all 'global' environment variable files, if any are defined.
 	if len(config.Env) > 0 {
 		for _, envPath := range config.Env {
-			globalEnvFile := expandPath(envPath, AhoyConf.srcDir)
-			vars := getEnvironmentVars(globalEnvFile)
+			globalEnvFile := expandPath(envPath, s.srcDir)
+			vars := s.getEnvironmentVars(globalEnvFile)
 			if vars != nil {
 				envVars = append(envVars, vars...)
 			}
@@ -322,8 +336,8 @@ func getCommands(config Config) []*cobra.Command {
 		newCmd := &cobra.Command{
 			Use:     name,
 			Aliases: cmd.Aliases,
-			// Don't use DisableFlagParsing - it prevents persistent flags from being parsed
-			// Instead, we'll use FParseErrWhitelist to allow unknown flags to pass through
+			// Don't use DisableFlagParsing - it prevents persistent flags from being parsed.
+			// Instead, we use FParseErrWhitelist to allow unknown flags to pass through.
 			FParseErrWhitelist: cobra.FParseErrWhitelist{
 				UnknownFlags: true,
 			},
@@ -339,7 +353,7 @@ func getCommands(config Config) []*cobra.Command {
 		}
 
 		if cmd.Cmd != "" {
-			// Capture variables for the closure
+			// Capture variables for the closure.
 			cmdString := cmd.Cmd
 			cmdEnv := cmd.Env
 			cmdName := name
@@ -351,7 +365,7 @@ func getCommands(config Config) []*cobra.Command {
 				var cmdArgs []string
 				var cmdEntrypoint []string
 
-				// Filter out "--" separator
+				// Filter out "--" separator.
 				for _, arg := range args {
 					if arg != "--" {
 						cmdArgs = append(cmdArgs, arg)
@@ -361,15 +375,16 @@ func getCommands(config Config) []*cobra.Command {
 				// Replace the entry point placeholders.
 				cmdEntrypoint = config.Entrypoint[:]
 				for i := range cmdEntrypoint {
-					if cmdEntrypoint[i] == "{{cmd}}" {
+					switch cmdEntrypoint[i] {
+					case "{{cmd}}":
 						cmdEntrypoint[i] = cmdString
-					} else if cmdEntrypoint[i] == "{{name}}" {
+					case "{{name}}":
 						cmdEntrypoint[i] = cmdName
 					}
 				}
 				cmdItems = append(cmdEntrypoint, cmdArgs...)
 
-				// Collect environment variables
+				// Collect environment variables.
 				cmdEnvVars := append([]string{}, envVars...)
 
 				// If defined, include any command-level environment variables.
@@ -377,8 +392,8 @@ func getCommands(config Config) []*cobra.Command {
 				// defined in the 'global' env file.
 				if len(cmdEnv) > 0 {
 					for _, envPath := range cmdEnv {
-						cmdEnvFile := expandPath(envPath, AhoyConf.srcDir)
-						vars := getEnvironmentVars(cmdEnvFile)
+						cmdEnvFile := expandPath(envPath, s.srcDir)
+						vars := s.getEnvironmentVars(cmdEnvFile)
 						if vars != nil {
 							cmdEnvVars = append(cmdEnvVars, vars...)
 						}
@@ -388,20 +403,37 @@ func getCommands(config Config) []*cobra.Command {
 				// Inject ahoy-specific environment variables so subprocesses can
 				// identify the running binary and the invoked command name.
 				ahoyEnvVars := []string{"AHOY_COMMAND_NAME=" + cmdName}
-				if ahoyExecutable != "" {
-					ahoyEnvVars = append(ahoyEnvVars, "AHOY_CMD="+ahoyExecutable)
+				if s.ahoyExecutable != "" {
+					ahoyEnvVars = append(ahoyEnvVars, "AHOY_CMD="+s.ahoyExecutable)
 				}
 				cmdEnvVars = append(cmdEnvVars, ahoyEnvVars...)
 
-				if verbose {
-					log.Println("===> Ahoy", cmdName, "from", sourcefile, ":", cmdItems)
+				if s.verbose {
+					log.Println("===> Ahoy", cmdName, "from", s.sourcefile, ":", cmdItems)
 				}
 				command := exec.Command(cmdItems[0], cmdItems[1:]...)
-				command.Dir = AhoyConf.srcDir
+				command.Dir = s.srcDir
 				command.Stdout = os.Stdout
 				command.Stdin = os.Stdin
 				command.Stderr = os.Stderr
-				command.Env = append(command.Environ(), cmdEnvVars...)
+				// Build the environment so cmdEnvVars always take precedence.
+				// macOS getenv(3) returns the first match, so we put cmdEnvVars
+				// first and append inherited entries only when their key is not
+				// already covered.
+				overridden := make(map[string]bool, len(cmdEnvVars))
+				for _, kv := range cmdEnvVars {
+					if i := strings.Index(kv, "="); i > 0 {
+						overridden[kv[:i]] = true
+					}
+				}
+				mergedEnv := make([]string, len(cmdEnvVars), len(cmdEnvVars)+len(command.Environ()))
+				copy(mergedEnv, cmdEnvVars)
+				for _, kv := range command.Environ() {
+					if i := strings.Index(kv, "="); i <= 0 || !overridden[kv[:i]] {
+						mergedEnv = append(mergedEnv, kv)
+					}
+				}
+				command.Env = mergedEnv
 				if err := command.Run(); err != nil {
 					fmt.Fprintln(os.Stderr)
 					return err
@@ -411,7 +443,7 @@ func getCommands(config Config) []*cobra.Command {
 		}
 
 		if cmd.Imports != nil {
-			subCommands := getSubCommands(cmd.Imports)
+			subCommands := s.getSubCommands(cmd.Imports)
 			if len(subCommands) == 0 {
 				if !cmd.Optional {
 					errorMsg := fmt.Sprintf("Command [%s] has 'imports' set, but no commands were found.", name)
@@ -419,7 +451,7 @@ func getCommands(config Config) []*cobra.Command {
 					// List any import files that are missing to help diagnose the issue.
 					var missingFiles []string
 					for _, importPath := range cmd.Imports {
-						fullPath := expandPath(importPath, AhoyConf.srcDir)
+						fullPath := expandPath(importPath, s.srcDir)
 						if !fileExists(fullPath) {
 							missingFiles = append(missingFiles, importPath)
 						}
@@ -436,7 +468,7 @@ func getCommands(config Config) []*cobra.Command {
 						errorMsg += "\n\nFor more help, run: ahoy config validate"
 					}
 
-					logger("fatal", errorMsg)
+					s.logger("fatal", errorMsg)
 				} else {
 					if !VersionSupports(GetAhoyVersion(), "optional_imports") {
 						errorMsg := fmt.Sprintf("Command [%s] uses 'optional: true' but this Ahoy version (%s) doesn't support optional imports.", name, GetAhoyVersion())
@@ -445,7 +477,7 @@ func getCommands(config Config) []*cobra.Command {
 						errorMsg += "\n1. Upgrade Ahoy to the latest version"
 						errorMsg += "\n2. Remove 'optional: true' and create the missing import files"
 						errorMsg += "\n\nFor more help, run: ahoy config validate"
-						logger("fatal", errorMsg)
+						s.logger("fatal", errorMsg)
 					}
 					continue
 				}
@@ -460,16 +492,16 @@ func getCommands(config Config) []*cobra.Command {
 	}
 
 	for _, e := range configErrors {
-		logger("error", e)
+		s.logger("error", e)
 	}
 	if len(configErrors) > 0 {
-		logger("fatal", "Fix the above configuration errors and try again.")
+		s.logger("fatal", "Fix the above configuration errors and try again.")
 	}
 
 	return exportCmds
 }
 
-func addDefaultCommands(commands []*cobra.Command) []*cobra.Command {
+func (s *appState) addDefaultCommands(commands []*cobra.Command) []*cobra.Command {
 	// 'ahoy config' command group with 'validate' and 'init' subcommands.
 	configCmd := &cobra.Command{
 		Use:   "config",
@@ -480,7 +512,7 @@ func addDefaultCommands(commands []*cobra.Command) []*cobra.Command {
 	configValidateCmd := &cobra.Command{
 		Use:   "validate",
 		Short: "Validate and diagnose an Ahoy configuration file.",
-		Run:   validateCommandAction,
+		Run:   s.validateCommandAction,
 	}
 
 	configInitCmd := &cobra.Command{
@@ -523,9 +555,9 @@ func addDefaultCommands(commands []*cobra.Command) []*cobra.Command {
 	return commands
 }
 
-// BashComplete prints the list of subcommands as the default app completion method
-func BashComplete(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	logger("debug", "BashComplete()")
+// bashComplete prints the list of subcommands as the default app completion method.
+func (s *appState) bashComplete(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	s.logger("debug", "bashComplete()")
 
 	completions := []string{}
 	for _, command := range cmd.Root().Commands() {
@@ -535,24 +567,26 @@ func BashComplete(cmd *cobra.Command, args []string, toComplete string) ([]strin
 	return completions, cobra.ShellCompDirectiveNoFileComp
 }
 
-// NoArgsAction is the application wide default action, for when no flags or arguments
+// noArgsAction is the application-wide default action when no flags or arguments
 // are passed or when a command doesn't exist.
-func NoArgsAction(cmd *cobra.Command, args []string) {
+func (s *appState) noArgsAction(cmd *cobra.Command, args []string) {
 	if len(args) > 0 {
 		msg := "Command not found for '" + strings.Join(args, " ") + "'"
-		logger("fatal", msg)
+		s.logger("fatal", msg)
 	}
 
-	cmd.Help()
+	if err := cmd.Help(); err != nil {
+		s.logger("error", err.Error())
+	}
 
-	if AhoyConf.srcFile == "" {
-		logger("error", "No .ahoy.yml found. You can use 'ahoy init' to download an example.")
+	if s.srcFile == "" {
+		s.logger("error", "No .ahoy.yml found. You can use 'ahoy init' to download an example.")
 	}
 
 	helpRequested, _ := cmd.Flags().GetBool("help")
 	versionRequested, _ := cmd.Flags().GetBool("version")
 	if !helpRequested && !versionRequested {
-		logger("warn", "Missing flag or argument.")
+		s.logger("warn", "Missing flag or argument.")
 		os.Exit(1)
 	}
 
@@ -560,9 +594,9 @@ func NoArgsAction(cmd *cobra.Command, args []string) {
 	os.Exit(0)
 }
 
-// BeforeCommand is a PersistentPreRunE hook that handles --version and --help
+// beforeCommand is a PersistentPreRunE hook that handles --version and --help
 // flag processing before cobra executes each command.
-func BeforeCommand(cmd *cobra.Command, args []string) error {
+func (s *appState) beforeCommand(cmd *cobra.Command, args []string) error {
 	// Check if version was set via --version (double dash) by cobra.
 	versionRequested, _ := cmd.Flags().GetBool("version")
 	if versionRequested {
@@ -579,46 +613,48 @@ func BeforeCommand(cmd *cobra.Command, args []string) error {
 			// Find the subcommand and show its help.
 			for _, subcmd := range cmd.Commands() {
 				if subcmd.Name() == args[0] {
-					subcmd.Help()
+					if err := subcmd.Help(); err != nil {
+						s.logger("error", err.Error())
+					}
 					os.Exit(0)
 				}
 			}
 		}
-		cmd.Help()
+		if err := cmd.Help(); err != nil {
+			s.logger("error", err.Error())
+		}
 		os.Exit(0)
 	}
 	return nil
 }
 
-func setupApp(localArgs []string) *cobra.Command {
-	var err error
-
-	initFlags(localArgs)
+func (s *appState) setupApp(localArgs []string) *cobra.Command {
+	s.initFlags(localArgs)
 
 	// initFlags() pre-parsed sourcefile and verbose from the legacy
 	// single-dash forms (-f, -verbose, etc.) - see flag.go for the full
 	// rationale. The cobra flag definitions below would re-bind those
 	// same variables and reset them to their zero values, so we capture
 	// the parsed values now and pass them as the cobra flag defaults.
-	parsedSourcefile := sourcefile
-	parsedVerbose := verbose
+	parsedSourcefile := s.sourcefile
+	parsedVerbose := s.verbose
 
-	// Create root command
-	rootCmd = &cobra.Command{
+	// Create root command.
+	rootCmd := &cobra.Command{
 		Use:     "ahoy",
 		Version: version,
 		Short:   "Creates a configurable cli app for running commands.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			NoArgsAction(cmd, args)
+			s.noArgsAction(cmd, args)
 			return nil
 		},
-		PersistentPreRunE: BeforeCommand,
-		ValidArgsFunction: BashComplete,
+		PersistentPreRunE: s.beforeCommand,
+		ValidArgsFunction: s.bashComplete,
 	}
 
-	// Set up global flags with the parsed values as defaults
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", parsedVerbose, "Output extra details like the commands to be run.")
-	rootCmd.PersistentFlags().StringVarP(&sourcefile, "file", "f", parsedSourcefile, "Use a specific ahoy file.")
+	// Set up global flags with the parsed values as defaults.
+	rootCmd.PersistentFlags().BoolVarP(&s.verbose, "verbose", "v", parsedVerbose, "Output extra details like the commands to be run.")
+	rootCmd.PersistentFlags().StringVarP(&s.sourcefile, "file", "f", parsedSourcefile, "Use a specific ahoy file.")
 	rootCmd.PersistentFlags().Bool("help", false, "show help")
 	rootCmd.PersistentFlags().Bool("version", false, "print the version")
 	rootCmd.PersistentFlags().Bool("generate-bash-completion", false, "")
@@ -628,44 +664,40 @@ func setupApp(localArgs []string) *cobra.Command {
 	rootCmd.PersistentFlags().StringVar(&simulateVersion, "simulate-version", "", "simulate a specific Ahoy version for testing")
 
 	// Mark help, version, and internal flags as hidden since we handle them manually.
-	rootCmd.PersistentFlags().MarkHidden("help")
-	rootCmd.PersistentFlags().MarkHidden("version")
-	rootCmd.PersistentFlags().MarkHidden("generate-bash-completion")
-	rootCmd.PersistentFlags().MarkHidden("simulate-version")
+	for _, name := range []string{"help", "version", "generate-bash-completion", "simulate-version"} {
+		_ = rootCmd.PersistentFlags().MarkHidden(name)
+	}
 
-	// Disable default help command
+	// Disable default help command.
 	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
 
-	importVisited = map[string]bool{}
+	s.importVisited = map[string]bool{}
 
-	AhoyConf.srcFile, err = getConfigPath(sourcefile)
-	if err != nil {
-		logger("fatal", err.Error())
+	var err error
+	s.srcFile, err = s.getConfigPath()
+	if errors.Is(err, errNoConfig) {
+		// No config found - supply default commands only and return early.
+		commands := s.addDefaultCommands([]*cobra.Command{})
+		rootCmd.AddCommand(commands...)
+		return rootCmd
+	} else if err != nil {
+		s.logger("fatal", err.Error())
 	} else {
-		AhoyConf.srcDir = filepath.Dir(AhoyConf.srcFile)
-		if AhoyConf.srcFile != "" {
-			importVisited[normalizePath(AhoyConf.srcFile)] = true
-		}
-		// If we don't have a sourcefile, then just supply the default commands.
-		if AhoyConf.srcFile == "" {
-			commands := addDefaultCommands([]*cobra.Command{})
-			rootCmd.AddCommand(commands...)
-			rootCmd.Execute()
-			os.Exit(0)
-		}
-		config, err := getConfig(AhoyConf.srcFile)
+		s.srcDir = filepath.Dir(s.srcFile)
+		s.importVisited[normalizePath(s.srcFile)] = true
+		config, err := getConfig(s.srcFile)
 		if err != nil {
-			logger("fatal", err.Error())
+			s.logger("fatal", err.Error())
 		}
-		commands := getCommands(config)
-		commands = addDefaultCommands(commands)
+		commands := s.getCommands(config)
+		commands = s.addDefaultCommands(commands)
 		rootCmd.AddCommand(commands...)
 		if config.Usage != "" {
 			rootCmd.Short = config.Usage
 		}
 	}
 
-	// Set up custom help template
+	// Set up custom help template.
 	rootCmd.SetHelpFunc(customHelpFunc)
 
 	// Suppress cobra's built-in error/usage prints. main() inspects the
@@ -757,35 +789,39 @@ VERSION:
 }
 
 func main() {
-	logger("debug", "main()")
+	state := newAppState()
 	if exe, err := os.Executable(); err == nil {
-		ahoyExecutable = exe
+		state.ahoyExecutable = exe
 	}
-	rootCmd = setupApp(os.Args[1:])
+	rootCmd := state.setupApp(os.Args[1:])
 
 	// Check for invalid flag error from initFlags - show help and exit 1.
-	if invalidFlagError != "" {
-		fmt.Print(invalidFlagError)
-		rootCmd.Help()
+	if state.invalidFlagError != "" {
+		fmt.Print(state.invalidFlagError)
+		if err := rootCmd.Help(); err != nil {
+			log.Printf("help error: %v", err)
+		}
 		os.Exit(1)
 	}
 
-	// Check for -version and -help flags set during initFlags (single-dash versions)
-	// This handles single-dash versions that cobra doesn't support
-	if versionFlagSet {
+	// Check for -version and -help flags set during initFlags (single-dash versions).
+	// This handles single-dash versions that cobra doesn't support.
+	if state.versionFlagSet {
 		if version != "" {
 			fmt.Println(version)
 		}
 		os.Exit(0)
 	}
 
-	if helpFlagSet {
-		rootCmd.Help()
+	if state.helpFlagSet {
+		if err := rootCmd.Help(); err != nil {
+			log.Printf("help error: %v", err)
+		}
 		os.Exit(0)
 	}
 
-	// Handle bash completion flag - print completions and exit
-	if bashCompletionFlagSet {
+	// Handle bash completion flag - print completions and exit.
+	if state.bashCompletionFlagSet {
 		for _, command := range rootCmd.Commands() {
 			if !command.Hidden {
 				fmt.Println(command.Name())
@@ -812,7 +848,9 @@ func main() {
 		drained := make(chan struct{})
 		go func() {
 			defer close(drained)
-			io.Copy(oldStderr, r)
+			if _, err := io.Copy(oldStderr, r); err != nil {
+				log.Printf("stderr drain error: %v", err)
+			}
 		}()
 
 		err = rootCmd.Execute()
@@ -833,7 +871,7 @@ func main() {
 			if len(parts) >= 2 {
 				cmdName := parts[1]
 				msg := "Command not found for '" + cmdName + "'"
-				logger("fatal", msg)
+				state.logger("fatal", msg)
 			}
 		}
 		os.Exit(1)

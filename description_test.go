@@ -71,7 +71,7 @@ func TestDescriptionInCLICommands(t *testing.T) {
 		t.Fatalf("Failed to load test config: %v", err)
 	}
 
-	commands := getCommands(config)
+	commands := (&appState{}).getCommands(config)
 
 	// Create a map for easy lookup
 	cmdMap := make(map[string]*cobra.Command)
@@ -173,7 +173,7 @@ func TestDescriptionWithExistingCommands(t *testing.T) {
 			}
 
 			// Verify CLI command assignment
-			commands := getCommands(config)
+			commands := (&appState{}).getCommands(config)
 			var cliCmd *cobra.Command
 			for _, c := range commands {
 				if c.Name() == test.command {

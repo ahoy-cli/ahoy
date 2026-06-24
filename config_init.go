@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -31,7 +32,11 @@ func downloadFile(rawURL, destPath string) error {
 		Timeout: 30 * time.Second,
 	}
 
-	resp, err := client.Get(rawURL)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, rawURL, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create request for %s: %v", rawURL, err)
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to fetch URL %s: %v", rawURL, err)
 	}
@@ -52,9 +57,15 @@ func downloadFile(rawURL, destPath string) error {
 	// Always clean up the temp file; harmless no-op after a successful rename.
 	defer os.Remove(tmpPath)
 
-	if _, err = io.Copy(out, resp.Body); err != nil {
+	const maxDownloadBytes = 5 * 1024 * 1024 // 5 MB - generous for any YAML config file
+	written, err := io.Copy(out, io.LimitReader(resp.Body, maxDownloadBytes+1))
+	if err != nil {
 		out.Close()
 		return fmt.Errorf("failed to write file %s: %v", destPath, err)
+	}
+	if written > maxDownloadBytes {
+		out.Close()
+		return fmt.Errorf("failed to download file successfully, file %s exceeds maximum size of %d bytes", destPath, maxDownloadBytes)
 	}
 
 	// Close explicitly (not via defer) so buffered write errors reported at

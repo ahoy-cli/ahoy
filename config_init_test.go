@@ -48,7 +48,9 @@ func TestDownloadFile_InvalidURL(t *testing.T) {
 func TestDownloadFile_200Response(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("ahoyapi: v2\ncommands: {}\n"))
+		if _, err := w.Write([]byte("ahoyapi: v2\ncommands: {}\n")); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}))
 	defer srv.Close()
 

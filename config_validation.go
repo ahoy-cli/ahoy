@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -109,10 +108,42 @@ func compareVersions(v1, v2 string) int {
 	if v1HasPre && !v2HasPre {
 		return -1 // Pre-release < normal version.
 	}
-	if v1PreRelease < v2PreRelease {
-		return -1
-	} else if v1PreRelease > v2PreRelease {
-		return 1
+	// Compare pre-release labels segment by segment so multi-digit numeric
+	// identifiers sort correctly (e.g. rc10 > rc9).
+	pre1Segs := strings.Split(v1PreRelease, ".")
+	pre2Segs := strings.Split(v2PreRelease, ".")
+	maxLen := len(pre1Segs)
+	if len(pre2Segs) > maxLen {
+		maxLen = len(pre2Segs)
+	}
+	for i := range maxLen {
+		var s1, s2 string
+		if i < len(pre1Segs) {
+			s1 = pre1Segs[i]
+		}
+		if i < len(pre2Segs) {
+			s2 = pre2Segs[i]
+		}
+		n1, err1 := strconv.Atoi(s1)
+		n2, err2 := strconv.Atoi(s2)
+		if err1 == nil && err2 == nil {
+			if n1 < n2 {
+				return -1
+			} else if n1 > n2 {
+				return 1
+			}
+		} else {
+			// When strconv.Atoi fails on empty strings, the
+			// string comparison naturally handles the edge case
+			// correctly by treating empty segments as sorting
+			// lower than non-empty ones, which
+			// aligns with SemVer 2.0 specification.
+			if s1 < s2 {
+				return -1
+			} else if s1 > s2 {
+				return 1
+			}
+		}
 	}
 	return 0
 }
@@ -283,54 +314,6 @@ func validateEnvFile(cmdName, envPath, configFile string) []ValidationIssue {
 	}
 
 	return issues
-}
-
-// PrintValidationIssues prints validation issues in a user-friendly format.
-func PrintValidationIssues(result ValidationResult) {
-	if len(result.Issues) == 0 {
-		return
-	}
-
-	fmt.Fprintf(os.Stderr, "\nConfiguration Validation Issues:\n")
-	fmt.Fprintf(os.Stderr, "================================\n\n")
-
-	errorCount := 0
-	warningCount := 0
-	infoCount := 0
-
-	for _, issue := range result.Issues {
-		switch issue.Severity {
-		case "error":
-			fmt.Fprintf(os.Stderr, "ERROR: %s\n", issue.Message)
-			errorCount++
-		case "warning":
-			fmt.Fprintf(os.Stderr, "WARNING: %s\n", issue.Message)
-			warningCount++
-		case "info":
-			fmt.Fprintf(os.Stderr, "INFO: %s\n", issue.Message)
-			infoCount++
-		}
-
-		if issue.File != "" {
-			fmt.Fprintf(os.Stderr, "File: %s\n", issue.File)
-		}
-		if issue.Field != "" {
-			fmt.Fprintf(os.Stderr, "Field: %s\n", issue.Field)
-		}
-		if issue.RequiredVersion != "" && issue.CurrentVersion != "" {
-			fmt.Fprintf(os.Stderr, "Required Version: %s (current: %s)\n", issue.RequiredVersion, issue.CurrentVersion)
-		}
-		if issue.Suggestion != "" {
-			fmt.Fprintf(os.Stderr, "Suggestion: %s\n", issue.Suggestion)
-		}
-		fmt.Fprintf(os.Stderr, "\n")
-	}
-
-	fmt.Fprintf(os.Stderr, "Summary: %d error(s), %d warning(s), %d info\n", errorCount, warningCount, infoCount)
-
-	if errorCount > 0 {
-		fmt.Fprintf(os.Stderr, "\nRun 'ahoy config validate' for more detailed diagnostics and solutions.\n")
-	}
 }
 
 // ConfigReport contains comprehensive diagnostic information about an Ahoy configuration.
