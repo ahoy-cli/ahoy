@@ -2,7 +2,7 @@ module github.com/ahoy-cli/ahoy/v3
 
 go 1.23.0
 
-toolchain go1.24.7
+toolchain go1.26.4
 
 require (
 	github.com/spf13/cobra v1.10.1
