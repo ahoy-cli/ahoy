@@ -28,20 +28,27 @@ Ahoy makes it easy to create aliases and templates for commands that are useful.
 
 ## What's New in v3
 
-Ahoy v3 is a major internal rewrite that brings improved CLI handling whilst maintaining full backwards compatibility with existing `.ahoy.yml` configuration files.
+Ahoy v3 is a major internal rewrite that brings improved CLI handling whilst maintaining **full backwards compatibility** with all existing `.ahoy.yml` configuration files. Your workflows will not break.
 
 ### Key Changes
 
-- **New CLI framework** - Migrated from `urfave/cli` to [Cobra](https://github.com/spf13/cobra) and [Viper](https://github.com/spf13/viper), providing a more robust and maintainable foundation.
+- **New CLI framework** - Migrated from `urfave/cli` to [Cobra](https://github.com/spf13/cobra), providing a more robust and maintainable foundation.
+- **`ahoy config` subcommand group** - Built-in management commands are now grouped under `ahoy config`:
+  - `ahoy config init [url]` - Download an example config to get started (replaces the old `ahoy init`).
+  - `ahoy config validate` - Check your `.ahoy.yml` for issues and get actionable suggestions.
 - **Command descriptions** - Commands now support a separate `description` field for longer, multiline help text, in addition to the existing `usage` field for short summaries.
 - **Optional imports** - Import commands can now be marked with `optional: true` so that missing import files are gracefully skipped instead of causing errors.
+- **Command aliases** - Commands support an `aliases` field for alternative names, displayed inline in help output.
+- **Multiple environment files** - The `env` field now accepts an array of files at both global and command level.
+- **Runtime environment variables** - Ahoy injects `AHOY_COMMAND_NAME` (the command being run) and `AHOY_CMD` (path to the ahoy binary) into every command's environment.
 - **Improved help output** - Custom help template displays command aliases inline for better discoverability.
-- **Environment variable configuration** - Ahoy's own settings can be configured via environment variables (e.g. `AHOY_VERBOSE`) through Viper integration.
 - **Full backwards compatibility** - Existing `.ahoy.yml` files continue to work without modification. The YAML API version remains `v2`.
 
 ### Upgrading from v2
 
 No changes to your `.ahoy.yml` files are required. Simply replace the `ahoy` binary with the v3 version. All existing commands, aliases, imports, entrypoints, and environment file configurations will continue to work as before.
+
+The only behavioural change you may notice is that `ahoy init` now prints a deprecation notice and redirects to `ahoy config init`. Both work identically.
 
 ## Examples
 
@@ -59,7 +66,7 @@ Get started immediately with our comprehensive examples file:
 
 ```bash
 # Create a new project with example commands
-ahoy init
+ahoy config init
 
 # Or download the examples file directly
 curl -o .ahoy.yml https://raw.githubusercontent.com/ahoy-cli/ahoy/master/examples/examples.ahoy.yml
@@ -89,17 +96,17 @@ ahoy shell     # Open a shell in your container
 - Flexible - Commands are specific to a single folder tree, so each repo/workspace can have its own commands.
 - Command templates - Use regular `bash` syntax like `"$@"` for all arguments, or `$1` for the first argument.
 - Fully interactive - Your shells (like MySQL) and prompts still work.
-- Import multiple config files using the "imports" field.
-- Uses the "last in wins" rule to deal with duplicate commands amongst the config files.
+- Import multiple config files using the `imports` field.
+- Uses the "last in wins" rule to deal with duplicate commands amongst config files.
 - [Command aliases](#command-aliases) - oft-used or long commands can have aliases.
 - [Command descriptions](#command-descriptions) - commands can have both short usage text and longer multiline descriptions.
 - [Optional imports](#optional-imports) - import commands can gracefully handle missing files.
-- Use a different entrypoint (the thing that runs your commands) if you wish, instead of `bash`. E.g. using PHP, Node.js, Python, etc. is possible.
+- [Config validation](#config-validation) - `ahoy config validate` checks your config and reports issues.
+- Use a different entrypoint (the thing that runs your commands) if you wish, instead of `bash`. E.g. using PHP, Node.js, Python, etc.
 - Plugins are possible by overriding the entrypoint.
 - Self-documenting - Commands and help declared in `.ahoy.yml` show up as ahoy command help and [shell completion](#shell-autocompletions) of commands is also available. We have a dedicated Zsh plugin for completions at [ahoy-cli/zsh-ahoy](https://github.com/ahoy-cli/zsh-ahoy).
-- Support for [environment variables](#environment-variables) at both file and command level using the `env` field.
-- Environment variables from a global file are loaded first, then command-specific variables override them.
-- Environment files use standard shell format with one variable per line, comments supported.
+- [Environment variables](#environment-variables) at both file and command level using the `env` field, with support for multiple env files.
+- Runtime variables - `AHOY_COMMAND_NAME` and `AHOY_CMD` are injected into every command so scripts can introspect how they were invoked.
 
 ## Installation
 
@@ -145,8 +152,6 @@ commands:
       Use with caution in production environments.
     cmd: ./scripts/deploy.sh
 ```
-
-The `usage` field is displayed in the main command listing, and the `description` field provides extended help text.
 
 ## Environment Variables
 
@@ -208,15 +213,24 @@ DB_NAME=mydb
 - Supports comments and empty lines in env files.
 - Maintains full backwards compatibility with single file syntax.
 
+#### Runtime Environment Variables
+
+Ahoy automatically injects two variables into every command's environment:
+
+| Variable | Value |
+|---|---|
+| `AHOY_COMMAND_NAME` | The name of the command being run |
+| `AHOY_CMD` | Path to the ahoy binary |
+
+These are useful for scripts that need to know how they were invoked, or that want to call other ahoy commands via `$AHOY_CMD`.
+
 ## Command Aliases
 
-Ahoy supports command aliases. This feature allows you to define alternative names for your commands, making them more convenient to use and remember.
+Ahoy supports command aliases, allowing you to define alternative names for your commands.
 
 ### Usage
 
-In your `.ahoy.yml` file, you can add an `aliases` field to any command definition. The `aliases` field should be an array of strings, each representing one or more alternative names for the command.
-
-Example:
+In your `.ahoy.yml` file, add an `aliases` field to any command definition:
 
 ```yaml
 ahoyapi: v2
@@ -229,17 +243,11 @@ commands:
 
 In this example, the `hello` command can also be invoked using `hi` or `greet`.
 
-### Benefits
-
-- Improved usability: Users can call commands using shorter or more intuitive names.
-- Flexibility: You can provide multiple ways to access the same functionality without duplicating command definitions.
-- Backward compatibility: You can introduce new, more descriptive command names while keeping old names as aliases.
-
 ### Notes
 
 - Aliases are displayed in the help output next to each command.
 - Bash completion works with aliases as well as primary command names.
-- **If multiple commands share the same alias, the "last in wins" rule is used and the last matching command will be executed.**
+- **If multiple commands share the same alias, the "last in wins" rule is used.**
 
 ## Optional Imports
 
@@ -262,6 +270,22 @@ commands:
 ```
 
 If `optional: true` is set and none of the imported files can be found, the command is silently omitted from the command listing. Without `optional`, missing imports will produce a fatal error.
+
+## Config Validation
+
+Ahoy v3 includes a built-in configuration validator:
+
+```bash
+ahoy config validate
+```
+
+This checks your `.ahoy.yml` (and any imported files) for common issues, including:
+
+- Unsupported fields or YAML API version mismatches
+- Missing import files (without `optional: true`)
+- Features that require a newer version of Ahoy
+
+Validation warnings are shown in verbose mode (`-v`); errors are always shown. The validator also provides actionable suggestions when it finds a problem.
 
 ## Shell Autocompletions
 

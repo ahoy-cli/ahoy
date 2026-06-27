@@ -1,34 +1,57 @@
+# Docker Compose command examples for Ahoy.
+# Import this file or copy commands into your own .ahoy.yml.
+#
+# Example import:
+#   commands:
+#     docker:
+#       usage: Docker Compose commands
+#       imports:
+#         - ./examples/docker.ahoy.yml
+
 ahoyapi: v2
+
 commands:
   up:
-    cmd: "docker compose up -d"
-    usage: Start the Docker Compose containers.
-  proxy-up:
-    cmd: "docker run -d -p 80:80 -v /var/run/docker.sock:/tmp/docker.sock:ro jwilder/nginx-proxy"
-    usage: Run the nginx-proxy container
+    usage: Start all containers
+    aliases: ["start"]
+    cmd: docker compose up -d
+
   stop:
-    cmd: "docker compose stop"
-    usage: Stop the Docker Compose containers (non-destructive).
+    usage: Stop containers without removing them
+    cmd: docker compose stop
+
+  down:
+    usage: Stop and remove containers
+    cmd: docker compose down
+
   ps:
-    cmd: "docker compose ps"
-    usage: List the running Docker Compose containers.
-  ip:
-    cmd: "docker-machine ip default"
-    usage: Show the ip address f the default docker machine VM
-  reset:
-    cmd: "docker compose stop && docker compose rm && ahoy up"
-    usage: Start the Docker Compose containers.
+    usage: List running containers
+    cmd: docker compose ps
+
   exec:
-    cmd: docker exec -it $(docker compose ps -q cli) bash -c "$@"
-    usage: run a command in the Docker Compose cli service container.
+    usage: Run a command in the cli container
+    cmd: docker compose exec cli "$@"
+
   mysql:
-    cmd: "docker exec -it $(docker compose ps -q cli) bash -c 'mysql -u$DB_ENV_MYSQL_USER -p$DB_ENV_MYSQL_PASSWORD -h$DB_PORT_3306_TCP_ADDR $DB_ENV_MYSQL_DATABASE'"
-    usage: Connect to the default mysql database.
+    usage: Open a MySQL shell
+    cmd: docker compose exec db mysql -u"$DB_USER" -p"$DB_PASS" "$DB_NAME"
+
   mysql-import:
-    cmd: "docker exec -i $(docker compose ps -q cli) bash -c 'mysql -u$DB_ENV_MYSQL_USER -p$DB_ENV_MYSQL_PASSWORD -h$DB_PORT_3306_TCP_ADDR $DB_ENV_MYSQL_DATABASE'"
-    usage: Pipe in a sql file.  `ahoy mysql-import < backups/live.sql`
+    usage: Import a SQL file into the database
+    description: |
+      Pipe a SQL file into the database.
+
+      Example: ahoy docker mysql-import < backup.sql
+    cmd: docker compose exec -T db mysql -u"$DB_USER" -p"$DB_PASS" "$DB_NAME"
+
   mysql-dump:
-    cmd: "docker exec -it $(docker compose ps -q cli) bash -c 'mysqldump -u$DB_ENV_MYSQL_USER -p$DB_ENV_MYSQL_PASSWORD -h$DB_PORT_3306_TCP_ADDR $DB_ENV_MYSQL_DATABASE'"
-    usage: Dump data out into a file. `ahoy mysql-import > backups/local.sql`
+    usage: Dump the database to stdout
+    description: |
+      Redirect output to save a backup.
+
+      Example: ahoy docker mysql-dump > backup.sql
+    cmd: docker compose exec -T db mysqldump -u"$DB_USER" -p"$DB_PASS" "$DB_NAME"
+
   override-example:
+    usage: An example command intended to be overridden via imports
     cmd: echo "Override me"
