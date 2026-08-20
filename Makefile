@@ -56,10 +56,20 @@ gocyclo:
 	@ go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
 	gocyclo -over 25 -avg -ignore "vendor" .
 
+# Mirrors the Lint step in .github/workflows/build_and_test.yml. Deliberately
+# not part of `test` while pre-existing complexity findings are outstanding;
+# CI runs it with continue-on-error for the same reason.
+lint:
+	@ command -v golangci-lint >/dev/null 2>&1 || { \
+		echo "golangci-lint not found. Install it: https://golangci-lint.run/docs/welcome/install/"; \
+		exit 1; \
+	}
+	golangci-lint run
+
 test: fmtcheck staticcheck vet
 	go test ./*.go $(TESTARGS)
 
 version:
 	@echo $(VERSION)
 
-.PHONY: clean test fmtcheck staticcheck vet gocyclo version testdeps cross build_dir default install
+.PHONY: clean test fmtcheck staticcheck vet lint gocyclo version testdeps cross build_dir default install

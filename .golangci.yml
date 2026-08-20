@@ -25,6 +25,11 @@ linters:
     - unparam
     - unused
     - whitespace
+  settings:
+    goconst:
+      # Repeated literals in tests are idiomatic and are excluded from
+      # reporting below, so they should not inflate counts for real code either.
+      ignore-tests: true
   exclusions:
     generated: lax
     presets:
@@ -33,8 +38,12 @@ linters:
       - legacy
       - std-error-handling
     rules:
+      # Repeated literals in table-driven tests are idiomatic, and long test
+      # tables are not complexity debt, so goconst/gocognit are not useful here.
       - linters:
           - bodyclose
+          - gocognit
+          - goconst
           - gosec
           - noctx
           - unparam
