@@ -18,3 +18,4 @@ test_helpers/
 .claude/
 AGENT.md
 CLAUDE.md
+/.artifacts/
