@@ -83,8 +83,11 @@ archives:
       - goos: windows
         formats:
           - zip
-    # Archive name format: ahoy_{version}_{os}_{arch}[v{arm_version}]
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}"
+    # Archive name format: ahoy-{os}-{arch}[v{arm_version}]
+    # Deliberately unversioned, matching the v2.x naming. The version belongs in
+    # the release URL, not the filename, so that
+    # releases/latest/download/ahoy-linux-amd64.tar.gz stays a stable link.
+    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}"
     files:
       - README.md
       - LICENSE
@@ -96,8 +99,8 @@ archives:
       - ahoy-static
     formats:
       - tar.gz
-    # Archive name format: ahoy_{version}_{os}_{arch}_static[v{arm_version}]
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}_static{{ with .Arm }}v{{ . }}{{ end }}"
+    # Archive name format: ahoy-{os}-{arch}[v{arm_version}]-static
+    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}-static"
     files:
       - README.md
       - LICENSE
