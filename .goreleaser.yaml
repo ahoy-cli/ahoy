@@ -180,13 +180,13 @@ release:
   prerelease: auto
   target_commitish: "{{ .Commit }}"
   # Upload extra files (individual binaries) - maintaining existing naming convention
+  # No name_template here: these globs each match many files, and a single
+  # name_template cannot name more than one output. Omitting it makes goreleaser
+  # upload each file under its own basename, which is the naming we want anyway.
+  # The "*.exe" files are already covered by the "ahoy-bin-*" glob.
   extra_files:
     - glob: "dist/ahoy_**/ahoy-bin-*"
-      name_template: "{{ .ArtifactName }}"
-    - glob: "dist/ahoy_**/ahoy-bin-*.exe"
-      name_template: "{{ .ArtifactName }}"
     - glob: "dist/ahoy-static_**/ahoy-bin-*-static"
-      name_template: "{{ .ArtifactName }}"
 
 # Generate metadata for package managers
 metadata:
