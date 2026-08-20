@@ -1,0 +1,60 @@
+version: "2"
+linters:
+  default: none
+  enable:
+    - asciicheck
+    - bodyclose
+    - copyloopvar
+    - dogsled
+    - errcheck
+    - exhaustive
+    - gocognit
+    - goconst
+    - goheader
+    - gosec
+    - govet
+    - ineffassign
+    - misspell
+    - nakedret
+    - nestif
+    - noctx
+    - rowserrcheck
+    - sqlclosecheck
+    - staticcheck
+    - unconvert
+    - unparam
+    - unused
+    - whitespace
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - bodyclose
+          - gosec
+          - noctx
+          - unparam
+        path: _test\.go
+      - linters:
+          - gosec
+        path: fixtures.go
+      - path: (.+)\.go$
+        text: composite literal uses unkeyed fields
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

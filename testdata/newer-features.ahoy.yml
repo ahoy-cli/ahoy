@@ -1,0 +1,23 @@
+ahoyapi: v2
+commands:
+  test-aliases:
+    usage: Run test with aliases
+    description: |
+      Test command that demonstrates the aliases feature.
+
+      This command can be invoked using 't' or 'test-cmd' as shortcuts.
+      Aliases provide convenient alternative names for commands.
+    cmd: echo "test"
+    aliases:
+      - t
+      - test-cmd
+  test-optional:
+    usage: Test optional imports
+    description: |
+      Demonstrates the optional imports feature introduced in v2.2.0.
+
+      This command imports optional-import.ahoy.yml, but won't fail
+      if the file doesn't exist. Useful for environment-specific configs.
+    imports:
+      - optional-import.ahoy.yml
+    optional: true

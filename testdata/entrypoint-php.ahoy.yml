@@ -1,0 +1,7 @@
+ahoyapi: v2
+entrypoint: [php, "-r", '{{cmd}}']
+commands:
+  echo:
+    cmd: |
+      array_shift($argv);
+      print(implode(" ", $argv) . "\n");

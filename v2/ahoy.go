@@ -101,7 +101,7 @@ func getConfigPath(sourcefile string) (string, error) {
 
 	// Keep track of the previous directory to detect when we've reached the root
 	prevDir := ""
-	for dir != prevDir && err == nil {
+	for dir != prevDir {
 		ymlpath := filepath.Join(dir, ".ahoy.yml")
 		// log.Println(ymlpath)
 		if _, err := os.Stat(ymlpath); err == nil {

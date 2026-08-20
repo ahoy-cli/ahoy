@@ -7,14 +7,14 @@ env:
   - GOPROXY=https://proxy.golang.org,direct
 before:
   hooks:
-    - sh -c "cd v2 && go mod download"
-    - sh -c "cd v2 && go mod tidy"
-    - sh -c "cd v2 && go test ./..."
+    - go mod download
+    - go mod tidy
+    - go test ./...
 
 builds:
   # Standard build
   - id: ahoy
-    dir: v2
+    dir: .
     # Binary name format: ahoy-bin-{os}-{arch}[v{arm_version}]
     binary: "{{ .ProjectName }}-bin-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}"
     goos:
@@ -50,7 +50,7 @@ builds:
 
   # Static build for Linux (useful for containers)
   - id: ahoy-static
-    dir: v2
+    dir: .
     # Binary name format: ahoy-bin-{os}-{arch}[v{arm_version}]-static
     binary: "{{ .ProjectName }}-bin-{{ .Os }}-{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}-static"
     env:

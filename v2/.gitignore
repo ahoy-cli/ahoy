@@ -1,0 +1,20 @@
+# Ignorables.
+
+# Docs
+docs/_build
+
+# IDEs
+.idea
+
+# Builds
+ahoy
+builds/
+dist/
+
+# Testing
+test_helpers/
+
+# Agents
+.claude/
+AGENT.md
+CLAUDE.md

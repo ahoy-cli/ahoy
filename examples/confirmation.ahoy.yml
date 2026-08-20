@@ -1,0 +1,11 @@
+ahoyapi: v2
+commands:
+  confirm:
+    cmd: |
+        read -r -p "$@ [y/N] " response
+        if [ $response = y ]
+        then
+          true
+        else
+          false
+        fi

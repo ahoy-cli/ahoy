@@ -1,0 +1,5 @@
+ahoyapi: v2
+commands:
+  empty-imports:
+    usage: "This item has imports set, but it's empty."
+    imports: []

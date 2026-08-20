@@ -1,0 +1,57 @@
+# Docker Compose command examples for Ahoy.
+# Import this file or copy commands into your own .ahoy.yml.
+#
+# Example import:
+#   commands:
+#     docker:
+#       usage: Docker Compose commands
+#       imports:
+#         - ./examples/docker.ahoy.yml
+
+ahoyapi: v2
+
+commands:
+  up:
+    usage: Start all containers
+    aliases: ["start"]
+    cmd: docker compose up -d
+
+  stop:
+    usage: Stop containers without removing them
+    cmd: docker compose stop
+
+  down:
+    usage: Stop and remove containers
+    cmd: docker compose down
+
+  ps:
+    usage: List running containers
+    cmd: docker compose ps
+
+  exec:
+    usage: Run a command in the cli container
+    cmd: docker compose exec cli "$@"
+
+  mysql:
+    usage: Open a MySQL shell
+    cmd: docker compose exec db mysql -u"$DB_USER" -p"$DB_PASS" "$DB_NAME"
+
+  mysql-import:
+    usage: Import a SQL file into the database
+    description: |
+      Pipe a SQL file into the database.
+
+      Example: ahoy docker mysql-import < backup.sql
+    cmd: docker compose exec -T db mysql -u"$DB_USER" -p"$DB_PASS" "$DB_NAME"
+
+  mysql-dump:
+    usage: Dump the database to stdout
+    description: |
+      Redirect output to save a backup.
+
+      Example: ahoy docker mysql-dump > backup.sql
+    cmd: docker compose exec -T db mysqldump -u"$DB_USER" -p"$DB_PASS" "$DB_NAME"
+
+  override-example:
+    usage: An example command intended to be overridden via imports
+    cmd: echo "Override me"

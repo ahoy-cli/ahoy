@@ -1,0 +1,31 @@
+ahoyapi: v2
+commands:
+  up:
+    cmd: "docker compose up -d"
+    usage: Start the Docker Compose containers.
+  proxy-up:
+    cmd: "docker run -d -p 80:80 -v /var/run/docker.sock:/tmp/docker.sock:ro jwilder/nginx-proxy"
+    usage: Run the nginx-proxy container.
+  stop:
+    cmd: "docker compose stop"
+    usage: Stop the Docker Compose containers (non-destructive).
+  ps:
+    cmd: "docker compose ps"
+    usage: List the running Docker Compose containers.
+  reset:
+    cmd: "docker compose stop && docker compose rm && ahoy up"
+    usage: Start the Docker Compose containers.
+  exec:
+    cmd: docker exec -it $(docker compose ps -q cli) bash -c "$@"
+    usage: Run a command in the Docker Compose cli service container.
+  mysql:
+    cmd: "docker exec -it $(docker compose ps -q cli) bash -c 'mysql -u$DB_ENV_MYSQL_USER -p$DB_ENV_MYSQL_PASSWORD -h$DB_PORT_3306_TCP_ADDR $DB_ENV_MYSQL_DATABASE'"
+    usage: Connect to the default mysql database.
+  mysql-import:
+    cmd: "docker exec -i $(docker compose ps -q cli) bash -c 'mysql -u$DB_ENV_MYSQL_USER -p$DB_ENV_MYSQL_PASSWORD -h$DB_PORT_3306_TCP_ADDR $DB_ENV_MYSQL_DATABASE'"
+    usage: Pipe in a sql file.  `ahoy mysql-import < backups/live.sql`
+  mysql-dump:
+    cmd: "docker exec -it $(docker compose ps -q cli) bash -c 'mysqldump -u$DB_ENV_MYSQL_USER -p$DB_ENV_MYSQL_PASSWORD -h$DB_PORT_3306_TCP_ADDR $DB_ENV_MYSQL_DATABASE'"
+    usage: Dump data out into a file. `ahoy mysql-import > backups/local.sql`
+  override-example:
+    cmd: echo "Override me"

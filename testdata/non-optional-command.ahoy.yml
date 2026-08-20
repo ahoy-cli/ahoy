@@ -1,0 +1,6 @@
+ahoyapi: v2
+commands:
+  non-optional-cmd:
+    usage: This command is not optional
+    imports:
+      - non-existent-file.yml

@@ -1,0 +1,6 @@
+ahoyapi: v2
+commands:
+  missing-imports:
+    usage: "This item has imports set, but it doesn't exist."
+    imports:
+      - "bogus.ahoy.yml"

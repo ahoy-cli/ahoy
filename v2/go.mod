@@ -2,7 +2,7 @@ module github.com/ahoy-cli/ahoy/v2
 
 go 1.23
 
-toolchain go1.24.5
+toolchain go1.26.4
 
 require (
 	github.com/urfave/cli v1.22.9

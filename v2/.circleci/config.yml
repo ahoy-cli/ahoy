@@ -1,0 +1,69 @@
+version: 2.1
+orbs:
+  go: circleci/go@3.0.2
+
+jobs:
+  build:
+    executor:
+      name: go/default
+      tag: "1.24"
+    working_directory: /home/circleci/go/src/github.com/ahoy-cli/ahoy/v2/
+    steps:
+      - checkout
+      - run:
+          name: Install BATS.
+          command: git clone https://github.com/bats-core/bats-core.git && cd bats-core && sudo ./install.sh /usr/local && bats --version && cd -
+      - run:
+          name: Install BATS extras.
+          command: |
+            cd v2/tests
+            git clone https://github.com/bats-core/bats-support.git ./test_helpers/bats-support
+            git clone https://github.com/bats-core/bats-assert.git ./test_helpers/bats-assert
+            cd -
+      - run:
+          name: Install Go linter.
+          command: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.46.2
+      - run:
+          name: Install gotestsum for testing.
+          command: go install gotest.tools/gotestsum@latest
+      - run:
+          name: Install PHP for testing.
+          command: sudo apt update && sudo apt install php
+      # - go/load-cache
+      # - go/mod-download
+      - run:
+          name: Get Go modules.
+          command: |
+            cd v2
+            go mod tidy
+            go mod vendor
+            go mod verify
+      # - go/save-cache
+      - run:
+          name: Build project.
+          command: |
+            cd v2
+            make
+            make version
+      - run:
+          name: Lint code.
+          command: /home/circleci/go/bin/golangci-lint run || true
+      - run:
+          name: Run unit tests.
+          command: cd v2 && make test
+      - run:
+          name: Run functional tests.
+          command: cd v2 && ./ahoy test
+      - run:
+          name: Run tests
+          command: |
+            mkdir -p /tmp/test-reports
+            cd v2
+            gotestsum --junitfile /tmp/test-reports/unit-tests.xml
+      - store_test_results:
+          path: /tmp/test-reports
+
+workflows:
+  main:
+    jobs:
+      - build

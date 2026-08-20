@@ -1,0 +1,28 @@
+ahoyapi: v2
+commands:
+  simple:
+    usage: Simple command
+    description: A basic command with a simple description.
+    cmd: echo "simple"
+  multiline:
+    usage: Multiline description test
+    description: |
+      This command demonstrates multiline descriptions.
+
+      It includes:
+      - Multiple paragraphs
+      - Bullet points
+      - Detailed explanations
+
+      Use this to test that YAML multiline strings work correctly.
+    cmd: echo "multiline"
+  no-description:
+    usage: Command without description
+    cmd: echo "no description"
+  only-description:
+    description: This command has only a description but no usage field.
+    cmd: echo "only description"
+  empty-description:
+    usage: Command with empty description
+    description: ""
+    cmd: echo "empty"

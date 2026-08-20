@@ -1,0 +1,18 @@
+ahoyapi: v2
+commands:
+  hello:
+    usage: Say hello
+    description: |
+      A friendly greeting command that can be invoked using multiple
+      aliases including 'hi', 'greet', and 'ahoy'.
+    cmd: echo "Hello, World!"
+    aliases: ["hi", "greet", "ahoy"]
+  ahoy-there:
+    usage: Say "ahoy there!"
+    description: |
+      A nautical greeting that demonstrates alias conflicts.
+
+      Note: This command also uses the 'ahoy' alias, which will conflict
+      with the hello command. The last loaded command wins.
+    cmd: echo "ahoy there!"
+    aliases: ["ahoy"]

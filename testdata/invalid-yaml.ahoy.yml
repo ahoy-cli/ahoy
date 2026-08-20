@@ -1,0 +1,7 @@
+ahoyapi: v2
+commands:
+  test:
+    cmd: echo "test"
+  bad-indent:
+    cmd: echo "bad"
+  invalid: [this is not valid yaml

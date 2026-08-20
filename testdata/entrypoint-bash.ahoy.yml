@@ -1,0 +1,12 @@
+ahoyapi: v2
+entrypoint:
+  - bash
+  - "-x"
+  - "-c"
+  - '{{cmd}}'
+  - '{{name}}'
+
+commands:
+  echo:
+    cmd: |
+      echo "$@"
