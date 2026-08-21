@@ -78,6 +78,22 @@ func newAppState() *appState {
 	return &appState{}
 }
 
+// logLineBreaks escapes the characters that would otherwise let a logged value
+// start a new log line. CRLF is collapsed to a single escape so Windows-authored
+// input does not read as two breaks.
+var logLineBreaks = strings.NewReplacer("\r\n", `\n`, "\r", `\r`, "\n", `\n`)
+
+// sanitiseLogValue neutralises carriage returns and line feeds in a single
+// config-derived value, so it cannot forge additional log lines. The characters
+// are escaped rather than dropped so the original content stays visible.
+//
+// This is applied to interpolated values rather than inside logger(), because
+// several messages deliberately span multiple lines to format help text, and
+// sanitising the assembled message would mangle that formatting.
+func sanitiseLogValue(value string) string {
+	return logLineBreaks.Replace(value)
+}
+
 func (s *appState) logger(errType string, text string) {
 	log.SetFlags(0)
 	if errType == logLevelDebug {
@@ -156,7 +172,7 @@ func (s *appState) getConfigPath() (string, error) {
 	for dir != prevDir {
 		ymlpath := filepath.Join(dir, ".ahoy.yml")
 		if _, err := os.Stat(ymlpath); err == nil {
-			s.logger(logLevelDebug, "Found .ahoy.yml at "+ymlpath)
+			s.logger(logLevelDebug, "Found .ahoy.yml at "+sanitiseLogValue(ymlpath))
 			return ymlpath, nil
 		}
 		prevDir = dir
@@ -201,7 +217,7 @@ func (s *appState) processImport(include string, commands map[string]*cobra.Comm
 		s.importVisited = map[string]bool{}
 	}
 	if s.importVisited[normalizedInclude] {
-		s.logger(logLevelWarn, "Circular import detected for '"+include+"', skipping.")
+		s.logger(logLevelWarn, "Circular import detected for '"+sanitiseLogValue(include)+"', skipping.")
 		return
 	}
 	s.importVisited[normalizedInclude] = true
@@ -213,7 +229,7 @@ func (s *appState) processImport(include string, commands map[string]*cobra.Comm
 		if !os.IsNotExist(err) {
 			// File exists but is unreadable (e.g. EACCES) - log so the
 			// user knows why commands are missing.
-			s.logger(logLevelError, "Cannot access import file '"+include+"': "+err.Error())
+			s.logger(logLevelError, "Cannot access import file '"+sanitiseLogValue(include)+"': "+sanitiseLogValue(err.Error()))
 		}
 		// Skipping missing or unreadable files allows subcommands to be
 		// separated into public and private sets.
@@ -221,7 +237,7 @@ func (s *appState) processImport(include string, commands map[string]*cobra.Comm
 	}
 	config, err := getConfig(include)
 	if err != nil {
-		s.logger(logLevelError, "Could not load imported config '"+include+"': "+err.Error())
+		s.logger(logLevelError, "Could not load imported config '"+sanitiseLogValue(include)+"': "+sanitiseLogValue(err.Error()))
 		return
 	}
 	includeCommands := s.getCommands(config)
@@ -267,7 +283,7 @@ func (s *appState) getEnvironmentVars(envFile string) []string {
 	if err != nil {
 		// The file was confirmed to exist above, so this is a real read
 		// failure (e.g. EACCES, EIO) - not a routine missing-file case.
-		s.logger(logLevelError, "Failed to read environment file '"+envFile+"': "+err.Error())
+		s.logger(logLevelError, "Failed to read environment file '"+sanitiseLogValue(envFile)+"': "+sanitiseLogValue(err.Error()))
 		return nil
 	}
 
@@ -282,7 +298,7 @@ func (s *appState) getEnvironmentVars(envFile string) []string {
 		// Warn on lines that don't contain '=' - common culprit is shell
 		// `export KEY=VALUE` syntax, which is not supported here.
 		if !strings.Contains(line, "=") {
-			s.logger(logLevelWarn, "ignoring malformed line in env file '"+envFile+"' (expected KEY=VALUE, got: "+line+")")
+			s.logger(logLevelWarn, "ignoring malformed line in env file '"+sanitiseLogValue(envFile)+"' (expected KEY=VALUE, got: "+sanitiseLogValue(line)+")")
 			continue
 		}
 		envVars = append(envVars, line)
@@ -452,7 +468,7 @@ func (s *appState) getCommands(config Config) []*cobra.Command {
 			subCommands := s.getSubCommands(cmd.Imports)
 			if len(subCommands) == 0 {
 				if !cmd.Optional {
-					errorMsg := fmt.Sprintf("Command [%s] has 'imports' set, but no commands were found.", name)
+					errorMsg := fmt.Sprintf("Command [%s] has 'imports' set, but no commands were found.", sanitiseLogValue(name))
 
 					// List any import files that are missing to help diagnose the issue.
 					var missingFiles []string
@@ -464,7 +480,7 @@ func (s *appState) getCommands(config Config) []*cobra.Command {
 					}
 
 					if len(missingFiles) > 0 {
-						errorMsg += fmt.Sprintf("\n\nMissing import files: %s", strings.Join(missingFiles, ", "))
+						errorMsg += fmt.Sprintf("\n\nMissing import files: %s", sanitiseLogValue(strings.Join(missingFiles, ", ")))
 						errorMsg += "\n\nSolutions:"
 						errorMsg += "\n1. Create the missing files"
 						errorMsg += "\n2. Mark imports as optional with 'optional: true'"
@@ -477,7 +493,7 @@ func (s *appState) getCommands(config Config) []*cobra.Command {
 					s.logger(logLevelFatal, errorMsg)
 				} else {
 					if !VersionSupports(GetAhoyVersion(), featureOptionalImports) {
-						errorMsg := fmt.Sprintf("Command [%s] uses 'optional: true' but this Ahoy version (%s) doesn't support optional imports.", name, GetAhoyVersion())
+						errorMsg := fmt.Sprintf("Command [%s] uses 'optional: true' but this Ahoy version (%s) doesn't support optional imports.", sanitiseLogValue(name), GetAhoyVersion())
 						errorMsg += fmt.Sprintf("\n\nThis feature requires Ahoy %s or later.", FeatureSupport[featureOptionalImports])
 						errorMsg += "\n\nSolutions:"
 						errorMsg += "\n1. Upgrade Ahoy to the latest version"
