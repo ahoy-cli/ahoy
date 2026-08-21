@@ -92,14 +92,33 @@ apply the same Tier 1 config exclusions (drops it to ~25 for a one-line change),
 or drop the v2 leg from the lint matrix entirely on the grounds that it is
 frozen. Fixing v2's Go code is hard to justify.
 
-## Known inconsistency, left alone deliberately
+## Log level spelling — standardised on `warn` (DONE)
 
-`ahoy.go` logs `[warn]` in two places (circular-import detection and the
-missing-flag message) and `[warning]` everywhere else. This is user-visible
-output and is **asserted by the BATS suite** (`tests/no-ahoy-file.bats:17`,
-`tests/simple.bats:9`), so it was not changed. Both spellings are now captured
-as `logLevelWarn` and `logLevelWarning` in `constants.go`.
+`ahoy.go` previously emitted two spellings of the same log level. Surveying the
+actual distribution before choosing mattered, because the intuitive reading was
+backwards:
 
-Unifying them is a small breaking change to output. If that is wanted, do it as
-its own commit that also updates the two BATS assertions, so the behaviour
-change is visible in review rather than buried in a lint cleanup.
+| Spelling | Call sites | In v2? | Asserted by tests? |
+|---|---|---|---|
+| `warn` | 2 — `ahoy.go:204` (circular import), `ahoy.go:595` (missing flag) | Yes, the only spelling v2 emits | Yes — 4 assertions across both modules |
+| `warning` | 1 — `ahoy.go:285` (malformed env line) | No | No |
+
+So `warn` was the incumbent and `warning` the outlier, not the reverse.
+**Standardised on `warn`**, which meant one line changed
+(`ahoy.go:285`), no test changes, no divergence from v2's output, and nothing
+that anyone currently asserts on or greps for was altered.
+
+`logLevelWarning` has been removed; `logLevelWarn` in `constants.go` is now the
+single definition, with a comment recording why that spelling won.
+
+The argument for `warning` was that the other levels are all full words
+(`debug`, `error`, `fatal`). That was judged not worth a user-visible output
+change to two messages plus two BATS assertions, particularly with v3.0.0 in
+flight. If it is ever revisited, do it as its own commit covering both modules
+and their tests together, so the behaviour change is visible in review rather
+than buried in unrelated work.
+
+### Applying this to v2, if v2 is ever unfrozen
+
+`v2/ahoy.go:449` already uses `warn`, so v2 is internally consistent and needs
+no change. The two modules now agree.

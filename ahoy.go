@@ -282,7 +282,7 @@ func (s *appState) getEnvironmentVars(envFile string) []string {
 		// Warn on lines that don't contain '=' - common culprit is shell
 		// `export KEY=VALUE` syntax, which is not supported here.
 		if !strings.Contains(line, "=") {
-			s.logger(logLevelWarning, "ignoring malformed line in env file '"+envFile+"' (expected KEY=VALUE, got: "+line+")")
+			s.logger(logLevelWarn, "ignoring malformed line in env file '"+envFile+"' (expected KEY=VALUE, got: "+line+")")
 			continue
 		}
 		envVars = append(envVars, line)

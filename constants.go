@@ -5,12 +5,11 @@ package main
 // constants avoids a typo silently changing behaviour.
 const (
 	logLevelDebug = "debug"
-	// logLevelWarn and logLevelWarning are both in use: the "[warn]" prefix is
-	// asserted by the BATS suite, so the inconsistency is preserved deliberately.
-	logLevelWarn    = "warn"
-	logLevelWarning = "warning"
-	logLevelError   = "error"
-	logLevelFatal   = "fatal"
+	// "warn" rather than "warning": it is the established prefix, is the only
+	// spelling the v2 module emits, and is what the BATS suite asserts on.
+	logLevelWarn  = "warn"
+	logLevelError = "error"
+	logLevelFatal = "fatal"
 )
 
 // Validation issue types, used as ValidationIssue.Type.
