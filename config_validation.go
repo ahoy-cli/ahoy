@@ -9,8 +9,8 @@ import (
 
 // ValidationIssue represents a configuration validation problem.
 type ValidationIssue struct {
-	Type            string // "version_mismatch", "missing_file"
-	Severity        string // "error", "warning", "info"
+	Type            string // One of the issueType* constants.
+	Severity        string // One of the severity* constants.
 	Message         string
 	File            string
 	Field           string
@@ -28,10 +28,10 @@ type ValidationResult struct {
 
 // FeatureSupport defines which minimum Ahoy version is required for each feature.
 var FeatureSupport = map[string]string{
-	"command_aliases":    "v2.1.0",
-	"optional_imports":   "v2.2.0",
-	"multiple_env_files": "v2.5.0",
-	"schema_validation":  "v2.6.0",
+	featureCommandAliases:   "v2.1.0",
+	featureOptionalImports:  "v2.2.0",
+	featureMultipleEnvFiles: "v2.5.0",
+	featureSchemaValidation: "v2.6.0",
 }
 
 // GetAhoyVersion returns the current Ahoy version, or a simulated version for testing.
@@ -158,8 +158,8 @@ func ValidateConfig(config Config, configFile string) ValidationResult {
 
 	if config.AhoyAPI != "v2" {
 		result.Issues = append(result.Issues, ValidationIssue{
-			Type:     "version_mismatch",
-			Severity: "error",
+			Type:     issueTypeVersionMismatch,
+			Severity: severityError,
 			Message:  fmt.Sprintf("Unsupported API version '%s'. Only 'v2' is currently supported.", config.AhoyAPI),
 			File:     configFile,
 			Field:    "ahoyapi",
@@ -174,7 +174,7 @@ func ValidateConfig(config Config, configFile string) ValidationResult {
 	}
 
 	for _, issue := range result.Issues {
-		if issue.Severity == "error" {
+		if issue.Severity == severityError {
 			result.HasError = true
 			break
 		}
@@ -187,15 +187,15 @@ func ValidateConfig(config Config, configFile string) ValidationResult {
 func validateFeatures(config Config, configFile, currentVersion string) []ValidationIssue {
 	var issues []ValidationIssue
 
-	if len(config.Env) > 1 && !VersionSupports(currentVersion, "multiple_env_files") {
+	if len(config.Env) > 1 && !VersionSupports(currentVersion, featureMultipleEnvFiles) {
 		issues = append(issues, ValidationIssue{
-			Type:            "version_mismatch",
-			Severity:        "warning",
+			Type:            issueTypeVersionMismatch,
+			Severity:        severityWarning,
 			Message:         "Multiple environment files detected. This feature requires proper support.",
 			File:            configFile,
 			Field:           "env",
-			Feature:         "multiple_env_files",
-			RequiredVersion: FeatureSupport["multiple_env_files"],
+			Feature:         featureMultipleEnvFiles,
+			RequiredVersion: FeatureSupport[featureMultipleEnvFiles],
 			CurrentVersion:  currentVersion,
 			Suggestion:      "Multiple env files are partially supported. Upgrade for full compatibility.",
 		})
@@ -208,29 +208,29 @@ func validateFeatures(config Config, configFile, currentVersion string) []Valida
 func validateCommand(cmdName string, cmd Command, configFile, currentVersion string) []ValidationIssue {
 	var issues []ValidationIssue
 
-	if cmd.Optional && !VersionSupports(currentVersion, "optional_imports") {
+	if cmd.Optional && !VersionSupports(currentVersion, featureOptionalImports) {
 		issues = append(issues, ValidationIssue{
-			Type:            "version_mismatch",
-			Severity:        "error",
-			Message:         fmt.Sprintf("Command '%s' uses 'optional: true' which requires Ahoy %s or later", cmdName, FeatureSupport["optional_imports"]),
+			Type:            issueTypeVersionMismatch,
+			Severity:        severityError,
+			Message:         fmt.Sprintf("Command '%s' uses 'optional: true' which requires Ahoy %s or later", cmdName, FeatureSupport[featureOptionalImports]),
 			File:            configFile,
 			Field:           fmt.Sprintf("commands.%s.optional", cmdName),
-			Feature:         "optional_imports",
-			RequiredVersion: FeatureSupport["optional_imports"],
+			Feature:         featureOptionalImports,
+			RequiredVersion: FeatureSupport[featureOptionalImports],
 			CurrentVersion:  currentVersion,
 			Suggestion:      "Upgrade Ahoy or remove 'optional: true' from the command",
 		})
 	}
 
-	if len(cmd.Aliases) > 0 && !VersionSupports(currentVersion, "command_aliases") {
+	if len(cmd.Aliases) > 0 && !VersionSupports(currentVersion, featureCommandAliases) {
 		issues = append(issues, ValidationIssue{
-			Type:            "version_mismatch",
-			Severity:        "warning",
-			Message:         fmt.Sprintf("Command '%s' uses aliases which require Ahoy %s or later", cmdName, FeatureSupport["command_aliases"]),
+			Type:            issueTypeVersionMismatch,
+			Severity:        severityWarning,
+			Message:         fmt.Sprintf("Command '%s' uses aliases which require Ahoy %s or later", cmdName, FeatureSupport[featureCommandAliases]),
 			File:            configFile,
 			Field:           fmt.Sprintf("commands.%s.aliases", cmdName),
-			Feature:         "command_aliases",
-			RequiredVersion: FeatureSupport["command_aliases"],
+			Feature:         featureCommandAliases,
+			RequiredVersion: FeatureSupport[featureCommandAliases],
 			CurrentVersion:  currentVersion,
 			Suggestion:      "Upgrade Ahoy for full alias support",
 		})
@@ -259,22 +259,22 @@ func validateImport(cmdName, importPath string, optional bool, configFile, curre
 	}
 
 	if optional {
-		if !VersionSupports(currentVersion, "optional_imports") {
+		if !VersionSupports(currentVersion, featureOptionalImports) {
 			issues = append(issues, ValidationIssue{
-				Type:            "version_mismatch",
-				Severity:        "error",
+				Type:            issueTypeVersionMismatch,
+				Severity:        severityError,
 				Message:         fmt.Sprintf("Import file '%s' not found for command '%s'. This file is marked as optional but your Ahoy version doesn't support optional imports.", importPath, cmdName),
 				File:            configFile,
 				Field:           fmt.Sprintf("commands.%s.imports", cmdName),
-				Feature:         "optional_imports",
-				RequiredVersion: FeatureSupport["optional_imports"],
+				Feature:         featureOptionalImports,
+				RequiredVersion: FeatureSupport[featureOptionalImports],
 				CurrentVersion:  currentVersion,
-				Suggestion:      fmt.Sprintf("Either upgrade Ahoy to %s+, create the missing file '%s', or remove 'optional: true'", FeatureSupport["optional_imports"], importPath),
+				Suggestion:      fmt.Sprintf("Either upgrade Ahoy to %s+, create the missing file '%s', or remove 'optional: true'", FeatureSupport[featureOptionalImports], importPath),
 			})
 		} else {
 			issues = append(issues, ValidationIssue{
-				Type:     "missing_file",
-				Severity: "info",
+				Type:     issueTypeMissingFile,
+				Severity: severityInfo,
 				Message:  fmt.Sprintf("Optional import file '%s' not found for command '%s' (this is OK)", importPath, cmdName),
 				File:     configFile,
 				Field:    fmt.Sprintf("commands.%s.imports", cmdName),
@@ -283,8 +283,8 @@ func validateImport(cmdName, importPath string, optional bool, configFile, curre
 	} else {
 		// Missing required imports are reported as warnings - getSubCommands handles them gracefully.
 		issues = append(issues, ValidationIssue{
-			Type:       "missing_file",
-			Severity:   "warning",
+			Type:       issueTypeMissingFile,
+			Severity:   severityWarning,
 			Message:    fmt.Sprintf("Import file '%s' not found for command '%s' (will be skipped)", importPath, cmdName),
 			File:       configFile,
 			Field:      fmt.Sprintf("commands.%s.imports", cmdName),
@@ -304,8 +304,8 @@ func validateEnvFile(cmdName, envPath, configFile string) []ValidationIssue {
 
 	if !fileExists(fullPath) {
 		issues = append(issues, ValidationIssue{
-			Type:       "missing_file",
-			Severity:   "warning",
+			Type:       issueTypeMissingFile,
+			Severity:   severityWarning,
 			Message:    fmt.Sprintf("Environment file '%s' not found for command '%s' (will be ignored)", envPath, cmdName),
 			File:       configFile,
 			Field:      fmt.Sprintf("commands.%s.env", cmdName),
@@ -433,7 +433,7 @@ func generateRecommendations(result ConfigReport) []string {
 	var recommendations []string
 
 	for _, issue := range result.ValidationResult.Issues {
-		if issue.Type == "version_mismatch" && issue.Severity == "error" {
+		if issue.Type == issueTypeVersionMismatch && issue.Severity == severityError {
 			recommendations = append(recommendations, "Upgrade Ahoy to the latest version for full feature support")
 			break
 		}
@@ -457,7 +457,7 @@ func generateRecommendations(result ConfigReport) []string {
 	}
 
 	for _, issue := range result.ValidationResult.Issues {
-		if issue.Type == "version_mismatch" && issue.Severity == "warning" {
+		if issue.Type == issueTypeVersionMismatch && issue.Severity == severityWarning {
 			recommendations = append(recommendations, "Consider upgrading to a newer Ahoy version for better support of advanced features")
 			break
 		}
@@ -514,11 +514,11 @@ func PrintConfigReport(result ConfigReport) {
 		for i, issue := range result.ValidationResult.Issues {
 			fmt.Printf("%d. ", i+1)
 			switch issue.Severity {
-			case "error":
+			case severityError:
 				fmt.Printf("❌ %s\n", issue.Message)
-			case "warning":
+			case severityWarning:
 				fmt.Printf("⚠️  %s\n", issue.Message)
-			case "info":
+			case severityInfo:
 				fmt.Printf("ℹ️  %s\n", issue.Message)
 			}
 
