@@ -14,13 +14,13 @@
 [![All Contributors](https://img.shields.io/badge/all_contributors-14-orange.svg)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
-**[📖 Read the documentation at ahoy-cli.github.io](https://ahoy-cli.github.io/)**
+**[📖 Read the full documentation at ahoy-cli.github.io](https://ahoy-cli.github.io/)**
 
 </div>
 
-Ahoy gives each of your projects its own CLI app with zero code and zero dependencies. Write your commands in a YAML file, and Ahoy turns them into a real command line tool with a command listing, per-command help, tab completion, and the ability to run from any subdirectory.
+Ahoy gives each of your projects its own CLI app with zero code and zero dependencies. Write your commands in a YAML file, and Ahoy turns them into a real command line tool with a command listing, per-command help, shell tab completion, and the ability to run your commands from any subdirectory.
 
-It was created to help with running interactive commands inside Docker containers, but it works just as well for local commands, commands over `ssh`, or anything else you would otherwise run by hand.
+It was created to help with running interactive commands inside Docker containers, but it works just as well for local commands, aliases for commands with complex parameters, commands over `ssh`, or anything else you would otherwise run by hand.
 
 ## Why
 
@@ -38,19 +38,21 @@ ahoy mysql-import < some-database.sql
 
 ## Installation
 
-**macOS** — using Homebrew / Linuxbrew:
+**macOS** - using Homebrew / Linuxbrew:
 
 ```bash
 brew install ahoy
 ```
 
-**Linux** — download the [latest release](https://github.com/ahoy-cli/ahoy/releases), put the binary for your platform somewhere in your `$PATH` and rename it `ahoy`. Or use the one-liner:
+**Linux** - download the [latest release](https://github.com/ahoy-cli/ahoy/releases), put the binary for your platform somewhere in your `$PATH` and rename it `ahoy`. Or use the one-liner:
 
 ```bash
 os=$(uname -s | tr '[:upper:]' '[:lower:]') && architecture=$(case $(uname -m) in (x86_64 | amd64) echo "amd64" ;; (aarch64 | arm64 | armv8*) echo "arm64" ;; (armv7*) echo "armv7" ;; (armv6*) echo "armv6" ;; esac) && { [ -n "$architecture" ] || { echo "Unsupported architecture: $(uname -m)" >&2; false; }; } && sudo wget -q https://github.com/ahoy-cli/ahoy/releases/latest/download/ahoy-bin-$os-$architecture -O /usr/local/bin/ahoy && sudo chown $USER /usr/local/bin/ahoy && chmod +x /usr/local/bin/ahoy
 ```
 
-**Windows** — for WSL2, use the Linux binary above.
+**Windows** - native builds are published as `ahoy-bin-windows-amd64.exe` and `ahoy-bin-windows-arm64.exe` on the [latest release](https://github.com/ahoy-cli/ahoy/releases) page (also available as `ahoy-windows-amd64.zip` / `ahoy-windows-arm64.zip`). Download the one for your architecture, rename it `ahoy.exe`, and put it in a directory that is on your `PATH` - for example `%USERPROFILE%\bin`, adding that folder under Settings → System → About → Advanced system settings → Environment Variables. Note that Ahoy runs command bodies through `bash -c` by default, so bash needs to be available (Git Bash, for instance) unless your config sets a custom `entrypoint`.
+
+For WSL2, use the Linux binary above.
 
 Full instructions: **[Installation & Setup](https://ahoy-cli.github.io/guides/getting-started/)**
 
@@ -64,7 +66,7 @@ ahoy config init
 ahoy
 ```
 
-The example file ships with 30+ ready-to-use commands covering local environments (`up`, `down`, `restart`), testing and linting, database operations, build and deploy, and Drupal integration. **[View it here](examples/examples.ahoy.yml)**.
+The example file ships with more than 20 ready-to-use commands covering local environments (`up`, `down`, `restart`), testing and linting, database operations, build and deploy, and Drupal integration. **[View it here](examples/examples.ahoy.yml)**.
 
 ## What a config looks like
 
@@ -109,36 +111,36 @@ Every field is documented in the **[YAML Schema reference](https://ahoy-cli.gith
 
 ## Features
 
-- **Non-invasive** — wraps the commands and scripts you already use.
-- **Consistent** — commands always run relative to the `.ahoy.yml` file, but can be called from any subfolder.
-- **Visual** — see all your commands in one place with helpful descriptions.
-- **Flexible** — each repo or workspace gets its own commands.
-- **Fully interactive** — shells like MySQL and interactive prompts still work.
-- **Command templates** — use regular bash syntax like `"$@"` or `$1`.
-- **[Imports](https://ahoy-cli.github.io/guides/importing/)** — split commands across multiple files, with "last in wins" for duplicates, and `optional: true` to skip missing files gracefully.
-- **[Aliases and descriptions](https://ahoy-cli.github.io/guides/writing-commands/)** — give commands short alternative names and longer multi-line help text.
-- **[Environment variables](https://ahoy-cli.github.io/guides/environment/)** — load one or more env files at both file and command level. Ahoy also injects `AHOY_COMMAND_NAME` and `AHOY_CMD` into every command.
-- **[Shell completion](https://ahoy-cli.github.io/guides/shell-autocompletion/)** — commands and help are self-documenting. There's a dedicated Zsh plugin at [ahoy-cli/zsh-ahoy](https://github.com/ahoy-cli/zsh-ahoy).
-- **Custom entrypoints** — swap `bash` for PHP, Node.js, Python or anything else. This is also how plugins work.
-- **Config validation** — `ahoy config validate` checks your config and suggests fixes.
+- **Non-invasive** - wraps the commands and scripts you already use.
+- **Consistent** - commands always run relative to the `.ahoy.yml` file, but can be called from any subfolder.
+- **Visual** - see all your commands in one place with helpful descriptions.
+- **Flexible** - each repo or workspace gets its own commands.
+- **Fully interactive** - shells like MySQL and interactive prompts still work.
+- **Command templates** - use regular bash syntax like `"$@"` or `$1`.
+- **[Imports](https://ahoy-cli.github.io/guides/importing/)** - split commands across multiple files, with "last in wins" for duplicates, and `optional: true` to skip missing files gracefully.
+- **[Aliases and descriptions](https://ahoy-cli.github.io/guides/writing-commands/)** - give commands short alternative names and longer multi-line help text.
+- **[Environment variables](https://ahoy-cli.github.io/guides/environment/)** - load one or more env files at both file and command level. Ahoy also injects `AHOY_COMMAND_NAME` and `AHOY_CMD` into every command.
+- **[Shell completion](https://ahoy-cli.github.io/guides/shell-autocompletion/)** - commands and help are self-documenting. There's a dedicated Zsh plugin at [ahoy-cli/zsh-ahoy](https://github.com/ahoy-cli/zsh-ahoy).
+- **Custom entrypoints** - swap `bash` for PHP, Node.js, Python or anything else. This is also how plugins work.
+- **Config validation** - `ahoy config validate` checks your config and suggests fixes.
 
 ## What's new in v3
 
 Ahoy v3 is a major internal rewrite that brings improved CLI handling whilst maintaining **full backwards compatibility** with existing `.ahoy.yml` files. Your workflows will not break.
 
-- **New CLI framework** — migrated from `urfave/cli` to [Cobra](https://github.com/spf13/cobra) for a more robust foundation.
-- **`ahoy config` subcommand group** — `ahoy config init [url]` downloads an example config (replacing `ahoy init`), and `ahoy config validate` checks your config for issues.
-- **Command descriptions** — a `description` field for longer multi-line help, alongside the existing short `usage` field.
-- **Optional imports** — mark imports with `optional: true` so missing files are skipped instead of erroring.
-- **Command aliases** — an `aliases` field for alternative names, shown inline in help output.
-- **Multiple environment files** — `env` now accepts an array, at both global and command level.
-- **Runtime environment variables** — `AHOY_COMMAND_NAME` and `AHOY_CMD` are injected into every command.
+- **New CLI framework** - migrated from `urfave/cli` to [Cobra](https://github.com/spf13/cobra) for a more robust foundation.
+- **`ahoy config` subcommand group** - `ahoy config init [url]` downloads an example config (replacing `ahoy init`), and `ahoy config validate` checks your config for issues.
+- **Command descriptions** - a `description` field for longer multi-line help, alongside the existing short `usage` field.
+- **Optional imports** - mark imports with `optional: true` so missing files are skipped instead of erroring.
+- **Command aliases** - an `aliases` field for alternative names, shown inline in help output.
+- **Multiple environment files** - `env` now accepts an array, at both global and command level.
+- **Runtime environment variables** - `AHOY_COMMAND_NAME` and `AHOY_CMD` are injected into every command.
 
 ### Upgrading from v2
 
-No changes to your `.ahoy.yml` files are required — just replace the binary. All existing commands, aliases, imports, entrypoints and environment configuration continue to work, and the YAML API version stays at `v2`.
+No changes to your `.ahoy.yml` files are required - just replace the binary. All existing commands, aliases, imports, entrypoints and environment configuration continue to work, and the YAML API version stays at `v2`.
 
-The one behavioural change: `ahoy init` now prints a deprecation notice and redirects to `ahoy config init`. Both work identically.
+The one behavioural change: `ahoy init` and `ahoy config init` create exactly the same configuration file, but `ahoy init` now also prints a deprecation notice pointing you at `ahoy config init`.
 
 ## Documentation
 
