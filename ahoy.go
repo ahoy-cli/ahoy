@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -64,11 +63,9 @@ type appState struct {
 	sourcefile     string
 	verbose        bool
 	ahoyExecutable string
-	// Keep the startup stream so subprocesses retain its terminal properties.
-	commandStderr io.Writer
-	importVisited map[string]bool
-	srcDir        string
-	srcFile       string
+	importVisited  map[string]bool
+	srcDir         string
+	srcFile        string
 	// flag pre-parse results written by initFlags, read by setupApp/main.
 	invalidFlagError      string
 	versionFlagSet        bool
@@ -77,7 +74,7 @@ type appState struct {
 }
 
 func newAppState() *appState {
-	return &appState{commandStderr: os.Stderr}
+	return &appState{}
 }
 
 func (s *appState) logger(errType string, text string) {
@@ -417,10 +414,7 @@ func (s *appState) getCommands(config Config) []*cobra.Command {
 				command.Dir = s.srcDir
 				command.Stdout = os.Stdout
 				command.Stdin = os.Stdin
-				command.Stderr = s.commandStderr
-				if command.Stderr == nil {
-					command.Stderr = os.Stderr
-				}
+				command.Stderr = os.Stderr
 				// Build the environment so cmdEnvVars always take precedence.
 				// macOS getenv(3) returns the first match, so we put cmdEnvVars
 				// first and append inherited entries only when their key is not
@@ -835,36 +829,11 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Route Ahoy's own stderr through a pipe drained by a goroutine.
-	// Subprocesses use the stderr captured in appState at startup, preserving
-	// terminal properties and direct pass-through for interactive commands.
-	// If pipe creation fails, fall back to running with stderr untouched.
-	oldStderr := os.Stderr
-	r, w, pipeErr := os.Pipe()
-
-	var err error
-
-	if pipeErr != nil {
-		err = rootCmd.Execute()
-	} else {
-		os.Stderr = w
-
-		drained := make(chan struct{})
-		go func() {
-			defer close(drained)
-			if _, err := io.Copy(oldStderr, r); err != nil {
-				log.Printf("stderr drain error: %v", err)
-			}
-		}()
-
-		err = rootCmd.Execute()
-
-		// Closing the writer signals EOF to the drain goroutine. Wait for
-		// it to finish so any in-flight stderr is flushed before we exit.
-		w.Close()
-		<-drained
-		os.Stderr = oldStderr
-	}
+	// Ahoy and its subprocesses share the stderr ahoy was started with.
+	// Nothing is interposed on it: an intervening pipe would strip the
+	// terminal properties that interactive children rely on (issue #180),
+	// and cobra's own error output is already suppressed via SilenceErrors.
+	err := rootCmd.Execute()
 
 	if err != nil {
 		// Cobra has SilenceErrors=true so the error has not been printed.

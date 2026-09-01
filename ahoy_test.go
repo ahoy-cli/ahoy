@@ -45,31 +45,26 @@ func TestGetCommands(t *testing.T) {
 	}
 }
 
-func TestCommandUsesStderrCapturedAtAppStartup(t *testing.T) {
-	originalStderr := os.Stderr
-	capturedRead, capturedWrite, err := os.Pipe()
+// TestSubprocessInheritsAhoyStderrDirectly pins the fix for issue #180.
+// Interposing anything on stderr - even something that faithfully copies
+// every byte through - replaces the inherited descriptor with a pipe, and
+// children that draw a TUI on stderr then read a 0x0 terminal size and
+// render nothing. The assertion is therefore about the *kind* of descriptor
+// the child receives, not just the bytes that reach the far end.
+func TestSubprocessInheritsAhoyStderrDirectly(t *testing.T) {
+	stderrFile, err := os.CreateTemp(t.TempDir(), "stderr")
 	if err != nil {
 		t.Fatal(err)
 	}
-	wrappedRead, wrappedWrite, err := os.Pipe()
-	if err != nil {
-		capturedRead.Close()
-		capturedWrite.Close()
-		t.Fatal(err)
-	}
-	defer capturedRead.Close()
-	defer capturedWrite.Close()
-	defer wrappedRead.Close()
-	defer wrappedWrite.Close()
-	defer func() {
-		os.Stderr = originalStderr
-	}()
+	defer stderrFile.Close()
 
-	os.Stderr = capturedWrite
-	state := newAppState()
-	os.Stderr = wrappedWrite
+	originalStderr := os.Stderr
+	os.Stderr = stderrFile
+	defer func() { os.Stderr = originalStderr }()
+
 	t.Setenv("AHOY_STDERR_HELPER", "1")
 
+	state := newAppState()
 	config := Config{
 		Entrypoint: []string{os.Args[0], "-test.run=^TestStderrHelperProcess$", "--", "{{cmd}}"},
 		Commands: map[string]Command{
@@ -81,30 +76,31 @@ func TestCommandUsesStderrCapturedAtAppStartup(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	capturedWrite.Close()
-	wrappedWrite.Close()
-	capturedOutput, err := io.ReadAll(capturedRead)
-	if err != nil {
-		t.Fatal(err)
-	}
-	wrappedOutput, err := io.ReadAll(wrappedRead)
+	os.Stderr = originalStderr
+	written, err := os.ReadFile(stderrFile.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if string(capturedOutput) != "child stderr" {
-		t.Fatalf("expected child stderr on startup stream, got %q", capturedOutput)
-	}
-	if len(wrappedOutput) != 0 {
-		t.Fatalf("expected wrapper stream to remain empty, got %q", wrappedOutput)
+	// "pipe=false" means the child got ahoy's own regular file on fd 2
+	// rather than a copy conduit standing in for it.
+	if got, want := string(written), "child stderr pipe=false"; got != want {
+		t.Fatalf("child stderr: got %q, want %q", got, want)
 	}
 }
 
+// TestStderrHelperProcess is not a test - it is the child process spawned by
+// TestSubprocessInheritsAhoyStderrDirectly, and reports what it found on fd 2.
 func TestStderrHelperProcess(t *testing.T) {
 	if os.Getenv("AHOY_STDERR_HELPER") != "1" {
 		return
 	}
-	fmt.Fprint(os.Stderr, "child stderr")
+	info, err := os.Stderr.Stat()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "child stderr stat error: %v", err)
+		os.Exit(1)
+	}
+	fmt.Fprintf(os.Stderr, "child stderr pipe=%t", info.Mode()&os.ModeNamedPipe != 0)
 	os.Exit(0)
 }
 

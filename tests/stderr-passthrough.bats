@@ -62,3 +62,25 @@ EOF
   line_count=$(printf '%s' "$stderr" | wc -l | tr -d ' ')
   [ "$line_count" -gt 100000 ]
 }
+
+@test "Subprocess inherits ahoy's stderr descriptor, not an internal pipe" {
+  # Regression test for issue #180. Ahoy must not interpose anything on
+  # stderr: a child that draws a TUI there (gum, anything on Bubble Tea)
+  # cannot query the terminal size through a pipe and renders nothing.
+  # Here ahoy's own stderr is a regular file, so the child must see a
+  # regular file too - seeing a pipe means ahoy inserted one.
+  TMP_CONFIG="$BATS_TEST_TMPDIR/fd.ahoy.yml"
+  cat > "$TMP_CONFIG" <<'YAML'
+ahoyapi: v2
+commands:
+  fd-kind:
+    usage: "report what kind of descriptor is on fd 2"
+    cmd: if test -p /dev/fd/2; then echo PIPE; else echo NOT_A_PIPE; fi
+YAML
+
+  # Redirect explicitly rather than via `run`, whose own capture would
+  # otherwise decide what the child finds on fd 2.
+  ./ahoy -f "$TMP_CONFIG" fd-kind \
+    >"$BATS_TEST_TMPDIR/stdout.log" 2>"$BATS_TEST_TMPDIR/stderr.log"
+  [ "$(cat "$BATS_TEST_TMPDIR/stdout.log")" = "NOT_A_PIPE" ]
+}
