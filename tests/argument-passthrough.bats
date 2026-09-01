@@ -73,6 +73,20 @@ YAML
   [ "$output" = "-f other.yml --verbose -v" ]
 }
 
+@test "--version after the command name reaches the command" {
+  # The wrapped tool's own --version must win, or `ahoy node --version`
+  # reports ahoy's version instead of Node's.
+  run ./ahoy -f "$TMP_CONFIG" echoargs --version
+  [ "$status" -eq 0 ]
+  [ "$output" = "--version" ]
+}
+
+@test "--version before the command name is still ahoy's" {
+  run ./ahoy --version
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"--version"* ]]
+}
+
 @test "Every global flag form is consumed before the command's arguments begin" {
   # commandArgs is sliced at the first non-flag token, so each spelling of a
   # global flag has to be counted correctly - miscount by one and the config
