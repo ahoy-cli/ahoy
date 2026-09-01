@@ -45,6 +45,69 @@ func TestGetCommands(t *testing.T) {
 	}
 }
 
+func TestCommandUsesStderrCapturedAtAppStartup(t *testing.T) {
+	originalStderr := os.Stderr
+	capturedRead, capturedWrite, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	wrappedRead, wrappedWrite, err := os.Pipe()
+	if err != nil {
+		capturedRead.Close()
+		capturedWrite.Close()
+		t.Fatal(err)
+	}
+	defer capturedRead.Close()
+	defer capturedWrite.Close()
+	defer wrappedRead.Close()
+	defer wrappedWrite.Close()
+	defer func() {
+		os.Stderr = originalStderr
+	}()
+
+	os.Stderr = capturedWrite
+	state := newAppState()
+	os.Stderr = wrappedWrite
+	t.Setenv("AHOY_STDERR_HELPER", "1")
+
+	config := Config{
+		Entrypoint: []string{os.Args[0], "-test.run=^TestStderrHelperProcess$", "--", "{{cmd}}"},
+		Commands: map[string]Command{
+			"stderr": {Cmd: "ignored"},
+		},
+	}
+	command := state.getCommands(config)[0]
+	if err := command.RunE(command, nil); err != nil {
+		t.Fatal(err)
+	}
+
+	capturedWrite.Close()
+	wrappedWrite.Close()
+	capturedOutput, err := io.ReadAll(capturedRead)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wrappedOutput, err := io.ReadAll(wrappedRead)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if string(capturedOutput) != "child stderr" {
+		t.Fatalf("expected child stderr on startup stream, got %q", capturedOutput)
+	}
+	if len(wrappedOutput) != 0 {
+		t.Fatalf("expected wrapper stream to remain empty, got %q", wrappedOutput)
+	}
+}
+
+func TestStderrHelperProcess(t *testing.T) {
+	if os.Getenv("AHOY_STDERR_HELPER") != "1" {
+		return
+	}
+	fmt.Fprint(os.Stderr, "child stderr")
+	os.Exit(0)
+}
+
 func TestGetSubCommand(t *testing.T) {
 	// Each scenario uses its own appState, no global save/restore needed.
 	state := &appState{}

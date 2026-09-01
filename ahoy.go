@@ -64,9 +64,11 @@ type appState struct {
 	sourcefile     string
 	verbose        bool
 	ahoyExecutable string
-	importVisited  map[string]bool
-	srcDir         string
-	srcFile        string
+	// Keep the startup stream so subprocesses retain its terminal properties.
+	commandStderr io.Writer
+	importVisited map[string]bool
+	srcDir        string
+	srcFile       string
 	// flag pre-parse results written by initFlags, read by setupApp/main.
 	invalidFlagError      string
 	versionFlagSet        bool
@@ -75,7 +77,7 @@ type appState struct {
 }
 
 func newAppState() *appState {
-	return &appState{}
+	return &appState{commandStderr: os.Stderr}
 }
 
 // logLineBreaks escapes the characters that would otherwise let a logged value
@@ -437,7 +439,10 @@ func (s *appState) getCommands(config Config) []*cobra.Command {
 				command.Dir = s.srcDir
 				command.Stdout = os.Stdout
 				command.Stdin = os.Stdin
-				command.Stderr = os.Stderr
+				command.Stderr = s.commandStderr
+				if command.Stderr == nil {
+					command.Stderr = os.Stderr
+				}
 				// Build the environment so cmdEnvVars always take precedence.
 				// macOS getenv(3) returns the first match, so we put cmdEnvVars
 				// first and append inherited entries only when their key is not
@@ -852,10 +857,9 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Route stderr through a pipe drained by a goroutine so subprocesses
-	// writing more than the pipe buffer (~64 KB) to stderr don't deadlock.
-	// Output is teed to the real stderr in real time, preserving live
-	// pass-through for child processes (the primary use case for ahoy).
+	// Route Ahoy's own stderr through a pipe drained by a goroutine.
+	// Subprocesses use the stderr captured in appState at startup, preserving
+	// terminal properties and direct pass-through for interactive commands.
 	// If pipe creation fails, fall back to running with stderr untouched.
 	oldStderr := os.Stderr
 	r, w, pipeErr := os.Pipe()
