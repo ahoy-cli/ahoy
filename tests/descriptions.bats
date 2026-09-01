@@ -27,8 +27,8 @@ teardown() {
   # The long description text should not appear in the top-level listing.
   [[ ! "$output" =~ "A basic command with a simple description" ]]
   [[ ! "$output" =~ "Multiple paragraphs" ]]
-  # But the hint to use --help should appear.
-  [[ "$output" =~ "Use 'ahoy <command> --help' for detailed information about a command" ]]
+  # But the hint to use the help command should appear.
+  [[ "$output" =~ "Use 'ahoy help <command>' for detailed information about a command" ]]
 }
 
 @test "Updated simple.ahoy.yml commands show usage in list" {
@@ -64,14 +64,14 @@ teardown() {
 
 @test "Per-command help shows description" {
   # A command with a simple description should show it in DESCRIPTION section.
-  run ./ahoy -f testdata/descriptions-test.ahoy.yml simple --help
+  run ./ahoy -f testdata/descriptions-test.ahoy.yml help simple
   [ "$status" -eq 0 ]
   [[ "$output" =~ "DESCRIPTION:" ]]
   [[ "$output" =~ "A basic command with a simple description" ]]
 }
 
 @test "Per-command help shows multiline description" {
-  run ./ahoy -f testdata/descriptions-test.ahoy.yml multiline --help
+  run ./ahoy -f testdata/descriptions-test.ahoy.yml help multiline
   [ "$status" -eq 0 ]
   [[ "$output" =~ "DESCRIPTION:" ]]
   [[ "$output" =~ "Multiple paragraphs" ]]
@@ -79,7 +79,7 @@ teardown() {
 }
 
 @test "Per-command help without description omits DESCRIPTION section" {
-  run ./ahoy -f testdata/descriptions-test.ahoy.yml no-description --help
+  run ./ahoy -f testdata/descriptions-test.ahoy.yml help no-description
   [ "$status" -eq 0 ]
   [[ ! "$output" =~ "DESCRIPTION:" ]]
   [[ "$output" =~ "NAME:" ]]
@@ -87,7 +87,7 @@ teardown() {
 }
 
 @test "Per-command help shows aliases" {
-  run ./ahoy -f testdata/command-aliases.ahoy.yml hello --help
+  run ./ahoy -f testdata/command-aliases.ahoy.yml help hello
   [ "$status" -eq 0 ]
   [[ "$output" =~ "ALIASES:" ]]
   [[ "$output" =~ "hi, greet, ahoy" ]]
@@ -106,13 +106,20 @@ teardown() {
   [[ "$output" =~ "empty" ]]
 }
 
-@test "Per-command --help shows help and does not execute the command" {
-  # Passing --help to a command should show help, not run the underlying cmd.
+@test "Per-command --help is passed through to the command, not intercepted" {
+  # A command owns every argument after its own name, so --help reaches the
+  # wrapped tool and ahoy's own help stays out of the way. See issue #182.
   run ./ahoy -f testdata/simple.ahoy.yml echo --help
+  [ "$status" -eq 0 ]
+  [ "$output" = "--help" ]
+  [[ ! "$output" =~ "NAME:" ]]
+}
+
+@test "Per-command help is reached with 'ahoy help <command>'" {
+  run ./ahoy -f testdata/simple.ahoy.yml help echo
   [ "$status" -eq 0 ]
   [[ "$output" =~ "NAME:" ]]
   [[ "$output" =~ "USAGE:" ]]
-  [[ ! "$output" =~ "test message" ]]
 }
 
 @test "Help flag after -- separator is passed through to the command" {

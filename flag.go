@@ -26,11 +26,15 @@ package main
 //   helpFlagSet            true if -h / -help / --help was seen
 //   bashCompletionFlagSet  true if --generate-bash-completion was seen
 //   invalidFlagError       non-empty if stdlib parsing failed
+//   commandArgs            everything from the subcommand name onwards
 //
-// Cobra also defines the same flags via PersistentFlags so they appear in
-// the help output and are parsed normally for the double-dash form when it
-// follows a subcommand (e.g. `ahoy mycmd --verbose`). The pre-parser only
-// catches flags ahead of the subcommand position.
+// The pre-parser is the ONLY place ahoy's own flags are recognised, and it
+// only looks ahead of the subcommand name. Everything from the subcommand
+// name onwards is handed to cobra verbatim as commandArgs, because a
+// command defined in .ahoy.yml owns its own arguments - `ahoy chown -R .`
+// must reach chown with its -R intact rather than have ahoy claim it.
+// Cobra still defines the same flags via PersistentFlags so they appear in
+// the help output.
 //
 // Environment-variable fallbacks (AHOY_FILE, AHOY_VERBOSE) are applied
 // here too, after flag parsing, so an explicit flag always wins over the
@@ -70,6 +74,14 @@ func (s *appState) initFlags(incomingFlags []string) {
 	s.helpFlagSet = helpFlag
 	s.bashCompletionFlagSet = bashCompletionFlag
 
+	// stdlib flag stops at the first non-flag token, which is the subcommand
+	// name, so fs.Args() is exactly "the subcommand and everything after it".
+	// Slice the ORIGINAL arguments rather than using fs.Args() directly:
+	// normaliseLongFlagPrefixes rewrote `--foo` to `-foo` for the stdlib
+	// parser's benefit, and the subcommand's own arguments must keep the
+	// dashes the user typed.
+	s.commandArgs = incomingFlags[len(incomingFlags)-len(fs.Args()):]
+
 	s.applyEnvFallbacks()
 }
 
@@ -77,6 +89,7 @@ func (s *appState) initFlags(incomingFlags []string) {
 // create fresh appState instances between runs.
 func (s *appState) resetFlagState() {
 	s.srcDir = ""
+	s.commandArgs = nil
 	s.versionFlagSet = false
 	s.helpFlagSet = false
 	s.bashCompletionFlagSet = false
