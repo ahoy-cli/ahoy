@@ -73,6 +73,28 @@ YAML
   [ "$output" = "-f other.yml --verbose -v" ]
 }
 
+@test "Every global flag form is consumed before the command's arguments begin" {
+  # commandArgs is sliced at the first non-flag token, so each spelling of a
+  # global flag has to be counted correctly - miscount by one and the config
+  # path leaks into the command's arguments, or an argument goes missing.
+  for flag in "-f" "-file" "--file"; do
+    run ./ahoy "$flag" "$TMP_CONFIG" echoargs hello
+    [ "$status" -eq 0 ]
+    [ "$output" = "hello" ]
+
+    run ./ahoy "$flag=$TMP_CONFIG" echoargs hello
+    [ "$status" -eq 0 ]
+    [ "$output" = "hello" ]
+  done
+}
+
+@test "A global flag in '=' form still leaves the command's arguments intact" {
+  run ./ahoy -f="$TMP_CONFIG" --verbose=true echoargs one --two three
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"===> Ahoy echoargs"* ]]
+  [[ "$output" == *"one --two three"* ]]
+}
+
 @test "The '--' separator is still consumed by ahoy, as in v2" {
   run ./ahoy -f "$TMP_CONFIG" echoargs a -- b -- c
   [ "$status" -eq 0 ]
