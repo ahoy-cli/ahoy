@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"strings"
 	"testing"
 
 	"gopkg.in/yaml.v2"
@@ -134,21 +136,59 @@ env:
 // Malformed input must be rejected rather than silently producing an entry
 // with an empty path, which would read as "load the config directory".
 
-func TestEnvFilesUnmarshalMappingWithoutPathIsAnError(t *testing.T) {
-	var config envTestConfig
-	err := yaml.Unmarshal([]byte("env:\n  - optional: true\n"), &config)
-	if err == nil {
-		t.Fatal("Expected an error for a mapping with no 'path' key, got nil")
+// An entry that names no file must be rejected outright. An empty path
+// resolves to the config directory, which previously produced a warning about
+// a missing file called ” and then carried on.
+func TestEnvFilesUnmarshalEntriesWithoutAPathAreErrors(t *testing.T) {
+	cases := map[string]string{
+		"empty string":              `env: ""`,
+		"null":                      "env:\n  - null",
+		"empty string in a list":    "env:\n  - \"\"",
+		"empty string before valid": "env:\n  - \"\"\n  - .env",
+		"mapping with no path":      "env:\n  - optional: true",
+		"mapping with empty path":   "env:\n  path: \"\"",
+		"mapping with unknown key":  "env:\n  key: value",
+	}
+
+	for name, doc := range cases {
+		t.Run(name, func(t *testing.T) {
+			var config envTestConfig
+			err := yaml.Unmarshal([]byte(doc), &config)
+			if err == nil {
+				t.Fatalf("Expected an error, got none (parsed as %+v)", config.Env)
+			}
+			if !errors.Is(err, errEnvFileNoPath) {
+				t.Errorf("Expected errEnvFileNoPath, got: %v", err)
+			}
+		})
 	}
 }
 
-func TestEnvFilesUnmarshalUnknownMappingKeyIsAnError(t *testing.T) {
-	// Previously `env: {key: value}` was a type error. It must stay an error
-	// now that mappings are meaningful, because it still names no file.
+func TestEnvFilesUnmarshalErrorNamesTheOffendingEntry(t *testing.T) {
 	var config envTestConfig
-	err := yaml.Unmarshal([]byte("env:\n  key: value\n"), &config)
+	err := yaml.Unmarshal([]byte("env:\n  - .env\n  - null\n"), &config)
 	if err == nil {
-		t.Fatal("Expected an error for a mapping with no 'path' key, got nil")
+		t.Fatal("Expected an error for a null entry, got nil")
+	}
+	if !strings.Contains(err.Error(), "env entry 2") {
+		t.Errorf("Expected the error to name entry 2, got: %v", err)
+	}
+}
+
+func TestEnvFilesUnmarshalWrongShapeIsAnError(t *testing.T) {
+	// A nested list is neither a path nor a mapping. The message must be ours
+	// rather than the decoder's, which names the internal struct we unmarshal
+	// mappings through.
+	var config envTestConfig
+	err := yaml.Unmarshal([]byte("env:\n  - - nested\n"), &config)
+	if err == nil {
+		t.Fatal("Expected an error for a nested list, got nil")
+	}
+	if !errors.Is(err, errEnvFileShape) {
+		t.Errorf("Expected errEnvFileShape, got: %v", err)
+	}
+	if strings.Contains(err.Error(), "struct {") {
+		t.Errorf("Error leaks the internal struct type: %v", err)
 	}
 }
 

@@ -175,7 +175,44 @@ YAML
 
   run ./ahoy -f "$TMP_CONFIG" deploy
   [ "$status" -ne 0 ]
-  [[ "$output" == *"path"* ]]
+  [[ "$output" == *"env entry 1: env entry has no file path"* ]]
+  # The message must be ours, not the decoder's rendering of the internal
+  # struct that mappings are unmarshalled through.
+  [[ "$output" != *"struct {"* ]]
+}
+
+@test "An empty env path is a config error rather than a file named ''" {
+  cat > "$TMP_CONFIG" <<'YAML'
+ahoyapi: v2
+commands:
+  deploy:
+    env:
+      - ""
+    cmd: echo "COMMAND-DID-RUN"
+YAML
+
+  run ./ahoy -f "$TMP_CONFIG" deploy
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"env entry has no file path"* ]]
+  [[ "$output" != *"COMMAND-DID-RUN"* ]]
+  [[ "$output" != *"environment file '' not found"* ]]
+}
+
+@test "A null env entry is a config error and names its position" {
+  cat > "$TMP_CONFIG" <<'YAML'
+ahoyapi: v2
+commands:
+  deploy:
+    env:
+      - .env
+      - null
+    cmd: echo "COMMAND-DID-RUN"
+YAML
+
+  run ./ahoy -f "$TMP_CONFIG" deploy
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"env entry 2"* ]]
+  [[ "$output" != *"COMMAND-DID-RUN"* ]]
 }
 
 @test "config validate distinguishes a missing optional file from a missing required one" {
