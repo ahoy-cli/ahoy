@@ -162,3 +162,136 @@ func TestEnvFilesLen(t *testing.T) {
 		t.Error("Expected empty EnvFiles to have length 0")
 	}
 }
+
+// The tests below parse through the real Config and Command structs rather
+// than a local stand-in, so they also cover the `yaml:"env"` wiring on both.
+// Carried over from the StringArray tests this type replaced.
+
+func TestEnvFilesInConfigStruct(t *testing.T) {
+	yamlData := `ahoyapi: v2
+env:
+  - .env.base
+  - .env.local
+commands:
+  test:
+    usage: Test command
+    cmd: echo test
+    env: .env.test`
+
+	var config Config
+	if err := yaml.Unmarshal([]byte(yamlData), &config); err != nil {
+		t.Fatalf("Failed to unmarshal config YAML: %v", err)
+	}
+
+	if len(config.Env) != 2 {
+		t.Fatalf("Expected 2 global env files, got %d", len(config.Env))
+	}
+	if config.Env[0].Path != ".env.base" {
+		t.Errorf("Expected '.env.base', got %q", config.Env[0].Path)
+	}
+	if config.Env[1].Path != ".env.local" {
+		t.Errorf("Expected '.env.local', got %q", config.Env[1].Path)
+	}
+
+	testCmd, exists := config.Commands["test"]
+	if !exists {
+		t.Fatal("Test command not found in config")
+	}
+	if len(testCmd.Env) != 1 {
+		t.Fatalf("Expected 1 command env file, got %d", len(testCmd.Env))
+	}
+	if testCmd.Env[0].Path != ".env.test" {
+		t.Errorf("Expected '.env.test', got %q", testCmd.Env[0].Path)
+	}
+}
+
+func TestEnvFilesBackwardsCompatibility(t *testing.T) {
+	// The single-string shorthand, at both levels, exactly as configs
+	// written before the mapping form existed use it.
+	oldFormatYaml := `ahoyapi: v2
+env: .env
+commands:
+  test:
+    usage: Test command
+    cmd: echo test
+    env: .env.command`
+
+	var config Config
+	if err := yaml.Unmarshal([]byte(oldFormatYaml), &config); err != nil {
+		t.Fatalf("Failed to unmarshal backwards compatible YAML: %v", err)
+	}
+
+	if len(config.Env) != 1 {
+		t.Fatalf("Expected 1 global env file, got %d", len(config.Env))
+	}
+	if config.Env[0].Path != ".env" || config.Env[0].Optional {
+		t.Errorf("Expected required '.env', got %+v", config.Env[0])
+	}
+
+	testCmd, exists := config.Commands["test"]
+	if !exists {
+		t.Fatal("Test command not found in config")
+	}
+	if len(testCmd.Env) != 1 {
+		t.Fatalf("Expected 1 command env file, got %d", len(testCmd.Env))
+	}
+	if testCmd.Env[0].Path != ".env.command" || testCmd.Env[0].Optional {
+		t.Errorf("Expected required '.env.command', got %+v", testCmd.Env[0])
+	}
+}
+
+func TestEnvFilesMixedFormats(t *testing.T) {
+	// All three spellings in one config: a list globally, the single-string
+	// shorthand on one command, and a list mixing plain paths with the
+	// mapping form on another.
+	mixedYaml := `ahoyapi: v2
+env:
+  - .env.global1
+  - .env.global2
+commands:
+  cmd1:
+    usage: Command with single env
+    cmd: echo cmd1
+    env: .env.single
+  cmd2:
+    usage: Command with array env
+    cmd: echo cmd2
+    env:
+      - .env.array1
+      - path: .env.array2
+        optional: true`
+
+	var config Config
+	if err := yaml.Unmarshal([]byte(mixedYaml), &config); err != nil {
+		t.Fatalf("Failed to unmarshal mixed format YAML: %v", err)
+	}
+
+	if len(config.Env) != 2 {
+		t.Errorf("Expected 2 global env files, got %d", len(config.Env))
+	}
+
+	cmd1, exists := config.Commands["cmd1"]
+	if !exists {
+		t.Fatal("cmd1 not found in config")
+	}
+	if len(cmd1.Env) != 1 {
+		t.Fatalf("Expected 1 env file for cmd1, got %d", len(cmd1.Env))
+	}
+	if cmd1.Env[0].Path != ".env.single" {
+		t.Errorf("Expected '.env.single', got %q", cmd1.Env[0].Path)
+	}
+
+	cmd2, exists := config.Commands["cmd2"]
+	if !exists {
+		t.Fatal("cmd2 not found in config")
+	}
+	if len(cmd2.Env) != 2 {
+		t.Fatalf("Expected 2 env files for cmd2, got %d", len(cmd2.Env))
+	}
+	if cmd2.Env[0].Path != ".env.array1" || cmd2.Env[0].Optional {
+		t.Errorf("Expected required '.env.array1', got %+v", cmd2.Env[0])
+	}
+	if cmd2.Env[1].Path != ".env.array2" || !cmd2.Env[1].Optional {
+		t.Errorf("Expected optional '.env.array2', got %+v", cmd2.Env[1])
+	}
+}
