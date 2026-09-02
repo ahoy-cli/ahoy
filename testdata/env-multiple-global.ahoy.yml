@@ -1,7 +1,8 @@
 ahoyapi: v2
 env:
   - ./.env
-  - ./.env.doesnotexist
+  - path: ./.env.doesnotexist
+    optional: true
   - ./.env.multiple
 commands:
   test-global-multiple:

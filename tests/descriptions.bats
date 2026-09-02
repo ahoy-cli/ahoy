@@ -122,6 +122,26 @@ teardown() {
   [[ "$output" =~ "USAGE:" ]]
 }
 
+@test "'ahoy help <command>' shows help without running the command" {
+  # Replaces the "does not execute the command" half of the old per-command
+  # --help test. That assertion moved here when --help became the command's
+  # own argument, because showing help must still mean not running anything.
+  TMP_CONFIG="$BATS_TEST_TMPDIR/.ahoy.yml"
+  cat > "$TMP_CONFIG" <<'YAML'
+ahoyapi: v2
+commands:
+  marked:
+    usage: A command that announces itself when it runs
+    cmd: echo "COMMAND-DID-RUN"
+YAML
+
+  run ./ahoy -f "$TMP_CONFIG" help marked
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "NAME:" ]]
+  [[ "$output" =~ "A command that announces itself when it runs" ]]
+  [[ "$output" != *"COMMAND-DID-RUN"* ]]
+}
+
 @test "Help flag after -- separator is passed through to the command" {
   # Arguments after -- should be passed to the underlying command, not intercepted.
   run ./ahoy -f testdata/simple.ahoy.yml echo -- --help

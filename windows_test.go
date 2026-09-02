@@ -93,7 +93,7 @@ ANOTHER_VAR=another_value`
 	}
 	defer os.Remove(testEnvFile)
 
-	envVars := (&appState{}).getEnvironmentVars(testEnvFile)
+	envVars := (&appState{}).getEnvironmentVars(EnvFile{Path: testEnvFile}, "")
 
 	expectedVars := []string{"WINDOWS_TEST_VAR=test_value", "ANOTHER_VAR=another_value"}
 	if len(envVars) != len(expectedVars) {

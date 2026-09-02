@@ -32,6 +32,7 @@ var FeatureSupport = map[string]string{
 	featureOptionalImports:  "v2.2.0",
 	featureMultipleEnvFiles: "v2.5.0",
 	featureSchemaValidation: "v2.6.0",
+	featureOptionalEnvFiles: "v3.0.1",
 }
 
 // GetAhoyVersion returns the current Ahoy version, or a simulated version for testing.
@@ -187,6 +188,20 @@ func ValidateConfig(config Config, configFile string) ValidationResult {
 func validateFeatures(config Config, configFile, currentVersion string) []ValidationIssue {
 	var issues []ValidationIssue
 
+	if configMarksAnEnvFileOptional(config) && !VersionSupports(currentVersion, featureOptionalEnvFiles) {
+		issues = append(issues, ValidationIssue{
+			Type:            issueTypeVersionMismatch,
+			Severity:        severityWarning,
+			Message:         "An env file is marked 'optional'. Older versions of Ahoy read that entry as a file path and will fail to parse the config.",
+			File:            configFile,
+			Field:           "env",
+			Feature:         featureOptionalEnvFiles,
+			RequiredVersion: FeatureSupport[featureOptionalEnvFiles],
+			CurrentVersion:  currentVersion,
+			Suggestion:      "Upgrade Ahoy, or list the file as a plain path if it must work with older versions.",
+		})
+	}
+
 	if len(config.Env) > 1 && !VersionSupports(currentVersion, featureMultipleEnvFiles) {
 		issues = append(issues, ValidationIssue{
 			Type:            issueTypeVersionMismatch,
@@ -240,8 +255,8 @@ func validateCommand(cmdName string, cmd Command, configFile, currentVersion str
 		issues = append(issues, validateImport(cmdName, importPath, cmd.Optional, configFile, currentVersion)...)
 	}
 
-	for _, envPath := range cmd.Env {
-		issues = append(issues, validateEnvFile(cmdName, envPath, configFile)...)
+	for _, envFile := range cmd.Env {
+		issues = append(issues, validateEnvFile(cmdName, envFile, configFile)...)
 	}
 
 	return issues
@@ -296,20 +311,27 @@ func validateImport(cmdName, importPath string, optional bool, configFile, curre
 }
 
 // validateEnvFile validates that an environment file exists.
-func validateEnvFile(cmdName, envPath, configFile string) []ValidationIssue {
+func validateEnvFile(cmdName string, envFile EnvFile, configFile string) []ValidationIssue {
 	var issues []ValidationIssue
 
+	// An entry marked optional is expected to come and go, so its absence is
+	// not worth reporting. That is the whole point of the marker.
+	if envFile.Optional {
+		return issues
+	}
+
 	configDir := filepath.Dir(configFile)
-	fullPath := expandPath(envPath, configDir)
+	fullPath := expandPath(envFile.Path, configDir)
 
 	if !fileExists(fullPath) {
 		issues = append(issues, ValidationIssue{
-			Type:       issueTypeMissingFile,
-			Severity:   severityWarning,
-			Message:    fmt.Sprintf("Environment file '%s' not found for command '%s' (will be ignored)", envPath, cmdName),
-			File:       configFile,
-			Field:      fmt.Sprintf("commands.%s.env", cmdName),
-			Suggestion: fmt.Sprintf("Create the file '%s' or remove it from the configuration", envPath),
+			Type:     issueTypeMissingFile,
+			Severity: severityWarning,
+			Message:  fmt.Sprintf("Environment file '%s' not found for command '%s'. The command will run with those variables unset.", envFile.Path, cmdName),
+			File:     configFile,
+			Field:    fmt.Sprintf("commands.%s.env", cmdName),
+			Suggestion: fmt.Sprintf("Create the file '%s', remove it from the configuration, or mark it 'optional: true' if it is meant to be absent",
+				envFile.Path),
 		})
 	}
 
@@ -332,9 +354,10 @@ type ConfigReport struct {
 
 // EnvFileStatus represents the status of an environment file.
 type EnvFileStatus struct {
-	Path   string
-	Exists bool
-	Global bool
+	Path     string
+	Exists   bool
+	Global   bool
+	Optional bool
 }
 
 // ImportFileStatus represents the status of an import file.
@@ -380,27 +403,47 @@ func RunConfigValidate(configFile string) ConfigReport {
 	return result
 }
 
+// configMarksAnEnvFileOptional reports whether any env entry, global or
+// command-level, uses the mapping form to mark a file optional.
+func configMarksAnEnvFileOptional(config Config) bool {
+	for _, envFile := range config.Env {
+		if envFile.Optional {
+			return true
+		}
+	}
+	for _, cmd := range config.Commands {
+		for _, envFile := range cmd.Env {
+			if envFile.Optional {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // checkEnvironmentFiles checks the status of all environment files referenced in the config.
 func checkEnvironmentFiles(config Config, configFile string) []EnvFileStatus {
 	var envFiles []EnvFileStatus
 	configDir := filepath.Dir(configFile)
 
-	for _, envPath := range config.Env {
-		fullPath := expandPath(envPath, configDir)
+	for _, envFile := range config.Env {
+		fullPath := expandPath(envFile.Path, configDir)
 		envFiles = append(envFiles, EnvFileStatus{
-			Path:   envPath,
-			Exists: fileExists(fullPath),
-			Global: true,
+			Path:     envFile.Path,
+			Exists:   fileExists(fullPath),
+			Global:   true,
+			Optional: envFile.Optional,
 		})
 	}
 
 	for _, cmd := range config.Commands {
-		for _, envPath := range cmd.Env {
-			fullPath := expandPath(envPath, configDir)
+		for _, envFile := range cmd.Env {
+			fullPath := expandPath(envFile.Path, configDir)
 			envFiles = append(envFiles, EnvFileStatus{
-				Path:   envPath,
-				Exists: fileExists(fullPath),
-				Global: false,
+				Path:     envFile.Path,
+				Exists:   fileExists(fullPath),
+				Global:   false,
+				Optional: envFile.Optional,
 			})
 		}
 	}
@@ -545,9 +588,12 @@ func PrintConfigReport(result ConfigReport) {
 			if envFile.Global {
 				scope = "global"
 			}
-			if envFile.Exists {
+			switch {
+			case envFile.Exists:
 				fmt.Printf("   ✅ %s (%s)\n", envFile.Path, scope)
-			} else {
+			case envFile.Optional:
+				fmt.Printf("   ➖ %s (%s) - missing, marked optional\n", envFile.Path, scope)
+			default:
 				fmt.Printf("   ❌ %s (%s) - missing\n", envFile.Path, scope)
 			}
 		}

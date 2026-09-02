@@ -31,4 +31,5 @@ const (
 	featureOptionalImports  = "optional_imports"
 	featureMultipleEnvFiles = "multiple_env_files"
 	featureSchemaValidation = "schema_validation"
+	featureOptionalEnvFiles = "optional_env_files"
 )

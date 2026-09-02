@@ -27,20 +27,20 @@ type Config struct {
 	AhoyAPI    string             `yaml:"ahoyapi"`
 	Commands   map[string]Command `yaml:"commands"`
 	Entrypoint []string           `yaml:"entrypoint"`
-	Env        StringArray        `yaml:"env"`
+	Env        EnvFiles           `yaml:"env"`
 }
 
 // Command is an ahoy command detailed in ahoy.yml files. Multiple
 // commands can be defined per ahoy.yml file.
 type Command struct {
-	Description string      `yaml:"description"`
-	Usage       string      `yaml:"usage"`
-	Cmd         string      `yaml:"cmd"`
-	Env         StringArray `yaml:"env"`
-	Hide        bool        `yaml:"hide"`
-	Optional    bool        `yaml:"optional"`
-	Imports     []string    `yaml:"imports"`
-	Aliases     []string    `yaml:"aliases"`
+	Description string   `yaml:"description"`
+	Usage       string   `yaml:"usage"`
+	Cmd         string   `yaml:"cmd"`
+	Env         EnvFiles `yaml:"env"`
+	Hide        bool     `yaml:"hide"`
+	Optional    bool     `yaml:"optional"`
+	Imports     []string `yaml:"imports"`
+	Aliases     []string `yaml:"aliases"`
 }
 
 // Build metadata variables injected at link time via -ldflags "-X main.version=...".
@@ -270,20 +270,31 @@ func (s *appState) getSubCommands(includes []string) []*cobra.Command {
 	return subCommands
 }
 
-// getEnvironmentVars returns a string array of environment variables from a filepath.
-func (s *appState) getEnvironmentVars(envFile string) []string {
+// getEnvironmentVars returns the KEY=VALUE lines of an env file, resolving the
+// path relative to baseDir.
+//
+// A missing file is not fatal, which is long-standing behaviour that plenty of
+// configurations rely on for layered overrides. It is however reported unless
+// the entry was marked optional: a command that silently runs with empty
+// credentials because its env file was never created is a worse outcome than
+// a line on stderr (issue #188).
+func (s *appState) getEnvironmentVars(envFile EnvFile, baseDir string) []string {
 	var envVars []string
 
-	// We allow non-existent "env" files, so skip if file doesn't exist.
-	if !fileExists(envFile) {
+	resolvedPath := expandPath(envFile.Path, baseDir)
+
+	if !fileExists(resolvedPath) {
+		if !envFile.Optional {
+			s.logger(logLevelWarn, "environment file '"+sanitiseLogValue(envFile.Path)+"' not found, continuing without it. Add 'optional: true' to that entry if it is meant to be absent.")
+		}
 		return nil
 	}
 
-	env, err := os.ReadFile(envFile)
+	env, err := os.ReadFile(resolvedPath)
 	if err != nil {
 		// The file was confirmed to exist above, so this is a real read
 		// failure (e.g. EACCES, EIO) - not a routine missing-file case.
-		s.logger(logLevelError, "Failed to read environment file '"+sanitiseLogValue(envFile)+"': "+sanitiseLogValue(err.Error()))
+		s.logger(logLevelError, "Failed to read environment file '"+sanitiseLogValue(resolvedPath)+"': "+sanitiseLogValue(err.Error()))
 		return nil
 	}
 
@@ -298,7 +309,7 @@ func (s *appState) getEnvironmentVars(envFile string) []string {
 		// Warn on lines that don't contain '=' - common culprit is shell
 		// `export KEY=VALUE` syntax, which is not supported here.
 		if !strings.Contains(line, "=") {
-			s.logger(logLevelWarn, "ignoring malformed line in env file '"+sanitiseLogValue(envFile)+"' (expected KEY=VALUE, got: "+sanitiseLogValue(line)+")")
+			s.logger(logLevelWarn, "ignoring malformed line in env file '"+sanitiseLogValue(resolvedPath)+"' (expected KEY=VALUE, got: "+sanitiseLogValue(line)+")")
 			continue
 		}
 		envVars = append(envVars, line)
@@ -312,9 +323,8 @@ func (s *appState) getCommands(config Config) []*cobra.Command {
 
 	// Get environment variables from all 'global' environment variable files, if any are defined.
 	if len(config.Env) > 0 {
-		for _, envPath := range config.Env {
-			globalEnvFile := expandPath(envPath, s.srcDir)
-			vars := s.getEnvironmentVars(globalEnvFile)
+		for _, envFile := range config.Env {
+			vars := s.getEnvironmentVars(envFile, s.srcDir)
 			if vars != nil {
 				envVars = append(envVars, vars...)
 			}
@@ -426,9 +436,8 @@ func (s *appState) getCommands(config Config) []*cobra.Command {
 				// Note that this will intentionally override any conflicting variables
 				// defined in the 'global' env file.
 				if len(cmdEnv) > 0 {
-					for _, envPath := range cmdEnv {
-						cmdEnvFile := expandPath(envPath, s.srcDir)
-						vars := s.getEnvironmentVars(cmdEnvFile)
+					for _, envFile := range cmdEnv {
+						vars := s.getEnvironmentVars(envFile, s.srcDir)
 						if vars != nil {
 							cmdEnvVars = append(cmdEnvVars, vars...)
 						}
