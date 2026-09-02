@@ -63,6 +63,7 @@ type appState struct {
 	sourcefile     string
 	verbose        bool
 	ahoyExecutable string
+	commandArgs    []string
 	importVisited  map[string]bool
 	srcDir         string
 	srcFile        string
@@ -351,8 +352,18 @@ func (s *appState) getCommands(config Config) []*cobra.Command {
 		newCmd := &cobra.Command{
 			Use:     name,
 			Aliases: cmd.Aliases,
-			// Don't use DisableFlagParsing - it prevents persistent flags from being parsed.
-			// Instead, we use FParseErrWhitelist to allow unknown flags to pass through.
+			// A command that runs something owns every argument after its
+			// own name, exactly as it was typed - ahoy is a wrapper, so
+			// `ahoy chown -R .` must reach chown with its -R intact.
+			// FParseErrWhitelist is not enough here: it suppresses the
+			// unknown-flag error but pflag still drops the flag AND the
+			// token after it, silently mangling the wrapped command
+			// (issue #182). Ahoy's own flags are read by the pre-parser in
+			// flag.go, which only looks before the command name.
+			//
+			// Commands that only group imports keep normal parsing so that
+			// subcommand routing and help still work.
+			DisableFlagParsing: cmd.Cmd != "",
 			FParseErrWhitelist: cobra.FParseErrWhitelist{
 				UnknownFlags: true,
 			},
@@ -659,6 +670,7 @@ func (s *appState) setupApp(localArgs []string) *cobra.Command {
 	// the parsed values now and pass them as the cobra flag defaults.
 	parsedSourcefile := s.sourcefile
 	parsedVerbose := s.verbose
+	parsedSimulateVersion := simulateVersion
 
 	// Create root command.
 	rootCmd := &cobra.Command{
@@ -682,15 +694,32 @@ func (s *appState) setupApp(localArgs []string) *cobra.Command {
 
 	// Add hidden --simulate-version flag for testing the validation system
 	// against older Ahoy versions without needing to rebuild the binary.
-	rootCmd.PersistentFlags().StringVar(&simulateVersion, "simulate-version", "", "simulate a specific Ahoy version for testing")
+	rootCmd.PersistentFlags().StringVar(&simulateVersion, "simulate-version", parsedSimulateVersion, "simulate a specific Ahoy version for testing")
 
 	// Mark help, version, and internal flags as hidden since we handle them manually.
 	for _, name := range []string{"help", "version", "generate-bash-completion", "simulate-version"} {
 		_ = rootCmd.PersistentFlags().MarkHidden(name)
 	}
 
-	// Disable default help command.
-	rootCmd.SetHelpCommand(&cobra.Command{Hidden: true})
+	// `ahoy help <command>` is the way to reach a command's own help,
+	// because `--help` after a command name belongs to that command and is
+	// passed through to it (see getCommands). Hidden so it doesn't clutter
+	// the list of the user's own commands.
+	rootCmd.SetHelpCommand(&cobra.Command{
+		Use:    "help [command]",
+		Short:  "Show help for a command.",
+		Hidden: true,
+		Run: func(cmd *cobra.Command, args []string) {
+			target, _, err := cmd.Root().Find(args)
+			if target == nil || err != nil {
+				s.logger(logLevelError, "Command not found for '"+strings.Join(args, " ")+"'")
+				os.Exit(1)
+			}
+			if err := target.Help(); err != nil {
+				s.logger(logLevelError, err.Error())
+			}
+		},
+	})
 
 	s.importVisited = map[string]bool{}
 
@@ -787,7 +816,7 @@ USAGE:
 COMMANDS:{{range .Commands}}{{if not .Hidden}}
    {{.Name}}{{if .Aliases}}, {{join .Aliases ", "}}{{end}}{{if .HasSubCommands}} ▼{{end}}	{{.Short}}
 {{end}}{{end}}
-Use 'ahoy <command> --help' for detailed information about a command.
+Use 'ahoy help <command>' for detailed information about a command.
 Run 'ahoy config validate' to check your configuration for issues.
 {{end}}{{if .HasAvailableLocalFlags}}
 GLOBAL OPTIONS:
@@ -815,6 +844,11 @@ func main() {
 		state.ahoyExecutable = exe
 	}
 	rootCmd := state.setupApp(os.Args[1:])
+
+	// Ahoy's own flags were consumed by the pre-parser in flag.go, which
+	// stops at the command name. Give cobra only what follows so it never
+	// gets the chance to claim a flag meant for the wrapped command.
+	rootCmd.SetArgs(state.commandArgs)
 
 	// Check for invalid flag error from initFlags - show help and exit 1.
 	if state.invalidFlagError != "" {

@@ -2,12 +2,12 @@
 
 # Verbose flag positioning tests.
 #
-# Cobra's persistent flag handler accepts the verbose flag anywhere relative
-# to the subcommand name and its positional arguments. The legacy single-dash
-# pre-parser (flag.go) handles the case where the flag appears before the
-# subcommand; everything else is delegated to cobra. These tests pin that
-# contract and verify that command arguments still reach the underlying
-# command without requiring a '--' separator.
+# Ahoy's own flags are only recognised BEFORE the command name, where the
+# pre-parser in flag.go reads them. Everything from the command name onwards
+# belongs to the command and is passed through exactly as typed - including
+# tokens that look like ahoy's own flags. This is the v2 contract, restored
+# after v3.0.0 briefly claimed flags anywhere and silently ate arguments
+# meant for the wrapped command (issue #182).
 
 @test "Verbose: no flag means no debug output" {
   run ./ahoy -f testdata/simple.ahoy.yml echo hello
@@ -30,25 +30,25 @@
   [[ "$output" == *"hello"* ]]
 }
 
-@test "Verbose: -v after command enables debug output" {
+@test "Verbose: -v after command belongs to the command, not to ahoy" {
   run ./ahoy -f testdata/simple.ahoy.yml echo -v hello
   [ $status -eq 0 ]
-  [[ "$output" == *"===> Ahoy echo"* ]]
-  [[ "$output" == *"hello"* ]]
+  [[ "$output" != *"===> Ahoy"* ]]
+  [ "$output" = "-v hello" ]
 }
 
-@test "Verbose: --verbose after command enables debug output" {
+@test "Verbose: --verbose after command belongs to the command, not to ahoy" {
   run ./ahoy -f testdata/simple.ahoy.yml echo --verbose hello
   [ $status -eq 0 ]
-  [[ "$output" == *"===> Ahoy echo"* ]]
-  [[ "$output" == *"hello"* ]]
+  [[ "$output" != *"===> Ahoy"* ]]
+  [ "$output" = "--verbose hello" ]
 }
 
-@test "Verbose: -v interspersed between args sets verbose and preserves args" {
+@test "Verbose: -v between args is preserved in place" {
   run ./ahoy -f testdata/simple.ahoy.yml echo one -v two
   [ $status -eq 0 ]
-  [[ "$output" == *"===> Ahoy echo"* ]]
-  [[ "$output" == *"one two"* ]]
+  [[ "$output" != *"===> Ahoy"* ]]
+  [ "$output" = "one -v two" ]
 }
 
 @test "Args passthru: multiple positional args reach command without '--'" {
