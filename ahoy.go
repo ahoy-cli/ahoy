@@ -391,11 +391,20 @@ func (s *appState) getCommands(config Config) []*cobra.Command {
 				var cmdArgs []string
 				var cmdEntrypoint []string
 
-				// Filter out "--" separator.
-				for _, arg := range args {
-					if arg != "--" {
-						cmdArgs = append(cmdArgs, arg)
-					}
+				// A leading "--" is Ahoy's, and is dropped. It dates from
+				// urfave/cli, where it was the only way to stop the parser
+				// claiming the flags that followed it (issue #100). Ahoy no
+				// longer parses a command's arguments at all, so it is now
+				// only a readability habit, but scripts and aliases still
+				// use it and it costs nothing to honour.
+				//
+				// Every later "--" is the command's own data. Plenty of
+				// tools require one - kubectl exec, npm run, cargo run,
+				// git checkout - and stripping those silently changed what
+				// the user asked for (issue #186).
+				cmdArgs = args
+				if len(cmdArgs) > 0 && cmdArgs[0] == "--" {
+					cmdArgs = cmdArgs[1:]
 				}
 
 				// Replace the entry point placeholders.

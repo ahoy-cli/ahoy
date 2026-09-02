@@ -109,10 +109,44 @@ YAML
   [[ "$output" == *"one --two three"* ]]
 }
 
-@test "The '--' separator is still consumed by ahoy, as in v2" {
-  run ./ahoy -f "$TMP_CONFIG" echoargs a -- b -- c
+@test "A leading '--' is consumed by ahoy" {
+  # The habit from issue #100. Ahoy no longer parses a command's arguments,
+  # so this is only a readability convention now, but scripts still use it.
+  run ./ahoy -f "$TMP_CONFIG" echoargs -- --build
   [ "$status" -eq 0 ]
-  [ "$output" = "a b c" ]
+  [ "$output" = "--build" ]
+}
+
+@test "A later '--' is the command's own data" {
+  # Issue #186: kubectl exec, npm run, cargo run and git checkout all need
+  # a '--' of their own, and stripping it silently changed the request.
+  run ./ahoy -f "$TMP_CONFIG" echoargs exec mypod -- ls /app
+  [ "$status" -eq 0 ]
+  [ "$output" = "exec mypod -- ls /app" ]
+}
+
+@test "A leading '--' is consumed and a later one is kept" {
+  run ./ahoy -f "$TMP_CONFIG" echoargs -- run test -- --watch
+  [ "$status" -eq 0 ]
+  [ "$output" = "run test -- --watch" ]
+}
+
+@test "Only the first '--' is consumed, not every leading one" {
+  run ./ahoy -f "$TMP_CONFIG" echoargs -- -- a
+  [ "$status" -eq 0 ]
+  [ "$output" = "-- a" ]
+}
+
+@test "A '--' as the only argument reaches the command as nothing" {
+  run ./ahoy -f "$TMP_CONFIG" echoargs --
+  [ "$status" -eq 0 ]
+  [ "$output" = "" ]
+}
+
+@test "A command that is only a '--' plus data keeps the data intact" {
+  run ./ahoy -f "$TMP_CONFIG" echoargs checkout -- deploy
+  [ "$status" -eq 0 ]
+  [ "$output" = "checkout -- deploy" ]
 }
 
 @test "Imported subcommands get the same verbatim pass-through" {
