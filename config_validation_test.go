@@ -193,9 +193,9 @@ func TestCheckEnvironmentFiles(t *testing.T) {
 	configFile := "testdata/with-env-files.ahoy.yml"
 
 	config := Config{
-		Env: StringArray{".env.test", ".env.missing"},
+		Env: EnvFiles{{Path: ".env.test"}, {Path: ".env.missing"}},
 		Commands: map[string]Command{
-			"test": {Env: StringArray{".env.command"}},
+			"test": {Env: EnvFiles{{Path: ".env.command"}}},
 		},
 	}
 
@@ -344,7 +344,7 @@ func TestValidateConfig_MultipleEnvFiles_OldVersion(t *testing.T) {
 	withSimulateVersion("v2.4.0", func() {
 		config := Config{
 			AhoyAPI: "v2",
-			Env:     StringArray{".env", ".env.local"},
+			Env:     EnvFiles{{Path: ".env"}, {Path: ".env.local"}},
 		}
 
 		result := ValidateConfig(config, "test.ahoy.yml")
