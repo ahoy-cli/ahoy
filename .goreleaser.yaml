@@ -109,6 +109,14 @@ archives:
 checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
   algorithm: sha256
+  # The raw ahoy-bin-* binaries reach the release through release.extra_files,
+  # which bypasses this pipe, so up to and including v3.0.1 they shipped with
+  # no checksums at all. They are the artifacts the documented install
+  # one-liner downloads, so they are the ones people most need to verify.
+  # These globs match the same files as release.extra_files below.
+  extra_files:
+    - glob: "dist/ahoy_**/ahoy-bin-*"
+    - glob: "dist/ahoy-static_**/ahoy-bin-*-static"
 
 snapshot:
   version_template: "{{ .Version }}-SNAPSHOT-{{ .ShortCommit }}"
