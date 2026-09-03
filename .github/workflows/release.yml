@@ -18,6 +18,13 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
+    # Only the canonical repository publishes releases. A fork that receives
+    # the same tag would build everything, then fail at the final API call,
+    # because the release.github owner/name in .goreleaser.yaml points here
+    # and a fork's GITHUB_TOKEN cannot write to this repository. That wasted
+    # two minutes and sent a failure notification on every tag pushed to a
+    # fork, for a release that had in fact succeeded upstream.
+    if: github.repository == 'ahoy-cli/ahoy'
     permissions:
       contents: write
       id-token: write
