@@ -109,11 +109,8 @@ archives:
 checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
   algorithm: sha256
-  # The raw ahoy-bin-* binaries reach the release through release.extra_files,
-  # which bypasses this pipe, so up to and including v3.0.1 they shipped with
-  # no checksums at all. They are the artifacts the documented install
-  # one-liner downloads, so they are the ones people most need to verify.
-  # These globs match the same files as release.extra_files below.
+  # The raw ahoy-bin-* binaries are added to the release through release.extra_files,
+  # and are now included in the checksums file.
   extra_files:
     - glob: "dist/ahoy_**/ahoy-bin-*"
     - glob: "dist/ahoy-static_**/ahoy-bin-*-static"
@@ -167,19 +164,13 @@ sboms:
 
 # Sign the checksums file with cosign, keyless.
 #
-# One signature is enough: the checksums file lists every other artifact
-# (archives, SBOMs and the raw binaries), so verifying it and then checking
-# the hashes covers the whole release. Signing each artifact separately would
-# add dozens of assets for no extra guarantee.
+# The checksums file lists every other artifact so we just sign that
+# and it verifies everything else.
 #
-# Keyless means there is no private key to store or rotate. cosign gets an
-# OIDC token from the workflow, so the signature records which repository,
-# workflow and ref produced it, and the certificate is logged to Rekor. The
-# release job already grants the id-token: write permission this needs.
-#
-# cosign v3 removed --output-signature and --output-certificate in favour of
-# --bundle, which carries the signature, the certificate and the transparency
-# log entry in one file. Snippets written for cosign v2 will not work here.
+# Keyless means cosign gets an OIDC token from the workflow, so the
+# signature records which repository, workflow and ref produced it,
+# and the certificate is logged to Rekor. The release job already
+# grants the id-token: write permission this needs.
 signs:
   - id: cosign-checksum
     cmd: cosign
