@@ -165,20 +165,32 @@ sboms:
       # SBOM name format: ahoy_{version}_{os}_{arch}[v{arm_version}]_static.sbom
       - "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}_static.sbom"
 
-# signs:
-#   - cmd: gpg
-#     args:
-#       - "--batch"
-#       - "--yes"
-#       - "-u"
-#       - "{{ .Env.GPG_FINGERPRINT }}"
-#       - "--output"
-#       - "${signature}"
-#       - "--detach-sign"
-#       - "${artifact}"
-#     artifacts: checksum
-#     output: true
-#     stdin: "{{ .Env.GPG_PASSWORD }}"
+# Sign the checksums file with cosign, keyless.
+#
+# One signature is enough: the checksums file lists every other artifact
+# (archives, SBOMs and the raw binaries), so verifying it and then checking
+# the hashes covers the whole release. Signing each artifact separately would
+# add dozens of assets for no extra guarantee.
+#
+# Keyless means there is no private key to store or rotate. cosign gets an
+# OIDC token from the workflow, so the signature records which repository,
+# workflow and ref produced it, and the certificate is logged to Rekor. The
+# release job already grants the id-token: write permission this needs.
+#
+# cosign v3 removed --output-signature and --output-certificate in favour of
+# --bundle, which carries the signature, the certificate and the transparency
+# log entry in one file. Snippets written for cosign v2 will not work here.
+signs:
+  - id: cosign-checksum
+    cmd: cosign
+    signature: "${artifact}.bundle"
+    args:
+      - "sign-blob"
+      - "--bundle=${signature}"
+      - "--yes"
+      - "${artifact}"
+    artifacts: checksum
+    output: true
 
 # Upload individual binaries as well as archives
 release:
