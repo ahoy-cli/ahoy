@@ -18,11 +18,11 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
+    # Make sure only the canonical repository publishes releases.
+    if: github.repository == 'ahoy-cli/ahoy'
     permissions:
       contents: write
       id-token: write
-    env:
-      GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -37,22 +37,13 @@ jobs:
           # Disabled to avoid cache-poisoning of release artefacts (zizmor).
           cache: false
 
-      - name: Import GPG key (optional, for signing)
-        id: import_gpg
-        if: env.GPG_PRIVATE_KEY != ''
-        uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd # v7.0.0
+      - name: Install Cosign for signing
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
         with:
-          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.GPG_PASSPHRASE }}
-
-      - name: Set GPG environment variables
-        if: steps.import_gpg.conclusion == 'success'
-        env:
-          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-        run: |
-          echo "GPG_FINGERPRINT=${GPG_FINGERPRINT}" >> "$GITHUB_ENV"
-          echo "GPG_PASSWORD=${GPG_PASSPHRASE}" >> "$GITHUB_ENV"
+          # Pinned so a cosign major release cannot change the signing flags
+          # underneath us. v3 removed --output-signature/--output-certificate
+          # in favour of --bundle, which is what .goreleaser.yaml uses.
+          cosign-release: "v3.1.3"
 
       - name: Install Syft for SBOM generation
         uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
@@ -89,8 +80,6 @@ jobs:
           args: ${{ steps.release_mode.outputs.args }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GPG_FINGERPRINT: ${{ env.GPG_FINGERPRINT }}
-          GPG_PASSWORD: ${{ env.GPG_PASSWORD }}
 
       - name: Display dry run artifacts
         if: steps.release_mode.outputs.mode == 'dry-run'
