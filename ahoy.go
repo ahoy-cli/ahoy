@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -605,16 +606,47 @@ func (s *appState) addDefaultCommands(commands []*cobra.Command) []*cobra.Comman
 	return commands
 }
 
-// bashComplete prints the list of subcommands as the default app completion method.
+// bashComplete adds command aliases to cobra's completion of the first
+// argument. Cobra already offers the visible command names itself, so
+// returning them here as well would list every command twice.
 func (s *appState) bashComplete(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	s.logger(logLevelDebug, "bashComplete()")
 
 	completions := []string{}
-	for _, command := range cmd.Root().Commands() {
-		completions = append(completions, command.Name())
-		completions = append(completions, command.Aliases...)
+	if len(args) == 0 {
+		for _, command := range cmd.Root().Commands() {
+			if command.Hidden {
+				continue
+			}
+			for _, alias := range command.Aliases {
+				if strings.HasPrefix(alias, toComplete) {
+					completions = append(completions, alias)
+				}
+			}
+		}
 	}
 	return completions, cobra.ShellCompDirectiveNoFileComp
+}
+
+// printLegacyCompletions answers a urfave/cli style --generate-bash-completion
+// request. It lists the visible subcommands of the command that args resolve
+// to, or of the root command when args is empty. One word may be left over
+// after the command, as the word being completed. A command without
+// subcommands, or args that do not resolve, list nothing. Nothing is run.
+func printLegacyCompletions(w io.Writer, rootCmd *cobra.Command, args []string) {
+	cmd := rootCmd
+	if len(args) > 0 {
+		found, rest, err := rootCmd.Find(args)
+		if err != nil || len(rest) > 1 {
+			return
+		}
+		cmd = found
+	}
+	for _, command := range cmd.Commands() {
+		if !command.Hidden {
+			fmt.Fprintln(w, command.Name())
+		}
+	}
 }
 
 // noArgsAction is the application-wide default action when no flags or arguments
@@ -895,11 +927,7 @@ func main() {
 
 	// Handle bash completion flag - print completions and exit.
 	if state.bashCompletionFlagSet {
-		for _, command := range rootCmd.Commands() {
-			if !command.Hidden {
-				fmt.Println(command.Name())
-			}
-		}
+		printLegacyCompletions(os.Stdout, rootCmd, state.commandArgs)
 		os.Exit(0)
 	}
 

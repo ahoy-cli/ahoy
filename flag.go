@@ -24,7 +24,8 @@ package main
 //   simulateVersion        value of --simulate-version (test-only flag, package-level)
 //   versionFlagSet         true if -version / --version was seen
 //   helpFlagSet            true if -h / -help / --help was seen
-//   bashCompletionFlagSet  true if --generate-bash-completion was seen
+//   bashCompletionFlagSet  true if --generate-bash-completion was seen, either
+//                          ahead of the subcommand or as the last argument
 //   invalidFlagError       non-empty if stdlib parsing failed
 //   commandArgs            everything from the subcommand name onwards
 //
@@ -81,6 +82,16 @@ func (s *appState) initFlags(incomingFlags []string) {
 	// parser's benefit, and the subcommand's own arguments must keep the
 	// dashes the user typed.
 	s.commandArgs = incomingFlags[len(incomingFlags)-len(fs.Args()):]
+
+	// Shell completion scripts written for urfave/cli append the flag to the
+	// words typed so far, e.g. `ahoy mycmd --generate-bash-completion`. That
+	// lands after the subcommand name, where the pre-parser does not look,
+	// so pick it off the end here. Left in place it would reach the command
+	// as an argument and run it.
+	if n := len(s.commandArgs); n > 0 && s.commandArgs[n-1] == "--generate-bash-completion" {
+		s.bashCompletionFlagSet = true
+		s.commandArgs = s.commandArgs[:n-1]
+	}
 
 	s.applyEnvFallbacks()
 }

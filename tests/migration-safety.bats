@@ -116,6 +116,18 @@ bats_require_minimum_version 1.5.0
   [ $status -eq 0 ]
 }
 
+@test "Bash completion after a command lists nothing and does not run it" {
+  run ./ahoy -f testdata/simple.ahoy.yml echo hello --generate-bash-completion
+  [ $status -eq 0 ]
+  [ -z "$output" ]
+}
+
+@test "Bash completion after a command with imports lists its subcommands" {
+  run --separate-stderr ./ahoy -f testdata/with-imports.ahoy.yml test1 --generate-bash-completion
+  [ $status -eq 0 ]
+  [ "$output" = "$(printf 'echo\nlist\nwhalesay')" ]
+}
+
 @test "Config file discovery continues to work" {
   # Simplified test - just verify that config loading works with relative paths
   run ./ahoy -f testdata/simple.ahoy.yml --help
