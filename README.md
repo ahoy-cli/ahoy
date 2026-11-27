@@ -157,6 +157,10 @@ Full documentation lives at **[ahoy-cli.github.io](https://ahoy-cli.github.io/)*
 | [CLI Reference](https://ahoy-cli.github.io/reference/cli/) | Every command and flag |
 | [YAML Schema](https://ahoy-cli.github.io/reference/yaml-schema/) | Every configuration field |
 
+## Security
+
+Found a security problem? Please report it privately through [GitHub's reporting form](https://github.com/ahoy-cli/ahoy/security/advisories/new) rather than opening an issue. See [SECURITY.md](SECURITY.md) for details.
+
 ## Planned features
 
 - Specify arguments and flags in the ahoy file itself, to cut down on argument parsing in scripts.
