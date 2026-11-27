@@ -23,3 +23,9 @@ updates:
       default-days: 7
     assignees:
       - "ocean"
+    groups:
+      # init, autobuild and analyze must run the same version, so bump them
+      # together.
+      codeql-action:
+        patterns:
+          - "github/codeql-action*"
