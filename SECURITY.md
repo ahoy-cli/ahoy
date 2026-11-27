@@ -20,4 +20,4 @@ Security fixes go into the latest v3 release. Upgrade to it before reporting, in
 
 ## Verifying downloads
 
-Every release ships SHA-256 checksums, and releases from v3.0.2 onwards are signed with cosign. See [Verifying your download](https://ahoy-cli.github.io/guides/getting-started/#verifying-your-download).
+Releases from v3.0.1 onwards include a SHA-256 checksum for every binary, and releases from v3.0.2 onwards are also signed with cosign. Older releases either have no checksums file or don't list the `ahoy-bin-*` binaries in it. See [Verifying your download](https://ahoy-cli.github.io/guides/getting-started/#verifying-your-download).
