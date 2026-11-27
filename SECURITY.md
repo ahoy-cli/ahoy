@@ -12,7 +12,7 @@ It helps if your report includes:
 - the steps or a minimal `.ahoy.yml` that shows the problem
 - what an attacker could do with it
 
-Ahoy is maintained by volunteers, so replies are best effort. We'll confirm we've received your report, keep you updated while we work on a fix, and credit you in the advisory unless you'd rather stay anonymous. Please give us a reasonable chance to release a fix before you share details publicly.
+Ahoy is maintained by volunteers, so replies are best effort. We'll confirm we've received your report, keep you updated while we work on a fix, and credit you in the advisory unless you'd rather stay anonymous. Please give us 14 days to release a fix before you share details publicly.
 
 ## Supported versions
 
